@@ -1,0 +1,113 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prusa Connect card: the card</title>
+<style>
+  body { margin: 0; padding: 16px; background: #111; color: #ddd; font: 13px Roboto, "Segoe UI", sans-serif; }
+  pre { white-space: pre-wrap; }
+</style>
+<script src="stand-ins.js"></script>
+<script src="../../prusa-connect-card.js"></script>
+<script src="checks.js"></script>
+<div id="cards"></div>
+<pre id="report" data-result="running">running</pre>
+<script>
+  const tileOf = (card) => card.shadowRoot.querySelector("hui-tile-card");
+  const badge = (card, kind) => card.shadowRoot.querySelector(`.badge.${kind}`);
+  const door = (card) => card.shadowRoot.getElementById("door");
+  // A tap on the title row, as the tile card sends its fire-dom-event action
+  const tap = (card) => tileOf(card).dispatchEvent(new CustomEvent("ll-custom", { bubbles: true, composed: true, detail: tileOf(card).config.tap_action }));
+
+  runChecks(async () => {
+    try { localStorage.clear(); } catch (err) { /* no storage */ }
+
+    // The tile card inside: the printer's name, its state, progress and time remaining
+    const core = addCard("CORE One, printing", { features: [{ type: "custom:prusa-print" }, { type: "custom:prusa-temperatures" }] });
+    await wait(100);
+    const tile = tileOf(core);
+    check("tile", tile?.config.name?.type === "device", "the printer's name (its device's)");
+    check("tile", tile?.config.state_content.join() === "state,progress,time_remaining", `state, progress and time remaining (${tile?.config.state_content})`);
+    check("tile", tile?.config.features_position === "inline", "features inline by default");
+    check("tile", tile?.getAttribute("prusa-phase") === "printing", "the state's color follows the printer's state");
+    check("tile", tile?.hass.states["sensor.office_core_one_state"].attributes.icon === "mdi:printer-3d-nozzle"
+      || !!tile?.hass.states["sensor.office_core_one_state"].attributes.icon, `the state's icon (${tile?.hass.states["sensor.office_core_one_state"].attributes.icon})`);
+    check("tile", tile?.hass.states["sensor.office_core_one_state"].attributes.progress !== undefined,
+      "the printer's sensors as the state's attributes, for the state content");
+
+    // Collapsible: a tap shows or hides the features below the title
+    check("collapse", tile.config.features.length === 2, "expanded at load (as set): both features");
+    tap(core);
+    await wait(50);
+    check("collapse", tileOf(core).config.features.length === 1, "a tap collapses to the first feature (inline)");
+    tap(core);
+    await wait(50);
+    check("collapse", tileOf(core).config.features.length === 2, "another tap expands");
+
+    // Follows the print job
+    const job = addCard("MK4S, idle then printing", { entity: "sensor.workshop_mk4s_state", expanded_at_load: false, features: [{ type: "custom:prusa-print" }, { type: "custom:prusa-movement" }] },
+      { hass: makeHass() });
+    job.hass = makeHass({ "sensor.workshop_mk4s_state": "idle" });
+    await wait(50);
+    check("job", tileOf(job).config.features.length === 1, "collapsed while idle");
+    job.hass = makeHass({ "sensor.workshop_mk4s_state": "printing" });
+    await wait(50);
+    check("job", tileOf(job).config.features.length === 2, "expands when a print starts");
+    job.hass = makeHass({ "sensor.workshop_mk4s_state": "finished" });
+    await wait(50);
+    check("job", tileOf(job).config.features.length === 1, "collapses when it finishes");
+
+    // Badges: the XL's active tool while printing or paused
+    const xl = addCard("XL, paused, tool 2", {}, { hass: makeHass() });
+    xl.setConfig({ type: "custom:prusa-connect-card", entity: "sensor.garage_xl_state", style: { family: "none" } });
+    await wait(100);
+    check("status badge", badge(xl, "status").classList.contains("on") && badge(xl, "status").textContent.trim() === "2", `the active tool (${badge(xl, "status").textContent.trim()})`);
+    check("connection badge", badge(xl, "connection").classList.contains("on") && badge(xl, "connection").title === "Connected to Prusa Connect", "connected");
+    xl.hass = makeHass({ "binary_sensor.garage_xl_connectivity": "off" });
+    await wait(50);
+    check("connection badge", badge(xl, "connection").title !== "Connected to Prusa Connect", `disconnected (${badge(xl, "connection").title})`);
+    xl.hass = makeHass({ "sensor.garage_xl_state": "unavailable" });
+    await wait(50);
+    check("connection badge", badge(xl, "connection").title === "Unavailable", "unavailable");
+
+    // A single-tool printer: the server update in the status badge
+    const update = addCard("CORE One, server update", {}, { hass: makeHass({ "update.prusa_connect_server": "on" }) });
+    await wait(100);
+    check("status badge", badge(update, "status").title === "Prusa Connect update available", `the server update (${badge(update, "status").title})`);
+    check("status badge", badge(core, "status").classList.contains("on") === false, "nothing on a single tool printer without an update");
+
+    // Styles: the CORE One's door and its status bar
+    const styled = addDefaultCard("CORE One, its own style", { features: [{ type: "custom:prusa-print" }] });
+    await wait(100);
+    check("style", styled.shadowRoot.querySelector(".frame").classList.contains("glazed"), "the CORE One has a door");
+    check("status bar", door(styled).dataset.bar !== undefined, `the status bar while printing (${door(styled).dataset.bar})`);
+    styled.hass = makeHass({ "sensor.office_core_one_state": "attention" });
+    await wait(50);
+    check("status bar", door(styled).dataset.bar === "warning", `pulses while it needs attention (${door(styled).dataset.bar})`);
+    const noBar = addDefaultCard("CORE One, no status bar", { style: { status_bar: false } });
+    await wait(100);
+    check("status bar", door(noBar).dataset.bar === undefined, "off when status_bar is false");
+
+    const mk = addDefaultCard("MK4S, its own style", { entity: "sensor.workshop_mk4s_state" });
+    await wait(100);
+    check("style", !mk.shadowRoot.querySelector(".frame").classList.contains("glazed"), "the MK4S has no door");
+    const mkDoor = addDefaultCard("MK4S with a door", { entity: "sensor.workshop_mk4s_state", style: { door: "#202020" } });
+    await wait(100);
+    check("style", mkDoor.shadowRoot.querySelector(".frame").classList.contains("glazed"), "a door color adds a door");
+
+    // Bad options are refused with a message
+    let error;
+    try { document.createElement("prusa-connect-card").setConfig({ entity: "sensor.office_core_one_state", style: { family: "mk5" } }); } catch (err) { error = err.message; }
+    check("options", error === "Unknown style family: mk5", `an unknown family (${error})`);
+
+    // Progress edge while printing
+    await wait(50);
+    check("progress edge", core.shadowRoot.getElementById("edge").classList.contains("on"), "shown while printing");
+    const idleEdge = addCard("MK4S, idle", { entity: "sensor.workshop_mk4s_state" });
+    await wait(50);
+    check("progress edge", !idleEdge.shadowRoot.getElementById("edge").classList.contains("on"), "hidden while idle");
+
+    // A new card: a printer, with Prusa print and Prusa temperatures
+    const stub = customElements.get("prusa-connect-card").getStubConfig(makeHass());
+    check("stub", stub.entity.startsWith("sensor.") && stub.entity.endsWith("_state") && stub.features?.map((f) => f.type).join() === "custom:prusa-print,custom:prusa-temperatures",
+      `a printer (${JSON.stringify(stub)})`);
+  });
+</script>

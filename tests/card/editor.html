@@ -1,0 +1,67 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prusa Connect card: editor</title>
+<style>
+  body { margin: 0; padding: 16px; background: #111; color: #ddd; font: 13px Roboto, "Segoe UI", sans-serif; }
+  pre { white-space: pre-wrap; }
+</style>
+<script src="stand-ins.js"></script>
+<script src="../../prusa-connect-card.js"></script>
+<script src="checks.js"></script>
+<div id="cards"></div>
+<pre id="report" data-result="running">running</pre>
+<script>
+  const change = (form, value) => form.dispatchEvent(new CustomEvent("value-changed", { detail: { value } }));
+
+  runChecks(async () => {
+    let fired;
+    const editor = document.createElement("prusa-connect-card-editor");
+    editor.addEventListener("config-changed", (ev) => (fired = ev.detail.config));
+    editor.hass = makeHass();
+    editor.setConfig({ type: "custom:prusa-connect-card", entity: "sensor.office_core_one_state", features: [{ type: "custom:prusa-print" }] });
+    document.getElementById("cards").append(editor);
+    await wait(100);
+    check("editor", fired === undefined, "a configuration with no option at its default is saved as it is");
+
+    // The printer is chosen as a device of the integration
+    const printer = editor.shadowRoot.getElementById("printer");
+    check("printer", printer.schema[0].selector.device.integration === "prusa_connect" && printer.data.device === "dev_core", "the printer's device");
+    change(printer, { device: "dev_xl" });
+    check("printer", fired?.entity === "sensor.garage_xl_state", `choosing a printer chooses its State sensor (${fired?.entity})`);
+    editor.setConfig(fired);
+    await wait(50);
+
+    // The style: the family's own, CORE takes the INDX in, Pro HT90 apart
+    const style = editor.shadowRoot.getElementById("style");
+    const families = style.schema[0].selector.select.options.map((o) => o.value ?? o[0]);
+    check("style", families.includes("core") && families.includes("ht90") && !families.some((f) => /indx/i.test(f)), `CORE (with the INDX) and Pro HT90 apart (${families.join()})`);
+    check("style", style.data.family === "xl", `the XL's own family by default (${style.data.family})`);
+    check("style", !style.schema.some((s) => s.name === "status_bar"), "no RGB status bar option without a door");
+    change(style, { door: "#202020" });
+    check("style", fired.style?.door === "#202020", "a door color is saved in style");
+    editor.setConfig(fired);
+    await wait(50);
+    check("style", style.schema.some((s) => s.name === "status_bar") && style.data.status_bar === true, "with a door: the RGB status bar, on by default");
+    check("style", editor.shadowRoot.getElementById("row").style.display === "", "and Randomize reflections");
+    editor.shadowRoot.getElementById("randomize").click();
+    check("style", Number.isInteger(fired.style?.reflections), "Randomize reflections saves a seed");
+
+    // The card's own options
+    const form = editor.shadowRoot.getElementById("form");
+    const names = form.schema.map((s) => s.name);
+    check("options", ["features_style", "collapsible", "expanded_at_load", "expand_when_job_starts", "collapse_when_job_ends"].every((n) => names.includes(n)),
+      `the card's options (${names.join(", ")})`);
+
+    // The tile card's own editor, without what the card decides
+    await wait(100);
+    const tile = editor.shadowRoot.querySelector("prusa-connect-tile-card-editor") ?? editor.shadowRoot.querySelector("hui-tile-card-editor");
+    check("tile editor", !!tile, "the tile card's own editor is inside");
+    check("tile editor", tile && !/"name":"icon"|"name":"show_entity_picture"|"name":"entity"/.test(tile.schemaNames), "without the entity, icon and picture options");
+    check("tile editor", tile?.config && !("style" in tile.config), "it gets only the tile card's options");
+
+    // Every option the card adds is checked by setConfig
+    let error;
+    try { document.createElement("prusa-connect-card").setConfig({ entity: "sensor.office_core_one_state", style: "core" }); } catch (err) { error = err.message; }
+    check("options", /style must be a set of options/.test(error ?? ""), "style is a set of options");
+  });
+</script>
