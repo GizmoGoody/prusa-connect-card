@@ -205,6 +205,16 @@ a { color: var(--accent-ink); }
 .styled.glazed .field { color: var(--win-ink); box-shadow: var(--window-edge), var(--chan); }
 .styled.glazed .field::before { background: var(--window); opacity: 1; }
 .styled:not(.glazed) .pc-head .key { background-image: none !important; box-shadow: none !important; transform: none !important; }
+/* A light, as the xTool card's Lights shows it: the light's tile icon in its color, and Home Assistant's brightness slider */
+.key.lamp .mdi { color: var(--c); }
+.key.lamp::before { opacity: .2; }
+.row .slide { flex: 2 1 0; min-width: 72px; }
+.slide { position: relative; height: 100%; border-radius: var(--fr); overflow: hidden; background: var(--backing); box-shadow: var(--chan); cursor: ew-resize; touch-action: none; isolation: isolate; }
+.slide::before { content: ""; position: absolute; inset: 0; background: var(--c); opacity: .2; }
+.slide .fill { position: absolute; inset: 0 auto 0 0; width: var(--v); background: var(--c); }
+.slide .fill::after { content: ""; position: absolute; right: 6px; top: 50%; width: 4px; height: 50%; border-radius: 2px; transform: translateY(-50%); background: #fff; }
+.slide .mdi { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 22px; line-height: 1; color: var(--ink); mix-blend-mode: overlay; pointer-events: none; }
+.help.pending { margin-top: 4px; }
 .field .mdi { font-size: 22px; line-height: 1; flex: none; margin-right: 4px; }
 .field:has(input:disabled) { cursor: default; opacity: .55; }
 .field input { flex: 1 1 0; width: 0; min-width: 0; border: 0; outline: none; background: none; text-align: right; padding: 0; font-weight: 500; font-variant-numeric: tabular-nums; cursor: inherit; }
@@ -396,6 +406,128 @@ footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
     </div>
   </div>
 
+  <h2>Full configuration</h2>
+  <p class="lede">Every option the card takes, each set, for a CORE One. The editor writes only what differs from the defaults, as the YAML beside the preview shows; this is the whole structure. Lines marked "not offered yet" wait for the integration (<a href="https://github.com/prusa3d/prusa-connect-homeassistant/issues/14" target="_blank" rel="noopener">the request</a>).</p>
+  <pre class="yaml panel" id="full-yaml">type: custom:prusa-connect-card
+entity: sensor.office_core_one_state   # the printer's State sensor; the card finds the rest on its device
+
+# Home Assistant's own tile card options, as for any tile card
+name: Office CORE One
+color: state
+state_content:                   # also time_printing, finish_time, job_name
+  - state
+  - progress
+  - time_remaining
+tap_action:
+  action: more-info
+icon_tap_action:
+  action: more-info
+features_position: inline
+
+# The Prusa section
+style: core                      # core, core_indx, ht90, mini, mk25, mk3, mk35, mk39, mk4, xl_multi, xl_single or none
+                                 #   default: the printer's family
+frame_color: "#434242"           # default: the style's own
+door_color: "#141619"            # core and core_indx only; default: the style's own
+pattern: 4242                    # core and core_indx only: the door's reflections (Randomize reflections)
+status_bar: true                 # core and core_indx only: the door lights up as the RGB status bar does
+features_style: console          # match, flat or console
+enabled_color: info              # a Home Assistant color name
+collapsible: true
+expanded_at_load: false
+expand_when_job_starts: true
+collapse_when_job_ends: true
+last_feature_full_width: true
+status_badge:                    # the first that applies shows
+  - active_tool                  #   printers with more than one tool
+  - server_update
+connection_badge: true
+progress_edge:
+  edge: top                      # none, top, bottom, left, right or around
+  thickness: 4
+  starts_at: 0
+  ends_at: 100
+  direction: clockwise           # clockwise or counterclockwise
+  color: state                   # state or thresholds
+  show_percentage: false
+  show_while:                    # printing, paused, attention, finished, error
+    - printing
+    - paused
+
+features:
+  - type: custom:prusa-print
+    controls:                    # also pause, resume, time_printing, finish_time, job_name
+      - pause_resume
+      - stop
+      - time_remaining
+      - progress
+    show: icons                  # icons, names or both
+    ask_before_stopping: true
+
+  - type: custom:prusa-temperatures
+    controls:                    # each heater also as &lt;heater&gt; (reading) and &lt;heater&gt;_target (field);
+      - nozzle_pair              #   heaters: nozzle (nozzle_1 to nozzle_5 on a multi-tool), bed, chamber
+      - bed_pair
+      - chamber_pair             # not offered yet
+      - chamber_fan              # not offered yet: Off, Auto, Manual and its speed
+      - presets
+      - cool_down
+    show: icons
+
+  - type: custom:prusa-history
+    lines:
+      - nozzle
+      - nozzle_target
+      - bed
+      - bed_target
+      - chamber                  # not offered yet
+      - chamber_target           # not offered yet
+    hours_to_show: 1
+    full_width: false
+
+  - type: custom:prusa-nozzles
+    controls:                    # also nozzle_high_flow, nozzle_hardened, heatbreak_fan_speed,
+      - material                 #   and active on a multi-tool
+      - nozzle_diameter
+      - print_fan_speed
+
+  - type: custom:prusa-movement
+    controls:
+      - speed
+      - flow                     # not offered yet
+      - axis_z
+      - axis_x
+      - axis_y
+      - home                     # not offered yet
+      - disable_steppers         # not offered yet
+    show: icons
+    only_z_while_printing: true
+    units: false
+
+  - type: custom:prusa-lights      # not offered yet
+    controls:
+      - chamber_light            # the light's icon: a tap turns it on or off
+      - chamber_light_brightness # its brightness slider
+    off_at_minimum: false
+
+  - type: custom:prusa-utilities   # not offered yet
+    controls:
+      - beep
+      - reset_printer
+    show: icons
+    ask_before_resetting: true
+
+  - type: custom:prusa-cameras
+    controls:                    # camera_buttons and camera_toggle with more than one camera
+      - camera_buttons
+      - crop
+    show: icons
+    camera: chamber              # default: the first
+    camera_view: auto            # auto or live
+    show_last_updated: true
+    full_width: true
+</pre>
+
   <h2>Styles</h2>
   <p class="lede">One style for each printer family, named as PrusaSlicer 2.9's configuration wizard names them (the legacy profiles in their own families), in alphabetical order, plus the Pro HT90 on its own. A style has a frame, behind the features. Only the CORE and CORE INDX families have a door, behind the title, drawn as the xTool card draws its windows: dark smoked glass with reflections across it (Randomize reflections in the editor draws them in a new pattern). With RGB status bar on, the door lights up from below as the printer's status bar does. The other families show the theme's own card where the door would be. The editor can replace the frame and door colors. A new card gets its printer's family. None follows your theme.</p>
   <div class="cw" id="styles"></div>
@@ -411,7 +543,8 @@ footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
     <li><b>Left out for now.</b> The MMU entities (slots and feeder), until they can be checked on a printer that has one.</li>
     <li><b>Crop.</b> The Crop key works as in the xTool card. The printer camera has no crop of its own, so the card keeps the crop in memory for as long as the page is open. Turning Crop off shows the whole picture.</li>
     <li><b>Only Z while printing.</b> Prusa movement shows only Z while a print runs, since X and Y change too fast to read. The integration turns the axis entities off by default; enable them to see them here. The positions show no unit unless Units is on (they are in millimetres).</li>
-    <li><b>Chamber.</b> The integration does not report the chamber yet. The card looks for a chamber temperature and a chamber target named like the bed's, and the CORE One here shows them as if they existed. Prusa temperatures also offers the chamber's fan (Off, Auto or Manual, and its speed while Manual) and its light, as Prusa Connect's Chamber section does; the integration does not report these yet either.</li>
+    <li><b>Not in the integration yet.</b> The card is ready for what Prusa Connect offers but the integration does not yet: the chamber's temperature, target and fan, the chamber light (Prusa lights), flow, Home and Disable steppers (Prusa movement), and Beep and Reset printer (Prusa utilities). Each feature's editor says which of its controls wait for it. <a href="https://github.com/prusa3d/prusa-connect-homeassistant/issues/14" target="_blank" rel="noopener">Add your support to the request</a> on the integration's repository.</li>
+    <li><b>Chamber.</b> The integration does not report the chamber yet. The card looks for a chamber temperature and a chamber target named like the bed's, and the CORE One here shows them as if they existed. Prusa temperatures also offers the chamber's fan (Off, Auto or Manual, and its speed while Manual), as Prusa Connect's Chamber section does, and Prusa lights offers its light.</li>
   </ol>
   <footer>Mockup only. Prusa, Original Prusa, CORE One and Prusa Connect are names of Prusa Research. This page is not made by or affiliated with Prusa Research.</footer>
 </div>
@@ -444,10 +577,10 @@ const fmtNum = (v, precision, unit) => (v == null || !isFinite(v) ? "Unknown" : 
 const MODELS = {
   mk4s: { name: "MK4S", product: "mk4s", device: "Workshop MK4S", tools: 1, chamber: false, cameras: ["Buddy3D"], job: { nozzle: [215], bed: 60, file: "Benchy_0.4n_0.2mm_PLA_MK4S_1h12m.bgcode", total: 4320 },
     materials: ["PLA"], dia: [0.4], hf: [false], hard: [false], nozzleMax: 300, bedMax: 120 },
-  coreone: { name: "CORE One", product: "core_one", device: "Office CORE One", tools: 1, chamber: true, cameras: ["Chamber"],
+  coreone: { name: "CORE One", product: "core_one", device: "Office CORE One", tools: 1, chamber: true, cameras: ["Chamber"], light: true,
     job: { nozzle: [260], bed: 105, chamber: 40, file: "Fan_duct_0.4n_0.2mm_ASA_COREONE_2h05m.bgcode", total: 7500 },
     materials: ["ASA"], dia: [0.4], hf: [true], hard: [false], nozzleMax: 300, bedMax: 120, chamberMax: 55 },
-  xl: { name: "XL", product: "xlmultitool5", device: "Garage XL", tools: 5, chamber: false, cameras: ["Front", "Top"],
+  xl: { name: "XL", product: "xlmultitool5", device: "Garage XL", tools: 5, chamber: false, cameras: ["Front", "Top"], light: true,
     job: { nozzle: [215, 170, 170, 0, 0], bed: 60, file: "Multi_color_vase_0.4n_0.2mm_PLA_XL5IS_3h40m.bgcode", total: 13200 },
     materials: ["PLA", "PLA", "PETG", "PETG", "PLA"], dia: [0.4, 0.4, 0.6, 0.4, 0.4], hf: [false, false, true, false, false], hard: [false, false, false, false, true], nozzleMax: 300, bedMax: 120 },
   mini: { name: "MINI+", product: "mini", device: "Desk MINI+", tools: 1, chamber: false, cameras: [],
@@ -593,9 +726,9 @@ const FEATURES = {
   // Each heater: its reading, its target, or both as one control
   temperatures: { name: "Temperatures", picker: "Prusa temperatures", icon: "mdi-thermometer-lines", type: "custom:prusa-temperatures",
     controls: (m) => [...heaterKeys(m).flatMap((k) => [[`${k}_pair`, `${heaterLabel(k)} / ${heaterLabel(k, true)}`, heaterIcon(k)], [k, heaterLabel(k), heaterIcon(k)], [`${k}_target`, heaterLabel(k, true), "mdi-thermometer-chevron-up"]]),
-      ...(m.chamber ? [["chamber_fan", "Chamber fan", "mdi-fan"], ["chamber_light", "Chamber light", "mdi-lightbulb-on-outline"]] : []),
+      ...(m.chamber ? [["chamber_fan", "Chamber fan", "mdi-fan"]] : []),
       ["presets", "Presets", "mdi-fire"], ["cool_down", "Cool down", "mdi-snowflake"]],
-    defaults: [...["nozzle", "nozzle_1", "nozzle_2", "nozzle_3", "nozzle_4", "nozzle_5", "bed", "chamber"].map((k) => `${k}_pair`), "chamber_fan", "chamber_light", "presets", "cool_down"], show: true },
+    defaults: [...["nozzle", "nozzle_1", "nozzle_2", "nozzle_3", "nozzle_4", "nozzle_5", "bed", "chamber"].map((k) => `${k}_pair`), "chamber_fan", "presets", "cool_down"], show: true },
   history: { name: "History", picker: "Prusa history", icon: "mdi-chart-line", type: "custom:prusa-history", wide: () => !!featureOf("history")?.opts.full_width,
     controls: (m) => seriesOf(m).map((id) => [id, seriesLabel(id), "mdi-chart-line"]), options: [["full_width", "Full width", false]] },
   nozzles: { name: "Nozzles", picker: "Prusa nozzles", icon: "mdi-printer-3d-nozzle-outline", type: "custom:prusa-nozzles",
@@ -605,8 +738,17 @@ const FEATURES = {
       ["print_fan_speed", "Print fan", "mdi-fan"], ["heatbreak_fan_speed", "Heatbreak fan", "mdi-fan"]],
     defaults: ["material", "nozzle_diameter", "active", "print_fan_speed"] },
   movement: { name: "Movement", picker: "Prusa movement", icon: "mdi-axis-arrow", type: "custom:prusa-movement",
-    controls: () => [["axis_x", "X", "mdi-axis-x-arrow"], ["axis_y", "Y", "mdi-axis-y-arrow"], ["axis_z", "Z", "mdi-axis-z-arrow"], ["speed", "Speed", "mdi-speedometer"]],
-    defaults: ["speed", "axis_z", "axis_x", "axis_y"], options: [["only_z_while_printing", "Only Z while printing", true], ["units", "Units", false]] },
+    controls: () => [["axis_x", "X", "mdi-axis-x-arrow"], ["axis_y", "Y", "mdi-axis-y-arrow"], ["axis_z", "Z", "mdi-axis-z-arrow"], ["speed", "Speed", "mdi-speedometer"],
+      ["flow", "Flow", "mdi-water-percent"], ["home", "Home", "mdi-home"], ["disable_steppers", "Disable steppers", "mdi-engine-off-outline"]],
+    defaults: ["speed", "flow", "axis_z", "axis_x", "axis_y"], show: true, options: [["only_z_while_printing", "Only Z while printing", true], ["units", "Units", false]] },
+  // As the xTool card's Lights: each light's icon (a tap turns it on or off) and its brightness slider, chosen one by one
+  lights: { name: "Lights", picker: "Prusa lights", icon: "mdi-lightbulb-group", type: "custom:prusa-lights", requires: (m) => !!m.light,
+    controls: () => [["chamber_light", "Chamber light", "mdi-lightbulb"], ["chamber_light_brightness", "Chamber light brightness", "mdi-brightness-6"]],
+    options: [["off_at_minimum", "Off at minimum", false]] },
+  // Prusa Connect's Utilities
+  utilities: { name: "Utilities", picker: "Prusa utilities", icon: "mdi-tools", type: "custom:prusa-utilities",
+    controls: () => [["beep", "Beep", "mdi-volume-high"], ["reset_printer", "Reset printer", "mdi-restart"]], show: true,
+    options: [["ask_before_resetting", "Ask before resetting the printer", true]] },
   cameras: { name: "Cameras", picker: "Prusa cameras", icon: "mdi-cctv", type: "custom:prusa-cameras", requires: (m) => m.cameras.length > 0, wide: () => cfg.camera.full_width,
     controls: (m) => [...(m.cameras.length > 1 ? [["camera_buttons", "Camera buttons", "mdi-cctv"], ["camera_toggle", "Camera toggle", "mdi-camera-switch"]] : []), ["crop", "Crop", "mdi-crop"]],
     defaults: ["camera_buttons", "crop"], show: true },
@@ -637,14 +779,14 @@ const PROGRESS_DEFAULTS = { edge: "top", thickness: 4, starts_at: 0, ends_at: 10
 
 // ---------- Configuration (what the card's YAML holds) ----------
 const cfg = {
-  style: null, frame_color: null, door_color: null, pattern: null, status_bar: false, features_style: "console", enabled_color: "info", collapsible: true, expanded_at_load: false,
+  style: null, frame_color: null, door_color: null, pattern: null, status_bar: true, features_style: "console", enabled_color: "info", collapsible: true, expanded_at_load: false,
   expand_when_job_starts: true, collapse_when_job_ends: true, last_feature_full_width: true,
   status_badge: null, connection_badge: true, progress_edge: { ...PROGRESS_DEFAULTS },
-  features: ["print", "temperatures", "history", "nozzles", "movement", "cameras"].map((kind) => ({ kind, controls: null, show: null, opts: {} })),
+  features: ["print", "temperatures", "history", "nozzles", "movement", "lights", "utilities", "cameras"].map((kind) => ({ kind, controls: null, show: null, opts: {} })),
   history: { hours_to_show: 1 },
   camera: { camera: null, view: "auto", show_last_updated: true, full_width: true },
 };
-const ui = { model: "coreone", open: { dash: true, preview: true }, editing: null, hidden: new Set(), num: { speed: 100, chamber_fan_speed: 60, chamber_light: 100 }, chamberFan: "auto", theme: "auto", shape: "default",
+const ui = { model: "coreone", open: { dash: true, preview: true }, editing: null, hidden: new Set(), num: { speed: 100, flow: 100, chamber_fan_speed: 60 }, light: { on: true, b: 80 }, chamberFan: "auto", theme: "auto", shape: "default",
   conn: "connected", update: false, camera: 0, cropping: false, crops: {}, first: null, dialog: null, preheat: "" };
 const model = () => MODELS[ui.model];
 const styleId = () => cfg.style || familyOf(model().product);
@@ -966,7 +1108,6 @@ const RENDER = {
       if (id === "chamber_fan") return `<div class="row">${[["off", "Off", "mdi-fan-off"], ["auto", "Auto", "mdi-fan-auto"], ["manual", "Manual", "mdi-fan"]].map(([mode, name, icon]) =>
           keyHTML({ act: "chamber_fan", arg: mode, icon, name, label: `Chamber fan: ${name}`, pressed: ui.chamberFan === mode, disabled: !available() }, show)).join("")}
           ${fieldHTML("chamber_fan_speed", ui.num.chamber_fan_speed, "%", "Chamber fan speed", "mdi-fan", ui.chamberFan !== "manual")}</div>`;
-      if (id === "chamber_light") return fieldHTML("chamber_light", ui.num.chamber_light, "%", "Chamber light", "mdi-lightbulb-on-outline");
       if (id === "cool_down") return keyHTML({ act: "cool_down", icon: "mdi-snowflake", name: "Cool down", color: "#4fc3f7", disabled: !available() }, show);
       if (id.endsWith("_target")) { const k = id.slice(0, -7); return fieldHTML(k, Math.round(sim.target[k] || 0), "°C", seriesLabel(id)); }
       if (id.endsWith("_pair")) { const k = id.slice(0, -5); return `<div class="combo">${heatHTML(k)}${fieldHTML(k, Math.round(sim.target[k] || 0), "°C", heaterLabel(k, true))}</div>`; }
@@ -999,9 +1140,23 @@ const RENDER = {
   },
   movement(ctrls, m, f) {
     const zOnly = optOf(f, "only_z_while_printing") && JOB_STATES.includes(sim.state);
-    const items = ctrls.filter((id) => !(zOnly && (id === "axis_x" || id === "axis_y"))).map((id) => id === "speed" ? fieldHTML("speed", ui.num.speed, "%", "Speed")
+    const items = ctrls.filter((id) => !(zOnly && (id === "axis_x" || id === "axis_y"))).map((id) => id === "speed" ? fieldHTML("speed", ui.num.speed, "%", "Speed", "mdi-speedometer")
+      : id === "flow" ? fieldHTML("flow", ui.num.flow, "%", "Flow", "mdi-water-percent")
+      : id === "home" ? keyHTML({ act: "noop", icon: "mdi-home", name: "Home", label: "Home the axes", disabled: !available() || JOB_STATES.includes(sim.state) }, showOf(f))
+      : id === "disable_steppers" ? keyHTML({ act: "noop", icon: "mdi-engine-off-outline", name: "Steppers off", label: "Disable steppers", disabled: !available() || JOB_STATES.includes(sim.state) }, showOf(f))
       : readout(`mdi-axis-${id.slice(5)}-arrow`, id, { title: id.slice(5).toUpperCase() }));
     return `<div class="row">${items.join("")}</div>`;
+  },
+  lights(ctrls) {
+    const { on, b } = ui.light, color = on && available() ? DAYLIGHT : LIGHT_OFF;
+    return `<div class="row">${ctrls.map((id) => id === "chamber_light"
+      ? `<button class="key lamp" data-act="light_toggle" style="--c:${color}" title="Chamber light: ${on ? "On" : "Off"}" aria-label="Chamber light" data-min="36" ${available() ? "" : "disabled"}><i class="mdi ${on ? "mdi-lightbulb-on" : "mdi-lightbulb-outline"}"></i></button>`
+      : `<div class="slide" data-slide="light" style="--c:${color};--v:${on ? b : 0}%" role="slider" aria-label="Chamber light brightness" aria-valuenow="${on ? b : 0}" data-min="72"><div class="fill"></div><i class="mdi mdi-lightbulb-on-outline"></i></div>`).join("")}</div>`;
+  },
+  utilities(ctrls, m, f) {
+    return `<div class="row">${ctrls.map((id) => id === "beep"
+      ? keyHTML({ act: "noop", icon: "mdi-volume-high", name: "Beep", disabled: !available() }, showOf(f))
+      : keyHTML({ act: "noop", icon: "mdi-restart", name: "Reset", label: "Reset printer", color: STATES.error.color, disabled: !available() }, showOf(f))).join("")}</div>`;
   },
   cameras(ctrls, m, f) {
     const show = showOf(f), name = m.cameras[ui.camera] || m.cameras[0];
@@ -1205,6 +1360,15 @@ function mainEditorHTML() {
     </div></details>
   </div></div>`;
 }
+// What the Prusa Connect integration does not offer yet (its request: https://github.com/prusa3d/prusa-connect-homeassistant/issues/14). The card is ready for each; until the integration adds it, it does not show
+const ISSUE_URL = "https://github.com/prusa3d/prusa-connect-homeassistant/issues/14";
+const PENDING = ["chamber", "chamber_target", "chamber_pair", "chamber_fan", "chamber_light", "chamber_light_brightness", "flow", "home", "disable_steppers", "beep", "reset_printer"];
+function pendingHTML(kind, m) {
+  const names = offered(kind, m).filter((c) => PENDING.includes(c[0])).map((c) => c[1]);
+  if (!names.length) return "";
+  const all = names.length === offered(kind, m).length;
+  return `<p class="help pending"><i class="mdi mdi-information-outline"></i> ${all ? "The Prusa Connect integration does not offer these yet" : `Not offered by the Prusa Connect integration yet: ${esc(names.join(", "))}`}. The card is ready for ${names.length > 1 ? "them" : "it"} and shows ${names.length > 1 ? "them" : "it"} once the integration does. Add your support to <a href="${ISSUE_URL}" target="_blank" rel="noopener">the request on the integration's repository</a>.</p>`;
+}
 function featureEditorHTML(kind) {
   const m = model(), f = featureOf(kind), def = FEATURES[kind];
   let extra = "";
@@ -1219,6 +1383,7 @@ function featureEditorHTML(kind) {
   }
   return `<div class="ed"><div class="ed-head"><button data-act="back" aria-label="Back"><i class="mdi mdi-arrow-left"></i></button>${esc(def.picker)}</div><div class="ed-body">
     ${chipsField(`ctrl:${kind}`, kind === "history" ? "Lines" : "Controls", controlsOf(f, m), offered(kind, m).map((c) => [c[0], c[1]]))}
+    ${pendingHTML(kind, m)}
     ${extra}</div></div>`;
 }
 
@@ -1232,7 +1397,7 @@ function yaml() {
   if (look?.glazed && cfg.pattern != null && cfg.pattern !== DEFAULT_PATTERN) out.push(`pattern: ${cfg.pattern}`);
   if (cfg.features_style !== "console") out.push(`features_style: ${cfg.features_style}`);
   if (cfg.enabled_color !== "info") out.push(`enabled_color: ${cfg.enabled_color}`);
-  for (const [k, d] of [["collapsible", true], ["expanded_at_load", false], ["expand_when_job_starts", true], ["collapse_when_job_ends", true], ["last_feature_full_width", true], ["connection_badge", true], ["status_bar", false]]) if (cfg[k] !== d) out.push(`${k}: ${cfg[k]}`);
+  for (const [k, d] of [["collapsible", true], ["expanded_at_load", false], ["expand_when_job_starts", true], ["collapse_when_job_ends", true], ["last_feature_full_width", true], ["connection_badge", true], ["status_bar", true]]) if (cfg[k] !== d) out.push(`${k}: ${cfg[k]}`);
   if (cfg.status_badge) { out.push("status_badge:"); cfg.status_badge.forEach((b) => out.push(`  - ${b}`)); }
   const pe = Object.entries(cfg.progress_edge).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(PROGRESS_DEFAULTS[k]));
   if (pe.length) { out.push("progress_edge:"); pe.forEach(([k, v]) => out.push(`  ${k}: ${Array.isArray(v) ? `[${v.join(", ")}]` : v}`)); }
@@ -1316,7 +1481,7 @@ function render() {
   placeFeatures();
   fitRows();
   $$("[data-hist]").forEach(drawHistory);
-  bindChips(); bindFeatureList(); bindFields(); bindShots();
+  bindChips(); bindFeatureList(); bindFields(); bindSlides(); bindShots();
 }
 function dialogHTML() {
   return `<div class="dlg-scrim"><div class="dlg" role="alertdialog" aria-labelledby="dlg-t"><h3 id="dlg-t">Stop the print?</h3>
@@ -1430,7 +1595,28 @@ function bindShots() {
 }
 
 // ---------- Actions ----------
-const NUMS = { speed: [20, 999], chamber_fan_speed: [0, 100], chamber_light: [0, 100] };
+// The light's colors, as the xTool card's light row takes them from Home Assistant's light tile
+const DAYLIGHT = "rgb(214, 228, 255)", LIGHT_OFF = "#bdbdbd";
+// The brightness slider, as Home Assistant's light brightness feature: press and slide along it
+function bindSlides() {
+  $$("[data-slide]").forEach((el) => {
+    let active = false;
+    const at = (ev) => { const r = el.getBoundingClientRect(); return clamp(Math.round(((ev.clientX - r.left) / r.width) * 100), 1, 100); };
+    const show = (v) => el.style.setProperty("--v", `${v}%`);
+    el.addEventListener("pointerdown", (ev) => { if (!available()) return; active = true; ui.slide = true; try { el.setPointerCapture(ev.pointerId); } catch (e) { /* moves still arrive */ } show(at(ev)); });
+    el.addEventListener("pointermove", (ev) => { if (active) show(at(ev)); });
+    const end = (ev) => {
+      if (!active) return;
+      active = false; ui.slide = false;
+      const v = at(ev), f = featureOf("lights");
+      if (v <= 1 && f && optOf(f, "off_at_minimum")) ui.light.on = false; else { ui.light.on = true; ui.light.b = v; }
+      render();
+    };
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+  });
+}
+const NUMS = { speed: [20, 999], flow: [50, 200], chamber_fan_speed: [0, 100] };
 function setNumber(id, v) { if (id in NUMS) ui.num[id] = clamp(Math.round(v) || 0, ...NUMS[id]); else setTarget(id, v); }
 function setTarget(key, v) { sim.target[key] = clamp(Math.round(v) || 0, 0, heaterMax(key, model())); }
 function act(name, arg, el) {
@@ -1448,6 +1634,8 @@ function act(name, arg, el) {
     case "dlg-no": ui.dialog = null; render(); return;
     case "dlg-yes": ui.dialog = null; changeState("stopped"); return;
     case "chamber_fan": ui.chamberFan = arg; render(); return;
+    case "light_toggle": ui.light.on = !ui.light.on; render(); return;
+    case "noop": return;
     case "cool_down": heaterKeys(m).forEach((k) => setTarget(k, 0)); ui.preheat = ""; render(); return;
     case "legend": ui.hidden.has(arg) ? ui.hidden.delete(arg) : ui.hidden.add(arg); render(); return;
     case "camera": ui.camera = Number(arg); ui.cropping = false; ui.first = null; render(); return;
