@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prusa Connect Card Mockups</title>
-<meta name="description" content="Interactive mockups of the Prusa Connect Card for Home Assistant: the card, its features, its editor and its model colors.">
+<meta name="description" content="Interactive mockups of the Prusa Connect Card for Home Assistant: the card, its features, its editor and its styles.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
@@ -12,26 +12,20 @@
 <style>
 :root {
   color-scheme: light;
-  --bg: #eef0f3; --surface: #ffffff; --surface-2: #f3f4f6; --text: #1c1c1e; --muted: #5d6168;
-  --border: rgba(0, 0, 0, .12); --accent: #fa6831; --accent-ink: #b9461a; --field: #f3f4f6;
-  --graph-bg: #fcfcfb; --grid: rgba(0, 0, 0, .08); --axis: #6b6f76;
-  --s1: #eb6834; --s2: #2a78d6; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6;
+  --bg: #e8eaee; --surface: #ffffff; --surface-2: #f3f4f6; --text: #1c1c1e; --muted: #5d6168;
+  --border: rgba(0, 0, 0, .12); --accent: #fa6831; --accent-ink: #b9461a; --field: #f1f2f4; --disabled: #bdbdbd;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #111214; --surface: #1c1d20; --surface-2: #26282c; --text: #ececee; --muted: #a3a6ac;
-    --border: rgba(255, 255, 255, .12); --accent-ink: #ff8a5c; --field: #2a2c30;
-    --graph-bg: #1a1a19; --grid: rgba(255, 255, 255, .08); --axis: #a3a6ac;
-    --s1: #d95926; --s2: #3987e5; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s7: #9085e9;
+    --bg: #111214; --surface: #1c1d20; --surface-2: #26282c; --text: #e1e1e3; --muted: #9b9ea4;
+    --border: rgba(255, 255, 255, .12); --accent-ink: #ff8a5c; --field: #2a2c30; --disabled: #6f6f6f;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #111214; --surface: #1c1d20; --surface-2: #26282c; --text: #ececee; --muted: #a3a6ac;
-  --border: rgba(255, 255, 255, .12); --accent-ink: #ff8a5c; --field: #2a2c30;
-  --graph-bg: #1a1a19; --grid: rgba(255, 255, 255, .08); --axis: #a3a6ac;
-  --s1: #d95926; --s2: #3987e5; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s7: #9085e9;
+  --bg: #111214; --surface: #1c1d20; --surface-2: #26282c; --text: #e1e1e3; --muted: #9b9ea4;
+  --border: rgba(255, 255, 255, .12); --accent-ink: #ff8a5c; --field: #2a2c30; --disabled: #6f6f6f;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -40,11 +34,13 @@ button, input, select { font: inherit; color: inherit; }
 .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px 64px; }
 h1 { font-size: 26px; margin: 28px 0 4px; }
 h2 { font-size: 19px; margin: 40px 0 6px; }
-.lede { color: var(--muted); max-width: 760px; margin: 0 0 8px; }
+.lede { color: var(--muted); max-width: 780px; margin: 0 0 10px; }
 a { color: var(--accent-ink); }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
 
-/* Toolbar */
-.toolbar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent);
+/* Page toolbar */
+.toolbar { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); margin: 16px -16px 0; padding: 10px 16px;
   display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
 .tb-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -54,140 +50,195 @@ a { color: var(--accent-ink); }
 .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
 .tb-select { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); padding: 6px 10px; }
 
-/* Layout */
-.grid-2 { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.grid-2 { display: grid; grid-template-columns: minmax(0, 500px) minmax(0, 1fr); gap: 28px; align-items: start; }
 .grid-2 > * { min-width: 0; }
-@media (max-width: 900px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } .grid-2 > [style*="sticky"] { position: static !important; } }
+.stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (max-width: 900px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } .sticky { position: static !important; } }
 .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-.muted { color: var(--muted); }
-.small { font-size: 12px; }
-.hint-list { margin: 8px 0 0; padding-left: 20px; color: var(--muted); }
-.hint-list li { margin: 4px 0; }
 .gallery { display: grid; gap: 10px; }
-.gallery .g-item { cursor: pointer; border-radius: 18px; outline-offset: 3px; }
-.gallery .g-item:focus-visible { outline: 2px solid var(--accent); }
-.gallery .g-cap { font-size: 12px; color: var(--muted); margin: 2px 4px 0; }
+.g-item { cursor: pointer; border-radius: 12px; outline-offset: 3px; }
+.g-item:focus-visible { outline: 2px solid var(--accent); }
+.g-cap { font-size: 12px; color: var(--muted); margin: 3px 4px 0; }
 
-/* ---------- The card ---------- */
-.pc-card { --ink: rgba(255, 255, 255, .95); --ink-2: rgba(235, 235, 240, .72);
-  position: relative; border-radius: 18px; padding: 6px; background: var(--body);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .22);
-  color: var(--ink); overflow: hidden; -webkit-tap-highlight-color: transparent; }
-.pc-card.theme-body { --ink: var(--text); --ink-2: var(--muted); box-shadow: 0 1px 3px rgba(0, 0, 0, .15); border: 1px solid var(--border); }
-.pc-edge { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
-.pc-edge rect { fill: none; stroke: var(--edge); stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray .6s linear; }
-.pc-title { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 8px 8px 8px 12px;
-  border-radius: 13px; background: var(--window); box-shadow: var(--window-edge); color: var(--win-ink); text-shadow: var(--win-shadow); }
-.pc-title.tappable { cursor: pointer; }
-.pc-title .chev { color: var(--win-ink-2); font-size: 18px; margin-left: -4px; transition: transform .2s; }
-.pc-card.open .pc-title .chev { transform: rotate(180deg); }
-.pc-pic { position: relative; flex: none; width: 44px; height: 44px; border-radius: 50%; background: #eceef1;
-  box-shadow: 0 0 0 3px var(--ring), 0 1px 4px rgba(0, 0, 0, .45); }
-.pc-pic svg { width: 100%; height: 100%; display: block; }
-.pc-badge { position: absolute; right: -6px; bottom: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--ring);
-  color: #fff; display: grid; place-items: center; font-size: 13px; box-shadow: 0 0 0 2px rgba(0, 0, 0, .3); text-shadow: none; }
-.pc-text { min-width: 0; flex: 1 1 auto; }
-.pc-name { font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pc-state { font-size: 13px; color: var(--win-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pc-inline { flex: 0 1 46%; display: flex; gap: 8px; }
-.pc-inline .key { flex: 1 1 0; }
-.pc-features { position: relative; z-index: 1; display: grid; gap: 8px; padding: 8px 2px 2px; }
-.pc-feature { border-radius: 14px; padding: 6px; display: grid; gap: 8px; }
-.pc-feature-name { display: none; }
-.row { display: flex; gap: 8px; flex-wrap: wrap; }
-.row > .key { flex: 1 1 0; min-width: 96px; }
+/* =================== The card (Home Assistant's tile card, wrapped) =================== */
+.pc-card {
+  --enabled: #039be5; --radius: 12px; --gap: 10px; --fh: 42px;
+  --ink: var(--text); --ink-2: var(--muted); --backing: transparent;
+  --d1: #d95926; --d2: #3987e5; --d3: #199e70; --d4: #c98500; --d5: #d55181; --d6: #0ca30c; --d7: #9085e9;
+  position: relative; border-radius: var(--radius); background: var(--surface); color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .14), 0 0 0 1px var(--border); overflow: hidden; -webkit-tap-highlight-color: transparent;
+}
+.pc-card.styled { background: var(--body); box-shadow: 0 2px 6px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .2); }
+.pc-card.styled.tone-dark { --ink: rgba(255, 255, 255, .95); --ink-2: rgba(235, 235, 240, .72); }
+.pc-card.styled.tone-light { --ink: rgba(0, 0, 0, .85); --ink-2: rgba(40, 40, 48, .62); }
+.pc-card.styled.tone-dark:is(.fs-flat, .fs-console) { --backing: #1e1f22; }
+.pc-card.styled.tone-light:is(.fs-flat, .fs-console) { --backing: #eceef1; }
+.pc-card.styled.tone-dark.fs-match { --backing: rgba(0, 0, 0, .28); }
+.pc-card.styled.tone-light.fs-match { --backing: rgba(255, 255, 255, .45); }
+.pc-card.styled.fs-flat .pc-backed { --ink: var(--backed-ink); }
 
-/* Features style: console (channels and keys that press in), flat (a patch of the body's base), match (body tones) */
-.fs-console { --key-bg: #cfd2d6; --key-ink: #26272a; --read-bg: rgba(0, 0, 0, .3); --read-ink: rgba(255, 255, 255, .95); --read-ink-2: rgba(235, 235, 240, .7); }
-.fs-console .pc-feature { background: linear-gradient(180deg, rgba(0, 0, 0, .22), rgba(0, 0, 0, .08));
+/* The title row; on a style, on the machine's window */
+.pc-head { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap); align-items: center; padding: 10px; }
+.pc-head.inline { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.styled .pc-head::before { content: ""; position: absolute; inset: 4px; border-radius: calc(var(--radius) - 4px);
+  background: var(--window); box-shadow: var(--window-edge); }
+.styled .pc-head { color: var(--win-ink); }
+.pc-content { position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; height: var(--fh); cursor: pointer; }
+.pc-content:focus-visible { outline: 2px solid var(--enabled); outline-offset: 2px; border-radius: 8px; }
+.pc-text { min-width: 0; }
+.pc-name { font-weight: 500; font-size: 14px; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-state { font-size: 12px; line-height: 16px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.styled .pc-name { text-shadow: var(--win-shadow); }
+.styled .pc-state { color: var(--win-ink-2); text-shadow: var(--win-shadow); }
+
+/* The state picture: the state's icon on a circle tinted in its color, as the xTool card draws its picture */
+.pc-pic { position: relative; flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; }
+.pc-pic::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--sc); opacity: .22; }
+.styled .pc-pic { background: rgba(0, 0, 0, .38); }
+.pc-pic .glyph { position: relative; font-size: 22px; line-height: 1; color: var(--sc); }
+.pc-pic.anim-printing .glyph { animation: bob 1.6s ease-in-out infinite; }
+.pc-pic.anim-idle .glyph { animation: breathe 3.2s ease-in-out infinite; }
+.pc-pic.anim-attention .glyph { animation: blink 1.2s step-end infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(-1.5px); } 50% { transform: translateY(1.5px); } }
+@keyframes breathe { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes blink { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .pc-pic .glyph, .spin { animation: none !important; } }
+/* The badges: the status badge at the top right, the connection badge at the bottom right, on a ring at 83.5% of the radius */
+.pc-badge { position: absolute; z-index: 3; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
+  display: grid; place-items: center; color: #fff; font-size: 12px; line-height: 0; background: var(--bc);
+  border: 2px solid var(--surface); left: calc(50% + 18px * .835 * .7071); }
+.styled .pc-badge { border-color: rgba(0, 0, 0, .55); }
+.pc-badge.status { top: calc(50% - 18px * .835 * .7071); }
+.pc-badge.connection { top: calc(50% + 18px * .835 * .7071); }
+
+/* The progress edge (top, by default) */
+.pc-edge { position: absolute; z-index: 4; pointer-events: none; }
+.pc-edge.top { top: 0; left: 0; right: 0; }
+.pc-edge.bottom { bottom: 0; left: 0; right: 0; }
+.pc-edge.left { top: 0; bottom: 0; left: 0; }
+.pc-edge.right { top: 0; bottom: 0; right: 0; }
+.pc-edge.around { inset: 0; border-radius: inherit;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; }
+.pc-pct { position: absolute; z-index: 4; right: 10px; top: 6px; font: 700 14px/1 Roboto, sans-serif; text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
+
+/* Features: two columns beside and under the title */
+.pc-features { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--gap); padding: 0 10px 10px; }
+.pc-f { min-width: 0; position: relative; display: grid; gap: var(--gap); align-content: start; }
+.pc-f.wide { grid-column: 1 / -1; }
+/* Console: a channel pressed into the body under each feature. Flat: a patch of the body's color */
+.styled.fs-console .pc-f::before, .styled.fs-console .pc-head .pc-inline::before { content: ""; position: absolute; inset: -3px; border-radius: calc(var(--fh) / 2 + 3px);
+  background: linear-gradient(180deg, rgba(0, 0, 0, .22), rgba(0, 0, 0, .08));
   box-shadow: inset 0 2px 3px rgba(0, 0, 0, .55), inset 0 1px 1px rgba(0, 0, 0, .4), inset 0 -1px 0 rgba(255, 255, 255, .14), 0 1px 0 rgba(255, 255, 255, .18); }
-.fs-console .key { background-image: linear-gradient(180deg, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, .18));
+.styled.fs-console .pc-f.wide::before { border-radius: calc(var(--radius) + 3px); }
+.styled.fs-flat .pc-f::before { content: ""; position: absolute; inset: -2px; border-radius: calc(var(--fh) / 2 + 2px); background: var(--base); box-shadow: 0 0 3px 1px var(--base); }
+.styled.fs-flat .pc-f.wide::before { border-radius: calc(var(--radius) + 2px); }
+.pc-inline { position: relative; min-width: 0; }
+.pc-f > *, .pc-inline > * { position: relative; }
+
+/* One line of items that fills its row: keys of one width; a field twice as wide; items that do not fit are left out, the last chosen first */
+.row { display: flex; flex-wrap: nowrap; align-items: center; gap: var(--gap); height: var(--fh); min-width: 0; }
+.row.wraps { flex-wrap: wrap; height: auto; }
+.row.wraps > * { height: var(--fh); }
+.row [data-dropped] { display: none !important; }
+.row .key { flex: 1 1 0; min-width: 36px; }
+.row .field { flex: 2 1 0; min-width: 72px; }
+.row .readout { flex: 2 1 0; min-width: 84px; }
+.row .readout.icon-only { flex: 1 1 0; min-width: 36px; }
+.row .pick { flex: 2 1 0; min-width: 120px; }
+.row.wraps .key { flex: 1 1 calc(25% - var(--gap)); }
+.group { display: contents; }
+.heaters { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--gap); }
+
+.key, .field, .readout, .pick { position: relative; height: 100%; border: 0; border-radius: calc(var(--fh) / 2); overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; font-size: 12px; font-weight: 500;
+  color: var(--ink); background: var(--backing); min-width: 0; }
+.key { cursor: pointer; }
+.key::before, .readout::before, .pick::before { content: ""; position: absolute; inset: 0; background: var(--c, var(--enabled)); opacity: .2; transition: opacity 180ms ease-in-out; }
+.key > *, .field > *, .readout > *, .pick > * { position: relative; }
+.key .mdi, .readout .mdi, .pick .mdi { font-size: 22px; line-height: 1; flex: none; }
+.key:hover::before { opacity: .35; }
+.key[aria-pressed="true"]::before { opacity: 1; }
+.key[aria-pressed="true"] { color: #fff; }
+.key:disabled { cursor: default; color: var(--disabled-ink, rgba(127, 127, 127, .7)); }
+.key:disabled::before, .key:disabled:hover::before { background: var(--disabled); opacity: .2; }
+.key:focus-visible, .field:focus-within, .pick:focus-within { outline: 2px solid var(--c, var(--enabled)); outline-offset: 2px; }
+.key span, .readout span, .pick span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.readout { cursor: pointer; padding: 0 8px; }
+.readout .mdi { color: var(--c, var(--enabled)); }
+.readout .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* A number field: on a style, a pane of its window's glass, in its window's text color */
+.field { cursor: text; }
+.field::before { content: ""; position: absolute; inset: 0; background: var(--enabled); opacity: .2; }
+.styled .field { color: var(--win-ink); box-shadow: var(--window-edge); }
+.styled .field::before { background: var(--window); opacity: 1; }
+.field input { width: 100%; min-width: 0; border: 0; outline: none; background: none; text-align: center; padding: 0 4px; font-weight: 500; -moz-appearance: textfield; }
+.field input::-webkit-outer-spin-button, .field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.field.off { color: var(--ink-2); }
+.key.scrub { touch-action: none; cursor: ew-resize; }
+.key.scrub.active::before { opacity: .5; }
+.pick { justify-content: space-between; padding: 0 12px 0 16px; cursor: pointer; }
+.pick select { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.spin { animation: spin var(--spin, 1.2s) linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+/* Console: the keys become keys that press in */
+.styled.fs-console .key { background-image: linear-gradient(180deg, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, .18));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 -2px 2px rgba(0, 0, 0, .3), 0 2px 3px rgba(0, 0, 0, .5);
   transition: transform 120ms ease-in-out, box-shadow 120ms ease-in-out; }
-.fs-console .key:not(:disabled):active, .fs-console .key[aria-pressed="true"] { transform: translateY(1px);
+.styled.fs-console.tone-dark .key { background-image: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, .25));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), inset 0 -2px 2px rgba(0, 0, 0, .4), 0 2px 3px rgba(0, 0, 0, .6); }
+.styled.fs-console .key:not(:disabled):active, .styled.fs-console .key[aria-pressed="true"] { transform: translateY(1px);
   background-image: linear-gradient(180deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, .06) 40%, rgba(255, 255, 255, .1));
   box-shadow: inset 0 3px 6px rgba(0, 0, 0, .55), inset 0 1px 2px rgba(0, 0, 0, .4), inset 0 -1px 0 rgba(255, 255, 255, .25); }
-.fs-console .key:disabled { background-image: none; box-shadow: none; }
-.fs-flat { --key-bg: rgba(255, 255, 255, .12); --key-ink: var(--ink); --read-bg: rgba(255, 255, 255, .06); --read-ink: var(--ink); --read-ink-2: var(--ink-2); }
-.fs-flat .pc-feature { background: var(--base); box-shadow: 0 0 3px 1px var(--base); }
-.fs-match { --key-bg: rgba(255, 255, 255, .16); --key-ink: var(--ink); --read-bg: rgba(255, 255, 255, .09); --read-ink: var(--ink); --read-ink-2: var(--ink-2); }
-.fs-match .pc-feature { padding: 0 2px; }
-.theme-body.fs-flat, .theme-body.fs-match { --key-bg: color-mix(in srgb, var(--text) 9%, transparent); --read-bg: color-mix(in srgb, var(--text) 5%, transparent); }
+.styled.fs-console .key:disabled { background-image: none; box-shadow: none; transform: none; }
 
-.key { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 42px; padding: 0 14px; border: 0;
-  border-radius: 999px; background-color: var(--key-bg); color: var(--key-ink); cursor: pointer; font-weight: 500; text-shadow: none;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.key .mdi { font-size: 20px; line-height: 1; }
-.key.on { background-color: var(--accent); color: #fff; }
-.key.danger { background-color: #c62f2f; color: #fff; }
-.key:disabled { opacity: .45; cursor: default; }
-.key.small { height: 34px; padding: 0 10px; font-size: 13px; }
-
-.reads { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
-.read { background: var(--read-bg); color: var(--read-ink); border-radius: 10px; padding: 6px 10px; min-width: 0; }
-.read .l { font-size: 11px; color: var(--read-ink-2); display: flex; gap: 4px; align-items: center; }
-.read .v { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.read.wide { grid-column: 1 / -1; }
-.bar { position: relative; height: 26px; border-radius: 999px; background: var(--read-bg); overflow: hidden; }
-.bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--bar); transition: width .6s linear; }
-.bar .t { position: relative; display: flex; justify-content: space-between; align-items: center; height: 100%; padding: 0 12px;
-  font-size: 13px; font-weight: 500; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
-
-/* Numeric input: Home Assistant's numeric-input card feature, buttons style */
-.num { display: inline-flex; align-items: center; height: 42px; border-radius: 999px; background: var(--key-bg); color: var(--key-ink); flex: none; }
-.num button { width: 42px; height: 42px; border: 0; background: none; cursor: pointer; border-radius: 50%; font-size: 20px; color: inherit; }
-.num input { width: 58px; border: 0; background: none; text-align: center; font-weight: 500; -moz-appearance: textfield; }
-.num input::-webkit-outer-spin-button, .num input::-webkit-inner-spin-button { -webkit-appearance: none; }
-.num .u { font-size: 12px; opacity: .75; margin-right: 2px; }
-.trow { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 0 2px 0 6px; }
-.trow .who { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.sw { width: 14px; height: 4px; border-radius: 2px; background: var(--c); flex: none; }
-.trow .now { font-size: 12px; color: var(--ink-2); }
-
-/* Graph */
-.graph { background: var(--graph-bg); color: var(--text); border-radius: 12px; padding: 8px 8px 4px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .35); }
-.g-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+/* The graph: a dark screen, like the camera's */
+.graph { position: relative; background: #121315; color: #e6e6e8; border-radius: var(--radius); padding: 8px 8px 4px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .6);
+  --d1: #d95926; --d2: #3987e5; --d3: #199e70; --d4: #c98500; --d5: #d55181; --d6: #0ca30c; --d7: #9085e9; --grid: rgba(255, 255, 255, .08); --axis: #a3a6ac; }
+.g-top { display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
 .g-chips { display: flex; gap: 4px; flex-wrap: wrap; }
-.chip { border: 1px solid var(--border); background: none; border-radius: 999px; padding: 2px 9px; font-size: 12px; cursor: pointer; color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
-.chip[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: var(--accent); }
-.chip[aria-pressed="false"].lg { opacity: .45; text-decoration: line-through; }
-.chip .ln { width: 14px; height: 0; border-top: 2px solid var(--c); }
-.chip .ln.dash { border-top-style: dashed; border-color: var(--muted); }
+.chip { border: 1px solid rgba(255, 255, 255, .18); background: none; border-radius: 999px; padding: 1px 9px; font-size: 12px; cursor: pointer; color: inherit; display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .4); }
+.chip.lg[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+.chip .ln { width: 14px; border-top: 2px solid var(--c); }
+.chip .ln.dash { border-top-style: dashed; border-color: #a3a6ac; }
 .g-box { position: relative; }
-.g-box svg { display: block; width: 100%; height: 180px; touch-action: pan-y; }
-.g-tip { position: absolute; top: 4px; pointer-events: none; background: var(--surface); color: var(--text); border: 1px solid var(--border);
-  border-radius: 8px; padding: 6px 8px; font-size: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, .25); display: none; min-width: 150px; z-index: 4; }
-.g-tip .tt { color: var(--muted); margin-bottom: 2px; }
+.g-box svg { display: block; width: 100%; height: 170px; touch-action: pan-y; }
+.g-tip { position: absolute; top: 4px; pointer-events: none; background: #26282c; color: #ececee; border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 8px; padding: 6px 8px; font-size: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, .45); display: none; min-width: 150px; z-index: 5; }
+.g-tip .tt { color: #a3a6ac; margin-bottom: 2px; }
 .g-tip .tr { display: grid; grid-template-columns: 14px 1fr auto; gap: 6px; align-items: center; white-space: nowrap; }
-.g-tip .tr .tv { font-variant-numeric: tabular-nums; }
-.g-note { font-size: 11px; color: var(--muted); padding: 2px 2px 0; }
+.sw { width: 14px; height: 3px; border-radius: 2px; background: var(--c); }
 
-/* Tools */
-.tool { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.tbadge { flex: none; min-width: 36px; height: 30px; border-radius: 999px; display: grid; place-items: center; font-weight: 700; font-size: 12px;
-  background: var(--read-bg); color: var(--read-ink); padding: 0 8px; }
-.tbadge.active { background: var(--accent); color: #fff; }
-.tchip { background: var(--read-bg); color: var(--read-ink); border-radius: 999px; padding: 4px 10px; font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
-.slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; flex: 1 1 200px; }
-.slot { background: var(--read-bg); color: var(--read-ink); border-radius: 10px; text-align: center; padding: 4px 2px; font-size: 12px; }
-.slot b { display: block; font-size: 10px; color: var(--read-ink-2); font-weight: 400; }
-.slot.active { box-shadow: inset 0 0 0 2px var(--accent); }
+/* The camera: Home Assistant's picture, with the time and the crop hint over it */
+.shot { position: relative; display: block; border-radius: var(--radius); overflow: hidden; background: #111; cursor: pointer;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.shot.cropping { cursor: crosshair; }
+.shot svg { display: block; width: 100%; height: 100%; }
+.shot .area { position: absolute; pointer-events: none; border: 2px solid var(--enabled); box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), 0 0 0 100vmax rgba(0, 0, 0, .35); }
+.shot .area[hidden] { display: none; }
+.shot .hint, .shot .time { position: absolute; left: 0; right: 0; padding: 6px 12px; font-size: 12px; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .9); pointer-events: none; }
+.shot .hint { top: 0; padding-bottom: 16px; background: linear-gradient(to bottom, rgba(0, 0, 0, .6), rgba(0, 0, 0, 0)); }
+.shot .time { bottom: 0; padding-top: 16px; background: linear-gradient(to top, rgba(0, 0, 0, .6), rgba(0, 0, 0, 0)); }
+.shot .hint:empty, .shot .time:empty { display: none; }
 
-/* Camera */
-.cam { position: relative; border-radius: 12px; overflow: hidden; background: #000; }
-.cam svg { display: block; width: 100%; height: 100%; }
-.cam .over { position: absolute; left: 10px; bottom: 8px; color: #fff; font-size: 13px; text-shadow: 0 1px 3px #000; }
-.cam .live { position: absolute; right: 10px; top: 8px; background: #c62f2f; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
-.pc-feature.full { padding-left: 0; padding-right: 0; }
+/* Home Assistant's confirmation dialog */
+.dlg-scrim { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .45); display: grid; place-items: center; padding: 16px; }
+.dlg { background: var(--surface); color: var(--text); border-radius: 24px; padding: 24px; max-width: 360px; width: 100%; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
+.dlg h3 { margin: 0 0 12px; font-size: 22px; font-weight: 400; }
+.dlg p { margin: 0 0 20px; color: var(--muted); }
+.dlg .acts { display: flex; justify-content: flex-end; gap: 8px; }
+.dlg button { border: 0; background: none; color: var(--accent-ink); font-weight: 500; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.dlg button.warn { color: #db4437; }
 
-/* ---------- Editor (looks like Home Assistant's card editor) ---------- */
+/* =================== The editor (Home Assistant's card editor) =================== */
 .ed { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
 .ed-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 17px; font-weight: 500; }
-.ed-head button { border: 0; background: none; font-size: 22px; cursor: pointer; padding: 0 4px; }
-.ed-body { padding: 16px; display: grid; gap: 14px; }
-.field { display: grid; gap: 4px; }
-.field > label, .field > .flabel { font-size: 12px; color: var(--muted); }
-.field select, .field input[type="text"] { width: 100%; border: 0; border-bottom: 1px solid var(--muted); background: var(--field);
+.ed-head button { border: 0; background: none; font-size: 22px; cursor: pointer; padding: 0 4px; line-height: 1; }
+.ed-body { padding: 16px; display: grid; gap: 16px; }
+.field-ed { display: grid; gap: 4px; }
+.field-ed > label, .flabel { font-size: 12px; color: var(--muted); }
+.field-ed select, .field-ed input[type="text"], .field-ed input[type="number"] { width: 100%; border: 0; border-bottom: 1px solid var(--muted); background: var(--field);
   border-radius: 6px 6px 0 0; padding: 10px 12px; }
 .help { font-size: 12px; color: var(--muted); }
 .exp { border: 1px solid var(--border); border-radius: 12px; }
@@ -195,8 +246,7 @@ a { color: var(--accent-ink); }
 .exp > summary::-webkit-details-marker { display: none; }
 .exp > summary::after { content: "\F0140"; font-family: "Material Design Icons"; margin-left: auto; font-size: 20px; transition: transform .2s; }
 .exp[open] > summary::after { transform: rotate(180deg); }
-.exp > .exp-body { padding: 0 14px 14px; display: grid; gap: 12px; }
-.tag { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 7px; font-weight: 400; }
+.exp > .exp-body { padding: 0 14px 14px; display: grid; gap: 14px; }
 .sw-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .sw-row .d { display: grid; }
 .switch { position: relative; width: 36px; height: 20px; flex: none; }
@@ -204,40 +254,33 @@ a { color: var(--accent-ink); }
 .switch span { position: absolute; inset: 3px 0; border-radius: 999px; background: color-mix(in srgb, var(--text) 30%, transparent); transition: .2s; }
 .switch span::after { content: ""; position: absolute; top: -3px; left: -2px; width: 20px; height: 20px; border-radius: 50%; background: #fafafa;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .4); transition: .2s; }
-.switch input:checked + span { background: color-mix(in srgb, var(--accent) 50%, transparent); }
-.switch input:checked + span::after { left: 18px; background: var(--accent); }
-.segf { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.segf button { border: 0; background: none; padding: 8px 12px; cursor: pointer; }
-.segf button[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent-ink); font-weight: 500; }
-
-/* Sortable list: Home Assistant's select selector with multiple and reorder */
-.sortable { display: grid; gap: 6px; }
-.srow { display: flex; align-items: center; gap: 8px; background: var(--field); border-radius: 8px; padding: 4px 6px; min-height: 44px; }
-.srow.dragging { box-shadow: 0 6px 16px rgba(0, 0, 0, .3); position: relative; z-index: 2; background: var(--surface-2); }
-.srow .handle { cursor: grab; font-size: 20px; color: var(--muted); padding: 4px; touch-action: none; }
-.srow .lbl { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
-.srow .lbl .mdi { font-size: 18px; color: var(--muted); }
-.srow .ib { border: 0; background: none; cursor: pointer; font-size: 18px; color: var(--muted); padding: 6px; border-radius: 50%; }
-.srow .ib:hover { background: color-mix(in srgb, var(--text) 8%, transparent); }
-.srow .ib:disabled { opacity: .3; cursor: default; }
-.add-sel { width: 100%; border: 1px dashed var(--border); background: none; border-radius: 8px; padding: 10px 12px; color: var(--muted); }
+.switch input:checked + span { background: color-mix(in srgb, #039be5 50%, transparent); }
+.switch input:checked + span::after { left: 18px; background: #039be5; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.checks { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.checks label { display: flex; gap: 6px; align-items: center; }
+.list-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+.list-row .mdi { font-size: 20px; color: var(--muted); }
+.list-row .nm { flex: 1; }
+.list-row .ib, .ib { border: 0; background: none; cursor: pointer; font-size: 18px; color: var(--muted); padding: 6px; border-radius: 50%; line-height: 1; }
+.ib:hover { background: color-mix(in srgb, var(--text) 8%, transparent); }
+.list-row .handle { cursor: grab; touch-action: none; }
+.list-row.dragging { background: var(--surface-2); box-shadow: 0 6px 16px rgba(0, 0, 0, .3); position: relative; z-index: 2; }
+/* The select selector with multiple and reorder: chips to drag, each with a remove button */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; background: var(--field); border-radius: 6px 6px 0 0; border-bottom: 1px solid var(--muted); min-height: 50px; }
+.ichip { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 4px 0 6px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); cursor: grab; touch-action: none; user-select: none; }
+.ichip .mdi-drag { color: var(--muted); font-size: 16px; }
+.ichip.dragging { box-shadow: 0 6px 16px rgba(0, 0, 0, .3); z-index: 2; position: relative; cursor: grabbing; }
+.ichip button { border: 0; background: none; cursor: pointer; color: var(--muted); padding: 2px; line-height: 1; font-size: 16px; border-radius: 50%; }
+.ichip button:disabled { opacity: .3; cursor: default; }
+.add-sel { width: 100%; border: 0; border-bottom: 1px solid var(--muted); background: var(--field); border-radius: 6px 6px 0 0; padding: 10px 12px; color: var(--muted); }
 .yaml { margin: 0; background: var(--field); border-radius: 10px; padding: 12px; font: 12px/1.5 ui-monospace, Consolas, monospace; overflow-x: auto; white-space: pre; }
 
-/* Crop tool */
-.crop-stage { position: relative; border-radius: 10px; overflow: hidden; background: #000; cursor: crosshair; user-select: none; touch-action: none; }
-.crop-stage svg { display: block; width: 100%; height: 100%; }
-.crop-stage .ov { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.crop-hint { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); background: rgba(0, 0, 0, .7); color: #fff; padding: 4px 10px;
-  border-radius: 999px; font-size: 12px; pointer-events: none; white-space: nowrap; }
-
-/* Colorways */
-.cw { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-.cw-item { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); }
-.cw-body { padding: 10px; background: var(--body); }
-.cw-win { height: 46px; border-radius: 10px; background: var(--window); box-shadow: var(--window-edge); display: flex; gap: 6px; align-items: center; padding: 0 8px; }
-.cw-win .pc-pic { width: 34px; height: 34px; box-shadow: 0 1px 3px rgba(0, 0, 0, .4); }
-.cw-meta { padding: 10px 12px; font-size: 12px; }
-.cw-meta b { font-size: 14px; display: block; margin-bottom: 4px; }
+/* Styles */
+.cw { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+.cw-meta { padding: 8px 4px 0; font-size: 12px; }
+.cw-meta b { font-size: 14px; display: block; margin-bottom: 2px; }
 .hex { display: inline-flex; align-items: center; gap: 4px; margin: 2px 8px 2px 0; font-family: ui-monospace, Consolas, monospace; }
 .hex i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid var(--border); }
 .notes { counter-reset: n; list-style: none; padding: 0; display: grid; gap: 10px; max-width: 860px; }
@@ -250,64 +293,60 @@ footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
 <body>
 <div class="wrap">
   <h1>Prusa Connect Card: mockups</h1>
-  <p class="lede">An interactive mockup of a Home Assistant card for the <a href="https://github.com/prusa3d/prusa-connect-homeassistant">Prusa Connect (on-premise) integration</a>. The card is Home Assistant's own tile card, wrapped, the same way as the xTool, SVS and Lampster cards. The printer, its temperatures and its job are simulated at 10 times real speed. Nothing here talks to a printer.</p>
+  <p class="lede">An interactive mockup of a Home Assistant card for the <a href="https://github.com/prusa3d/prusa-connect-homeassistant">Prusa Connect (on-premise) integration</a>. It is Home Assistant's tile card, wrapped, and it follows the xTool card's design: the state picture and its badges, the progress edge, the styles, the features in two columns, and the editor. The printer is simulated at 10 times real speed. Nothing here talks to a printer.</p>
 
   <div class="toolbar" role="toolbar" aria-label="Mockup controls">
     <div class="tb-group"><span class="tb-label">Printer</span><div class="seg" id="tb-model"></div></div>
     <div class="tb-group"><span class="tb-label">State</span><select class="tb-select" id="tb-state" aria-label="Printer state"></select></div>
+    <div class="tb-group"><span class="tb-label">Connected</span><div class="seg" id="tb-conn"></div></div>
     <div class="tb-group"><span class="tb-label">Page</span><div class="seg" id="tb-theme"></div></div>
   </div>
 
   <h2>On a dashboard</h2>
-  <p class="lede">Tap the title row to expand or collapse the card. Set the state to Printing to watch it expand on its own, and to Finished or Stopped to watch it collapse.</p>
+  <p class="lede">Tap the card to expand or collapse it. Set the state to Printing to watch it expand on its own, and to Finished or Stopped to watch it collapse. On the camera, turn on Crop and tap two corners of the picture.</p>
   <div class="grid-2">
-    <div id="dash-card" data-where="dash"></div>
-    <div>
-      <div class="panel">
-        <b>Every model, collapsed</b>
-        <p class="muted small" style="margin:4px 0 10px">Each model gets its own picture and colors. Tap one to show it above and in the editor.</p>
-        <div class="gallery" id="gallery"></div>
-      </div>
-      <ul class="hint-list small">
-        <li>The progress edge runs around the card while a job prints.</li>
-        <li>The ring and badge on the picture show the state, with an icon as well as a color.</li>
-        <li>Print controls sit beside the title when they are the first feature, as with xTool.</li>
-      </ul>
+    <div id="dash-card"></div>
+    <div class="panel">
+      <b>Every model, collapsed</b>
+      <p class="muted small" style="margin:4px 0 10px">Each in its model's style. Tap one to show it above and in the editor.</p>
+      <div class="gallery" id="gallery"></div>
     </div>
   </div>
 
   <h2>In the editor</h2>
-  <p class="lede">The editor is Home Assistant's own tile card editor, wrapped, with a printer picker above it and a Prusa section below it. Edit a feature to choose its controls: add any of them, remove any of them (at least one stays), and drag the handles to sort them. The preview follows every change.</p>
+  <p class="lede">A printer picker, Home Assistant's own tile card editor, and a Prusa section, as in the xTool card's editor. Edit a feature to choose its controls: drag the chips to sort them, remove any but the last, and add more.</p>
   <div class="grid-2">
     <div id="editor"></div>
-    <div style="position:sticky; top:72px; display:grid; grid-template-columns:minmax(0, 1fr); gap:14px">
-      <div id="preview-card" data-where="preview"></div>
+    <div class="stack sticky" style="position:sticky; top:72px">
+      <div id="preview-card"></div>
       <details class="exp panel" style="padding:0" open>
         <summary>Card configuration (YAML)</summary>
-        <div class="exp-body"><pre class="yaml" id="yaml"></pre><span class="help">Options at their default value are left out, as in the xTool card.</span></div>
+        <div class="exp-body"><pre class="yaml" id="yaml"></pre></div>
       </details>
     </div>
   </div>
 
-  <h2>Model colors</h2>
-  <p class="lede">Each style paints the card's body and its title window. A new card gets its model's style, and any style can be picked for any printer. These colors are first proposals, to be checked against Prusa's product photos before release.</p>
-  <div class="cw" id="colorways"></div>
+  <h2>Styles</h2>
+  <p class="lede">A style paints the card in the colors of the printer: its body behind the features and its window behind the title. A new card gets its model's style. None follows your theme. The colors are first proposals, to be checked against Prusa's product photos.</p>
+  <div class="cw" id="styles"></div>
 
   <h2>Decisions to review</h2>
   <p class="lede">Reply with a number to comment on any of these.</p>
   <ol class="notes">
-    <li><b>Feature grouping.</b> Job, Print controls, Temperatures, Tools, Motion and Camera follow the printer page in Prusa Connect: the status and job, the temperatures, the tools and filament, the movement and speed, and the cameras. The grouping will be checked against the on-premise web interface before the card is built.</li>
-    <li><b>The temperature graph.</b> In the real card, Home Assistant's own chart element (the one its history and statistics cards use) draws the graph, fed from Home Assistant's history. The card only chooses the series, their colors, and dashed lines for targets. The drawing here is an approximation of that element.</li>
-    <li><b>Target controls.</b> Each target is Home Assistant's own numeric-input card feature, bound to the integration's number entity (0 turns a heater off). Preheat sets the nozzle and bed targets from Prusa's material presets, and Cooldown sets every target to 0.</li>
-    <li><b>Chamber.</b> The integration does not report the chamber yet. The card looks for a chamber temperature sensor and a chamber target number with the same naming as the bed, and shows the chamber only when they exist. The CORE One here shows the chamber as if they did.</li>
-    <li><b>XL toolheads.</b> Today the integration reports a nozzle target only for the first toolhead of the XL. The other toolheads' targets may show as unknown until it reports them all.</li>
-    <li><b>Print controls.</b> Pause and Resume share one key, which follows the state. Stop asks for a second tap to confirm.</li>
-    <li><b>Expanding and collapsing.</b> The card expands when a job starts and collapses when it finishes or is stopped. Only the change of state does this, so the card does not fight you when you tap it open or closed.</li>
-    <li><b>Camera crop.</b> The crop, rotation and flips are stored in the card's configuration and applied to Home Assistant's own camera picture, so the integration needs no extra entities. Full frame shows the whole picture for a moment, like the xTool card's crop key.</li>
-    <li><b>MINI+.</b> It is shown without a camera, so the Camera feature is not offered for it. With a camera on Prusa Connect, it would get the same Camera feature.</li>
+    <li><b>Feature grouping.</b> Print controls, Job, Temperatures, Tools, Motion and Camera follow the printer page in Prusa Connect. It will be checked against the on-premise web interface before the card is built.</li>
+    <li><b>The state picture.</b> It is the state's icon on a circle tinted in the state's color, as the xTool card draws its picture. Printing moves gently, Idle breathes, Attention blinks, and none of them move with reduced motion turned on.</li>
+    <li><b>Badges.</b> The status badge (top right) shows the first that applies of: a heater on while the printer is not printing, and an update to the Prusa Connect server. The connection badge (bottom right) shows the integration's Connectivity sensor, or that the printer is unavailable.</li>
+    <li><b>No status light.</b> The xTool card's ring copies the laser's own status light. Prusa printers report no light, so the card has no ring.</li>
+    <li><b>The temperature graph.</b> Home Assistant's own chart element draws it in the real card, fed from Home Assistant's history. The card chooses the series, their colors and dashed targets. It sits on a dark screen like the camera, so its colors read the same on every style.</li>
+    <li><b>Targets.</b> Each heater is a read-out of its temperature, a field for its target (a pane of the window's glass), and a plus-minus key: press it and slide, and the target changes faster the farther you slide, as in the xTool card. 0 turns a heater off.</li>
+    <li><b>Crop.</b> The Crop key works as in the xTool card: turn it on, tap a corner, then the opposite corner. Turn it off to see the whole picture. The printer camera has no crop of its own, so the card keeps the crop: per Home Assistant user, in Home Assistant's own user data, so it follows you from device to device.</li>
+    <li><b>Chamber.</b> The integration does not report the chamber yet. The card looks for a chamber temperature sensor and a chamber target number named like the bed's, and shows the chamber only when they exist. The CORE One here shows the chamber as if they did.</li>
+    <li><b>State content.</b> As in the xTool card, the job's progress, time remaining and finish time become attributes of the State sensor, so the tile card's own State content can show them beside the state.</li>
+    <li><b>XL toolheads.</b> Today the integration reports a nozzle target only for the first toolhead of the XL. The others may show as unknown until it reports them all.</li>
   </ol>
   <footer>Mockup only. Prusa, Original Prusa, CORE One and Prusa Connect are names of Prusa Research. This page is not made by or affiliated with Prusa Research.</footer>
 </div>
+<div id="dialog"></div>
 
 <script>
 "use strict";
@@ -322,7 +361,7 @@ const store = {
 };
 function fmtDur(s) {
   if (s == null || !isFinite(s)) return "—";
-  if (s < 60) return "less than 1 min";
+  if (s < 60) return "1 min";
   const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60);
   return h ? `${h} h ${m} min` : `${m} min`;
 }
@@ -330,53 +369,54 @@ const fmtClock = (ms) => new Date(ms).toLocaleTimeString([], { hour: "numeric", 
 
 // ---------- Models, styles and states ----------
 const MODELS = {
-  mk4s: { name: "MK4S", device: "Workshop MK4S", tools: 1, mmu: true, chamber: false, camera: "Camera Buddy3D", style: "frame_black",
-    job: { material: "PLA", nozzle: [215], bed: 60, chamber: 0, file: "Benchy_0.4n_0.2mm_PLA_MK4S_1h12m.bgcode", total: 4320 },
+  mk4s: { name: "MK4S", device: "Workshop MK4S", tools: 1, mmu: true, chamber: false, cameras: ["Buddy3D"], style: "black_frame",
+    job: { nozzle: [215], bed: 60, file: "Benchy_0.4n_0.2mm_PLA_MK4S_1h12m.bgcode", total: 4320 },
     materials: ["PLA"], dia: [0.4], hf: [false], hard: [false], slots: ["PLA", "PLA", "PETG", "PLA", "PETG"], nozzleMax: 300, bedMax: 120 },
-  coreone: { name: "CORE One", device: "Office CORE One", tools: 1, mmu: false, chamber: true, camera: "Camera CORE One", style: "core_smoke",
-    job: { material: "ASA", nozzle: [260], bed: 105, chamber: 40, file: "Fan_duct_0.4n_0.2mm_ASA_COREONE_2h05m.bgcode", total: 7500 },
+  coreone: { name: "CORE One", device: "Office CORE One", tools: 1, mmu: false, chamber: true, cameras: ["Chamber"], style: "core_one",
+    job: { nozzle: [260], bed: 105, chamber: 40, file: "Fan_duct_0.4n_0.2mm_ASA_COREONE_2h05m.bgcode", total: 7500 },
     materials: ["ASA"], dia: [0.4], hf: [true], hard: [false], nozzleMax: 300, bedMax: 120 },
-  xl: { name: "XL", device: "Garage XL", tools: 5, mmu: false, chamber: false, camera: "Camera XL", style: "frame_black",
-    job: { material: "PLA", nozzle: [215, 170, 170, 0, 0], bed: 60, chamber: 0, file: "Multi_color_vase_0.4n_0.2mm_PLA_XL5IS_3h40m.bgcode", total: 13200 },
+  xl: { name: "XL", device: "Garage XL", tools: 5, mmu: false, chamber: false, cameras: ["Front", "Top"], style: "black_frame",
+    job: { nozzle: [215, 170, 170, 0, 0], bed: 60, file: "Multi_color_vase_0.4n_0.2mm_PLA_XL5IS_3h40m.bgcode", total: 13200 },
     materials: ["PLA", "PLA", "PETG", "PETG", "PLA"], dia: [0.4, 0.4, 0.6, 0.4, 0.4], hf: [false, false, true, false, false], hard: [false, false, false, false, true], nozzleMax: 300, bedMax: 120 },
-  mini: { name: "MINI+", device: "Desk MINI+", tools: 1, mmu: false, chamber: false, camera: null, style: "frame_black",
-    job: { material: "PETG", nozzle: [230], bed: 85, chamber: 0, file: "Cable_clip_0.4n_0.15mm_PETG_MINI_38m.bgcode", total: 2280 },
+  mini: { name: "MINI+", device: "Desk MINI+", tools: 1, mmu: false, chamber: false, cameras: [], style: "prusa_orange",
+    job: { nozzle: [230], bed: 85, file: "Cable_clip_0.4n_0.15mm_PETG_MINI_38m.bgcode", total: 2280 },
     materials: ["PETG"], dia: [0.4], hf: [false], hard: [false], nozzleMax: 280, bedMax: 100 },
 };
 const DARK_EDGE = "inset 0 1px 0 rgba(255,255,255,.18), inset 0 0 0 1px rgba(255,255,255,.06), inset 0 3px 8px rgba(0,0,0,.6)";
+const ORANGE_GLASS = "radial-gradient(90% 130% at 50% 120%, rgba(255,160,100,.45) 0%, rgba(255,160,100,0) 70%), linear-gradient(170deg,#ff8a50 0%,#fa6831 45%,#c9481a 100%)";
+const ORANGE_EDGE = "inset 0 1px 0 rgba(255,255,255,.45), inset 0 0 0 1px rgba(90,30,0,.35), inset 0 3px 8px rgba(90,30,0,.3)";
 const STYLES = {
-  frame_black: { label: "Black frame, orange window", models: "MK4S, XL, MINI+",
+  none: { label: "None (theme)" },
+  black_frame: { label: "Black frame, orange", models: "MK4S, XL", tone: "dark",
     body: "linear-gradient(160deg,#45464a 0%,#2d2e30 50%,#1f2023 100%)", base: "#2d2e30",
-    window: "radial-gradient(90% 130% at 50% 120%, rgba(255,160,100,.45) 0%, rgba(255,160,100,0) 70%), linear-gradient(170deg,#ff8a50 0%,#fa6831 45%,#c9481a 100%)",
-    edge: "inset 0 1px 0 rgba(255,255,255,.45), inset 0 0 0 1px rgba(90,30,0,.35), inset 0 3px 8px rgba(90,30,0,.3)",
-    winInk: "rgba(255,250,245,.97)", winInk2: "rgba(255,236,224,.88)", winShadow: "0 1px 2px rgba(90,30,0,.55)",
-    bar: "#fa6831", ring: "#fa6831", hex: [["Frame", "#2d2e30"], ["Prusa orange", "#fa6831"]] },
-  prusa_orange: { label: "Prusa orange", models: "Any model",
-    body: "linear-gradient(160deg,#ff9460 0%,#fa6831 50%,#d4501c 100%)", base: "#e45b26",
-    window: "linear-gradient(170deg,#44454a 0%,#27282b 55%,#1b1c1e 100%)", edge: DARK_EDGE,
-    winInk: "rgba(255,255,255,.95)", winInk2: "rgba(235,235,240,.74)", winShadow: "none",
-    bar: "#1f2022", ring: "#fff3ea", hex: [["Body", "#fa6831"], ["Window", "#27282b"]] },
-  core_smoke: { label: "CORE One, smoked door", models: "CORE One",
+    window: ORANGE_GLASS, edge: ORANGE_EDGE, winInk: "rgba(255,250,245,.97)", winInk2: "rgba(255,236,224,.88)", winShadow: "0 1px 2px rgba(90,30,0,.55)",
+    hex: [["Frame", "#2d2e30"], ["Prusa orange", "#fa6831"]] },
+  core_one: { label: "CORE One", models: "CORE One", tone: "dark",
     body: "linear-gradient(160deg,#5c5f65 0%,#43464b 50%,#303237 100%)", base: "#43464b",
     window: "radial-gradient(90% 140% at 50% 125%, rgba(250,104,49,.55) 0%, rgba(250,104,49,0) 68%), linear-gradient(170deg,#3d4045 0%,#26282c 60%,#1a1b1e 100%)",
     edge: DARK_EDGE, winInk: "rgba(255,255,255,.95)", winInk2: "rgba(235,235,240,.76)", winShadow: "0 1px 2px rgba(0,0,0,.6)",
-    bar: "#fa6831", ring: "#fa6831", hex: [["Enclosure", "#43464b"], ["Door", "#26282c"], ["Glow", "#fa6831"]] },
-  theme: { label: "Home Assistant theme", models: "Any model", themeBody: true,
-    body: "var(--surface)", base: "var(--surface)", window: "var(--surface-2)", edge: "inset 0 0 0 1px var(--border)",
-    winInk: "var(--text)", winInk2: "var(--muted)", winShadow: "none", bar: "var(--accent)", ring: "var(--accent)", hex: [] },
+    hex: [["Enclosure", "#43464b"], ["Door", "#26282c"], ["Glow", "#fa6831"]] },
+  prusa_orange: { label: "Prusa orange", models: "MINI+", tone: "dark",
+    body: "linear-gradient(160deg,#ff9460 0%,#fa6831 50%,#d4501c 100%)", base: "#e45b26",
+    window: "linear-gradient(170deg,#44454a 0%,#27282b 55%,#1b1c1e 100%)", edge: DARK_EDGE,
+    winInk: "rgba(255,255,255,.95)", winInk2: "rgba(235,235,240,.74)", winShadow: "none",
+    hex: [["Body", "#fa6831"], ["Window", "#27282b"]] },
 };
+// The state's color, its icon and how the picture moves (the xTool card's state colors, Printing in Prusa orange)
 const STATES = {
-  idle: { label: "Idle", ring: "#8a8d93", icon: "mdi-sleep" },
-  printing: { label: "Printing", ring: "#fa6831", icon: "mdi-printer-3d-nozzle" },
-  paused: { label: "Paused", ring: "#2a78d6", icon: "mdi-pause" },
-  attention: { label: "Attention", ring: "#e69500", icon: "mdi-alert" },
-  finished: { label: "Finished", ring: "#2e9e44", icon: "mdi-check-bold" },
-  stopped: { label: "Stopped", ring: "#8a8d93", icon: "mdi-stop" },
-  error: { label: "Error", ring: "#d93636", icon: "mdi-alert-circle" },
+  idle: { label: "Idle", color: "#9aa0a6", icon: "mdi-sleep" },
+  busy: { label: "Busy", color: "#29a3e0", icon: "mdi-progress-clock" },
+  printing: { label: "Printing", color: "#fa6831", icon: "mdi-printer-3d-nozzle" },
+  paused: { label: "Paused", color: "#f5a623", icon: "mdi-pause" },
+  attention: { label: "Attention", color: "#ffb74d", icon: "mdi-alert" },
+  finished: { label: "Finished", color: "#3fbf6a", icon: "mdi-check-bold" },
+  stopped: { label: "Stopped", color: "#8a8a8a", icon: "mdi-stop" },
+  error: { label: "Error", color: "#ef5350", icon: "mdi-alert-circle" },
 };
 const JOB_STATES = ["printing", "paused", "attention"];
 const PRESETS = [["PLA", 215, 60, 0], ["PETG", 230, 85, 0], ["ASA", 260, 105, 40], ["PC", 275, 110, 45], ["FLEX", 240, 50, 0]];
 const RANGES = [[600, "10 min"], [1800, "30 min"], [3600, "1 h"], [10800, "3 h"]];
+const ENABLED_COLORS = [["info", "Info", "#039be5"], ["primary", "Primary", "#03a9f4"], ["orange", "Orange", "#ff9800"], ["green", "Green", "#4caf50"], ["purple", "Purple", "#9c27b0"]];
 
 // ---------- Heaters ----------
 function heaterKeys(m) {
@@ -393,87 +433,96 @@ function heaterLabel(key, short) {
   const n = key.split("_")[1];
   return short ? `T${n}` : `Tool ${n} nozzle`;
 }
+const heaterIcon = (key) => (key === "bed" ? "mdi-radiator" : key === "chamber" ? "mdi-cube-outline" : "mdi-printer-3d-nozzle-heat");
 function heaterColor(key) {
-  if (key === "nozzle" || key === "nozzle_1") return "var(--s1)";
-  if (key === "bed") return "var(--s2)";
-  if (key === "chamber") return "var(--s3)";
-  return `var(--s${2 + Number(key.split("_")[1])})`;
+  if (key === "nozzle" || key === "nozzle_1") return "var(--d1)";
+  if (key === "bed") return "var(--d2)";
+  if (key === "chamber") return "var(--d3)";
+  return `var(--d${2 + Number(key.split("_")[1])})`;
 }
-function heaterMax(key, m) { return key === "bed" ? m.bedMax : key === "chamber" ? 60 : m.nozzleMax; }
+const heaterMax = (key, m) => (key === "bed" ? m.bedMax : key === "chamber" ? 60 : m.nozzleMax);
 
 // ---------- Features ----------
+// Each control: [id, editor label, icon, one-word name, kind]. Show (icons, names, both) applies to keys.
 const FEATURES = {
-  print_controls: { name: "Print controls", icon: "mdi-play-pause", type: "custom:prusa-print-controls",
-    controls: () => [["pause_resume", "Pause or resume", "mdi-play-pause"], ["stop", "Stop", "mdi-stop"]] },
-  job: { name: "Job", icon: "mdi-file-clock-outline", type: "custom:prusa-job",
-    controls: () => [["progress", "Progress", "mdi-progress-clock"], ["file", "File", "mdi-file-outline"], ["time_remaining", "Time remaining", "mdi-timer-sand"],
-      ["finish_time", "Finish time", "mdi-flag-checkered"], ["time_printing", "Print time", "mdi-clock-outline"]],
-    defaults: ["progress", "file", "time_remaining", "finish_time"] },
-  temperatures: { name: "Temperatures", icon: "mdi-thermometer-lines", type: "custom:prusa-temperatures",
-    controls: (m) => [["graph", "Graph", "mdi-chart-line"],
-      ...heaterKeys(m).map((k) => [k, `${heaterLabel(k)} target`, k === "bed" ? "mdi-radiator" : k === "chamber" ? "mdi-cube-outline" : "mdi-printer-3d-nozzle-heat"]),
-      ["preheat", "Preheat and cooldown", "mdi-fire"]] },
-  tools: { name: "Tools", icon: "mdi-printer-3d-nozzle-outline", type: "custom:prusa-tools",
+  print_controls: { name: "Print controls", picker: "Prusa print controls", icon: "mdi-play-pause", type: "custom:prusa-print-controls",
+    controls: () => [["pause_resume", "Pause / Resume", "mdi-play-pause", "Pause"], ["pause", "Pause", "mdi-pause", "Pause"], ["resume", "Resume", "mdi-play", "Resume"], ["stop", "Stop", "mdi-stop", "Stop"]],
+    defaults: ["pause_resume", "stop"], show: true, options: [["ask_before_stopping", "Ask before stopping a print", true]] },
+  job: { name: "Job", picker: "Prusa job", icon: "mdi-file-clock-outline", type: "custom:prusa-job",
+    controls: () => [["progress", "Progress", "mdi-progress-clock"], ["time_remaining", "Time remaining", "mdi-timer-sand"], ["finish_time", "Finish time", "mdi-flag-checkered"],
+      ["time_printing", "Print time", "mdi-clock-outline"], ["file", "File", "mdi-file-outline"]],
+    defaults: ["progress", "time_remaining", "finish_time"] },
+  temperatures: { name: "Temperatures", picker: "Prusa temperatures", icon: "mdi-thermometer-lines", type: "custom:prusa-temperatures", wide: () => true,
+    controls: (m) => [["graph", "Graph", "mdi-chart-line"], ...heaterKeys(m).map((k) => [k, heaterLabel(k), heaterIcon(k)]), ["preheat", "Preheat", "mdi-fire", "Preheat"], ["cooldown", "Cooldown", "mdi-snowflake", "Cooldown"]],
+    show: true },
+  tools: { name: "Tools", picker: "Prusa tools", icon: "mdi-printer-3d-nozzle-outline", type: "custom:prusa-tools", wide: (m) => m.tools > 1 || m.mmu,
     controls: (m) => [["material", "Material", "mdi-printer-3d-nozzle-outline"], ["nozzle_diameter", "Nozzle diameter", "mdi-diameter-variant"],
-      ["nozzle_type", "High-flow and hardened", "mdi-speedometer"], ["active", "Active tool", "mdi-target"],
-      ["print_fan", "Print fan speed", "mdi-fan"], ["heatbreak_fan", "Heatbreak fan speed", "mdi-fan-chevron-up"],
+      ["nozzle_type", "High-flow and hardened", "mdi-speedometer"], ["print_fan", "Print fan", "mdi-fan"], ["heatbreak_fan", "Heatbreak fan", "mdi-fan-chevron-up"],
       ...(m.mmu ? [["mmu_slots", "MMU slots", "mdi-tray-full"]] : [])],
-    defaults: ["material", "nozzle_diameter", "nozzle_type", "active", "mmu_slots"] },
-  motion: { name: "Motion", icon: "mdi-axis-arrow", type: "custom:prusa-motion",
-    controls: () => [["speed", "Print speed", "mdi-speedometer"], ["x", "X position", "mdi-axis-x-arrow"], ["y", "Y position", "mdi-axis-y-arrow"], ["z", "Z position", "mdi-axis-z-arrow"]] },
-  camera: { name: "Camera", icon: "mdi-cctv", type: "custom:prusa-camera", requires: (m) => !!m.camera,
-    controls: () => [["picture", "Picture", "mdi-image-outline"], ["last_updated", "Last updated", "mdi-update"], ["live", "Live view key", "mdi-video-outline"], ["full_frame", "Full frame key", "mdi-crop-free"]] },
+    defaults: ["material", "nozzle_diameter", "nozzle_type", "print_fan", "mmu_slots"] },
+  motion: { name: "Motion", picker: "Prusa motion", icon: "mdi-axis-arrow", type: "custom:prusa-motion",
+    controls: () => [["speed", "Print speed", "mdi-speedometer"], ["position", "Position", "mdi-axis-arrow"]] },
+  camera: { name: "Camera", picker: "Prusa camera", icon: "mdi-cctv", type: "custom:prusa-camera", requires: (m) => m.cameras.length > 0, wide: () => cfg.camera.full_width,
+    controls: (m) => [...(m.cameras.length > 1 ? [["camera_buttons", "Camera buttons", "mdi-cctv"], ["camera_toggle", "Camera toggle", "mdi-camera-switch"]] : []), ["custom_crop", "Custom crop", "mdi-crop", "Crop"]],
+    defaults: ["camera_buttons", "custom_crop"], show: true },
 };
 const offered = (kind, m) => FEATURES[kind].controls(m);
-const defaultsOf = (kind, m) => (FEATURES[kind].defaults || offered(kind, m).map((c) => c[0])).filter((id) => offered(kind, m).some((c) => c[0] === id));
+const defaultsOf = (kind, m) => {
+  const ids = offered(kind, m).map((c) => c[0]);
+  return (FEATURES[kind].defaults || ids).filter((id) => ids.includes(id));
+};
 function controlsOf(f, m) {
   const ids = offered(f.kind, m).map((c) => c[0]);
   const chosen = (f.controls || defaultsOf(f.kind, m)).filter((id) => ids.includes(id));
   return chosen.length ? chosen : defaultsOf(f.kind, m);
 }
 const supported = (kind, m) => !FEATURES[kind].requires || FEATURES[kind].requires(m);
+const STATUS_BADGES = [["heater_on", "A heater is on while not printing"], ["server_update", "Prusa Connect update available"]];
+const EDGES = [["none", "None"], ["top", "Top"], ["bottom", "Bottom"], ["left", "Left"], ["right", "Right"], ["around", "Around the card"]];
+const SHOW_WHILE = [["printing", "Printing"], ["paused", "Paused"], ["attention", "Attention"], ["finished", "Finished"], ["error", "Error"]];
+const PROGRESS_DEFAULTS = { edge: "top", thickness: 4, starts_at: 0, ends_at: 100, direction: "clockwise", color: "state", show_percentage: false, show_while: ["printing", "paused"] };
 
 // ---------- Configuration (what the card's YAML holds) ----------
 const cfg = {
-  style: null, features_style: "console", collapsible: true, expanded_at_load: false,
-  expand_when_job_starts: true, collapse_when_job_ends: true,
-  features: ["print_controls", "job", "temperatures", "tools", "motion", "camera"].map((kind) => ({ kind, controls: null })),
+  style: null, features_style: "console", enabled_color: "info", collapsible: true, expanded_at_load: false,
+  expand_when_job_starts: true, collapse_when_job_ends: true, last_feature_full_width: true,
+  status_badge: null, connection_badge: true, progress_edge: { ...PROGRESS_DEFAULTS },
+  features: ["print_controls", "job", "motion", "temperatures", "tools", "camera"].map((kind) => ({ kind, controls: null, show: null, opts: {} })),
   temps: { range: 3600, show_targets: true },
-  camera: { view: "auto", crop: { x: 12, y: 18, w: 76, h: 78 }, rotate: 0, flip_h: false, flip_v: false, full_width: false },
+  camera: { camera: null, view: "auto", show_last_updated: true, full_width: true },
 };
-const ui = { model: "coreone", open: { dash: false, preview: false }, editing: null, hidden: new Set(), confirmStop: 0,
-  live: false, fullFrame: false, crop: { mode: 0, p1: null }, speed: 100, theme: "auto" };
+const ui = { model: "coreone", open: { dash: true, preview: true }, editing: null, hidden: new Set(), speed: 100, theme: "auto", connected: true,
+  camera: 0, cropping: false, crops: {}, first: null, dialog: null, preheat: "" };
 const model = () => MODELS[ui.model];
 const styleId = () => cfg.style || model().style;
+const featureOf = (kind) => cfg.features.find((f) => f.kind === kind);
+const showOf = (f) => f.show || "icons";
 
 // ---------- Simulation (10 seconds of printer time each second) ----------
 const AMBIENT = 23, STEP = 10, SPAN = 10800;
-const sim = { state: "printing", t: 0, clock0: Date.now(), times: [], cur: {}, tgt: {}, now: {}, target: {}, progress: null, total: 0 };
+const sim = { state: "printing", t: 0, clock0: Date.now(), times: [], cur: {}, tgt: {}, now: {}, target: {}, progress: null, total: 0, changed: 0 };
 const clock = (t) => sim.clock0 + t * 1000;
 function scheduleTargets(t, m, state) {
   const zero = Object.fromEntries(heaterKeys(m).map((k) => [k, 0]));
-  const job = () => {
-    const r = { ...zero };
-    heaterKeys(m).forEach((k) => {
-      if (k === "bed") r[k] = m.job.bed; else if (k === "chamber") r[k] = m.job.chamber;
-      else r[k] = m.job.nozzle[m.tools > 1 ? Number(k.split("_")[1]) - 1 : 0];
-    });
-    return r;
-  };
-  const windows = { printing: [-3300, 1e9], paused: [-3300, 1e9], attention: [-4200, 1e9], finished: [-9300, -2400], stopped: [-6000, -900], error: [-5000, -1200] };
+  const windows = { printing: [-3300, 1e9], paused: [-3300, 1e9], attention: [-4200, 1e9], finished: [-9300, -2400], stopped: [-6000, -900], error: [-5000, -1200], busy: [-300, 1e9] };
   const w = windows[state];
-  return w && t >= w[0] && t < w[1] ? job() : zero;
+  if (!w || t < w[0] || t >= w[1]) return zero;
+  const r = { ...zero };
+  heaterKeys(m).forEach((k) => {
+    if (k === "bed") r[k] = m.job.bed; else if (k === "chamber") r[k] = m.job.chamber || 0;
+    else r[k] = m.job.nozzle[m.tools > 1 ? Number(k.split("_")[1]) - 1 : 0];
+  });
+  return r;
 }
 function stepHeaters(m) {
   for (const k of heaterKeys(m)) {
-    const tg = sim.target[k];
+    const tg = sim.target[k], now = sim.now[k] ?? AMBIENT;
     let goal = tg > 0 ? tg : AMBIENT, rate = k === "bed" ? 0.045 : k === "chamber" ? 0.012 : 0.3;
     if (k === "chamber") {
       const bed = sim.now.bed ?? AMBIENT;
       goal = tg > 0 ? Math.min(tg, AMBIENT + (bed - AMBIENT) * 0.5) : AMBIENT + (bed - AMBIENT) * 0.22;
     } else if (!(tg > 0)) rate *= 0.45;
-    const noise = (Math.random() - 0.5) * (k === "bed" ? 0.3 : k === "chamber" ? 0.15 : 0.8);
-    sim.now[k] = (sim.now[k] ?? AMBIENT) + (goal - (sim.now[k] ?? AMBIENT)) * rate + noise;
+    sim.now[k] = now + (goal - now) * rate + (Math.random() - 0.5) * (k === "bed" ? 0.3 : k === "chamber" ? 0.15 : 0.8);
   }
 }
 function record(m) {
@@ -483,29 +532,23 @@ function record(m) {
 }
 function startScenario(state) {
   const m = model();
-  sim.state = state; sim.t = 0; sim.times = []; sim.cur = {}; sim.tgt = {}; sim.now = {}; sim.target = {};
+  Object.assign(sim, { state, t: 0, times: [], cur: {}, tgt: {}, now: {}, target: {} });
   heaterKeys(m).forEach((k) => { sim.now[k] = AMBIENT; });
-  for (let t = -SPAN; t <= 0; t += STEP) {
-    sim.t = t; sim.target = scheduleTargets(t, m, state); stepHeaters(m); record(m);
-  }
+  for (let t = -SPAN; t <= 0; t += STEP) { sim.t = t; sim.target = scheduleTargets(t, m, state); stepHeaters(m); record(m); }
   sim.total = m.job.total;
   sim.progress = { printing: 42, paused: 42, attention: 57, finished: 100, stopped: 63 }[state] ?? null;
-  ui.confirmStop = 0;
+  sim.changed = { printing: -3300, paused: -120, attention: -60, finished: -2400, stopped: -900, error: -1200, idle: -5400, busy: -300 }[state] ?? 0;
 }
-function setState(next) {
-  const prev = sim.state;
-  startScenario(next);
-  const started = next === "printing" && !JOB_STATES.includes(prev);
-  const ended = ["finished", "stopped"].includes(next) && JOB_STATES.includes(prev);
-  if (started && cfg.expand_when_job_starts) setOpen(true);
-  if (ended && cfg.collapse_when_job_ends) setOpen(false);
-  render();
-}
-function changeState(next) { // a state change from a control on the card: history is kept
-  const prev = sim.state; sim.state = next;
-  if (next === "stopped" || next === "finished") heaterKeys(model()).forEach((k) => { sim.target[k] = 0; });
-  if (["finished", "stopped"].includes(next) && JOB_STATES.includes(prev) && cfg.collapse_when_job_ends) setOpen(false);
+function transition(prev, next) {
   if (next === "printing" && !JOB_STATES.includes(prev) && cfg.expand_when_job_starts) setOpen(true);
+  if (["finished", "stopped"].includes(next) && JOB_STATES.includes(prev) && cfg.collapse_when_job_ends) setOpen(false);
+}
+function setState(next) { const prev = sim.state; startScenario(next); transition(prev, next); render(); }
+function changeState(next) { // a change from a key on the card: the history is kept
+  const prev = sim.state;
+  sim.state = next; sim.changed = sim.t;
+  if (next === "stopped" || next === "finished") heaterKeys(model()).forEach((k) => { sim.target[k] = 0; });
+  transition(prev, next);
   render();
 }
 function tick() {
@@ -518,281 +561,272 @@ function tick() {
   updateLive();
 }
 
-// ---------- Open and closed (stored per printer on the dashboard, separately in the editor preview) ----------
-function storedOpen() { const v = store.get(`prusa-connect-card:${ui.model}`); return v == null ? null : v === "1"; }
+// ---------- Open and closed ----------
 function setOpen(open, where) {
   if (!cfg.collapsible) return;
   if (!where || where === "dash") { ui.open.dash = open; if (where) store.set(`prusa-connect-card:${ui.model}`, open ? "1" : "0"); }
   if (!where || where === "preview") ui.open.preview = open;
 }
 function loadOpen() {
-  const s = storedOpen();
-  ui.open.dash = s ?? cfg.expanded_at_load;
-  ui.open.preview = cfg.expanded_at_load;
-}
-
-// ---------- Pictures ----------
-function modelSVG(id) {
-  const F = "#1d1e20", A = "#fa6831", M = "#a6abb2", B = "#2c2a27";
-  const parts = {
-    mk4s: `<rect x="13" y="9" width="38" height="5" rx="1.5" fill="${F}"/><rect x="13" y="9" width="5" height="40" fill="${F}"/><rect x="46" y="9" width="5" height="40" fill="${F}"/>
-      <rect x="15" y="26" width="34" height="2.5" fill="${M}"/><rect x="26" y="20" width="12" height="13" rx="2" fill="${A}"/><path d="M30 33h4l-2 3.5z" fill="#d4a94a"/>
-      <rect x="9" y="44" width="46" height="3.5" rx="1" fill="${B}"/><rect x="7" y="49" width="50" height="6" rx="2" fill="${A}"/>`,
-    coreone: `<rect x="9" y="7" width="46" height="50" rx="5" fill="${F}"/><rect x="13" y="12" width="38" height="38" rx="2.5" fill="#7f97a8" fill-opacity=".38" stroke="${A}" stroke-width="1.6"/>
-      <rect x="17" y="21" width="30" height="2" fill="${M}"/><rect x="26" y="17" width="12" height="10" rx="1.5" fill="${A}"/><rect x="17" y="40" width="30" height="3" fill="${B}"/>
-      <rect x="9" y="52" width="46" height="5" rx="2" fill="${A}"/>`,
-    xl: `<rect x="5" y="10" width="54" height="42" rx="3" fill="none" stroke="${F}" stroke-width="5"/>
-      ${[0, 1, 2, 3, 4].map((i) => `<rect x="${10 + i * 9.5}" y="13" width="6.5" height="7" rx="1" fill="${A}"/>`).join("")}
-      <rect x="8" y="30" width="48" height="2.5" fill="${M}"/><rect x="27" y="25" width="10" height="11" rx="1.5" fill="${A}"/><rect x="10" y="44" width="44" height="3" fill="${B}"/>`,
-    mini: `<rect x="13" y="8" width="7" height="42" rx="1" fill="${F}"/><rect x="20" y="20" width="30" height="3" fill="${M}"/><rect x="36" y="15" width="11" height="12" rx="2" fill="${A}"/>
-      <path d="M39.5 27h4l-2 3.5z" fill="#d4a94a"/><rect x="22" y="43" width="32" height="3" fill="${B}"/><rect x="8" y="49" width="48" height="7" rx="2.5" fill="${A}"/>`,
-  };
-  return `<svg viewBox="0 0 64 64" aria-hidden="true">${parts[id]}</svg>`;
-}
-const CAM_W = 1600, CAM_H = 900;
-function camScene(state, progress, live, t) {
-  const p = progress == null ? 0 : progress / 100;
-  const hasObj = state !== "idle" && state !== "error" && p > 0;
-  const hObj = hasObj ? 240 * p : 0, top = 700 - hObj;
-  const parked = !JOB_STATES.includes(state);
-  const gy = parked ? 150 : top - 200;
-  const tx = parked ? 1180 : live ? 700 + Math.sin(t / 3) * 90 : 740;
-  return `<defs><linearGradient id="cbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34373c"/><stop offset="1" stop-color="#141517"/></linearGradient>
-    <linearGradient id="csh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a352f"/><stop offset="1" stop-color="#211e1b"/></linearGradient></defs>
-    <rect width="${CAM_W}" height="${CAM_H}" fill="url(#cbg)"/>
-    <rect x="80" y="0" width="70" height="${CAM_H}" fill="#1b1c1e"/><rect x="1450" y="0" width="70" height="${CAM_H}" fill="#1b1c1e"/>
-    <path d="M250 830 L1350 830 L1215 560 L385 560 Z" fill="url(#csh)" stroke="#9a8558" stroke-width="5"/>
-    ${[0.25, 0.5, 0.75].map((f) => `<line x1="${385 + 830 * f}" y1="560" x2="${250 + 1100 * f}" y2="830" stroke="#9a8558" stroke-opacity=".25" stroke-width="2"/>`).join("")}
-    ${hasObj ? `<rect x="680" y="${top}" width="240" height="${hObj}" fill="#e8622e"/>
-      <path d="M680 ${top} L920 ${top} L890 ${top - 40} L710 ${top - 40} Z" fill="#ff8a55"/>
-      ${[...Array(Math.floor(hObj / 14))].map((_, i) => `<line x1="680" x2="920" y1="${700 - i * 14}" y2="${700 - i * 14}" stroke="#c24e20" stroke-opacity=".5"/>`).join("")}` : ""}
-    <rect x="150" y="${gy}" width="1300" height="26" fill="#9aa0a6"/>
-    <rect x="${tx}" y="${gy - 50}" width="130" height="160" rx="16" fill="#fa6831"/>
-    <circle cx="${tx + 65}" cy="${gy + 25}" r="38" fill="#232427"/><circle cx="${tx + 65}" cy="${gy + 25}" r="10" fill="#3a3c40"/>
-    <path d="M${tx + 52} ${gy + 110} L${tx + 78} ${gy + 110} L${tx + 65} ${gy + 140} Z" fill="#d4a94a"/>`;
-}
-function camBase(rot) { return rot % 180 ? { x: (CAM_W - CAM_H) / 2, y: -(CAM_W - CAM_H) / 2, w: CAM_H, h: CAM_W } : { x: 0, y: 0, w: CAM_W, h: CAM_H }; }
-function camTransform(c) {
-  return `rotate(${c.rotate} ${CAM_W / 2} ${CAM_H / 2}) ${c.flip_h ? `translate(${CAM_W} 0) scale(-1 1)` : ""} ${c.flip_v ? `translate(0 ${CAM_H}) scale(1 -1)` : ""}`;
-}
-function camView(c, full) {
-  const b = camBase(c.rotate);
-  if (full || !c.crop) return b;
-  return { x: b.x + (b.w * c.crop.x) / 100, y: b.y + (b.h * c.crop.y) / 100, w: (b.w * c.crop.w) / 100, h: (b.h * c.crop.h) / 100 };
+  const s = store.get(`prusa-connect-card:${ui.model}`);
+  ui.open.dash = s == null ? true : s === "1";
+  ui.open.preview = true;
 }
 
 // ---------- Live values ----------
+function agoText(dt) {
+  const s = Math.max(0, dt);
+  if (s < 60) return `${Math.round(s)} seconds ago`;
+  if (s < 3600) return `${Math.round(s / 60)} minutes ago`;
+  return `${Math.round(s / 3600)} hours ago`;
+}
 function live(key) {
   const m = model(), p = sim.progress;
-  const hasJob = p != null && sim.state !== "idle";
-  if (key === "stateline") {
-    const s = STATES[sim.state].label;
-    if (JOB_STATES.includes(sim.state)) return `${s} · ${Math.floor(p)} % · ${fmtDur(sim.total * (1 - p / 100))} left`;
-    if (sim.state === "finished") return `${s} · ${m.job.file.split("_")[0]}`;
-    return `${s} · ${heaterLabel(heaterKeys(m)[0])} ${Math.round(sim.now[heaterKeys(m)[0]])} °C`;
+  const job = p != null && sim.state !== "idle";
+  const running = JOB_STATES.includes(sim.state);
+  switch (key) {
+    case "state": {
+      const s = ui.connected ? STATES[sim.state].label : "Unavailable";
+      if (!ui.connected) return s;
+      if (running) return `${s} · ${Math.floor(p)} % · ${fmtDur(sim.total * (1 - p / 100))} left`;
+      return `${s} · ${agoText(sim.t - sim.changed)}`;
+    }
+    case "progress": return job ? `${Math.floor(p)} %` : "—";
+    case "time_remaining": return running ? fmtDur(sim.total * (1 - p / 100)) : "—";
+    case "finish_time": return running ? fmtClock(clock(sim.t + sim.total * (1 - p / 100))) : "—";
+    case "time_printing": return job ? fmtDur((sim.total * p) / 100) : "—";
+    case "file": return sim.state === "idle" ? "—" : m.job.file;
+    case "position": {
+      const pr = sim.state === "printing";
+      const x = pr ? 125 + Math.sin(sim.t / 7) * 60 : 250, y = pr ? 105 + Math.cos(sim.t / 9) * 50 : 210, z = job ? (p / 100) * 48 : 0;
+      return `${x.toFixed(0)}, ${y.toFixed(0)}, ${z.toFixed(1)}`;
+    }
+    case "time": return cfg.camera.show_last_updated ? (cfg.camera.view === "live" ? "" : `Updated ${(sim.t / STEP) % 6 + 2} seconds ago`) : "";
   }
-  if (key === "progress") return hasJob ? `${Math.floor(p)} %` : "No job";
-  if (key === "time_remaining") return hasJob && JOB_STATES.includes(sim.state) ? fmtDur(sim.total * (1 - p / 100)) : "—";
-  if (key === "finish_time") return hasJob && JOB_STATES.includes(sim.state) ? fmtClock(clock(sim.t + sim.total * (1 - p / 100))) : "—";
-  if (key === "time_printing") return hasJob ? fmtDur((sim.total * p) / 100) : "—";
-  if (key.startsWith("cur:")) { const v = sim.now[key.slice(4)]; return v == null ? "—" : `${v.toFixed(1)} °C`; }
-  const printing = sim.state === "printing";
-  if (key === "x") return printing ? `${(125 + Math.sin(sim.t / 7) * 60).toFixed(1)} mm` : "250.0 mm";
-  if (key === "y") return printing ? `${(105 + Math.cos(sim.t / 9) * 50).toFixed(1)} mm` : "210.0 mm";
-  if (key === "z") return hasJob ? `${((p / 100) * 48).toFixed(2)} mm` : "0.00 mm";
-  if (key.startsWith("fan:")) return printing && key === "fan:1" ? `${4200 + Math.round(Math.sin(sim.t) * 60)} RPM` : "0 RPM";
-  if (key.startsWith("hb:")) { const k = m.tools > 1 ? `nozzle_${key.slice(3)}` : "nozzle"; return sim.now[k] > 50 ? `${6100 + Math.round(Math.cos(sim.t) * 80)} RPM` : "0 RPM"; }
-  if (key === "camtime") return ui.live ? "Live" : `Updated ${(sim.t / STEP) % 6 + 1} seconds ago`;
+  if (key.startsWith("cur:")) { const v = sim.now[key.slice(4)]; return v == null ? "—" : `${v.toFixed(1)}°`; }
+  if (key.startsWith("fan:")) return sim.state === "printing" && key === "fan:1" ? `${4200 + Math.round(Math.sin(sim.t) * 60)}` : "0";
+  if (key.startsWith("hb:")) { const k = m.tools > 1 ? `nozzle_${key.slice(3)}` : "nozzle"; return sim.now[k] > 50 ? `${6100 + Math.round(Math.cos(sim.t) * 80)}` : "0"; }
   return "";
 }
-const L = (key) => `<span data-live="${key}">${esc(live(key))}</span>`;
+const L = (key) => `<span class="t" data-live="${key}">${esc(live(key))}</span>`;
 
-// ---------- Card ----------
-function styleVars(sid, stateId) {
+// ---------- The card ----------
+function styleVars(sid) {
   const st = STYLES[sid];
-  return `--body:${st.body};--base:${st.base};--window:${st.window};--window-edge:${st.edge};--win-ink:${st.winInk};--win-ink-2:${st.winInk2};`
-    + `--win-shadow:${st.winShadow};--bar:${st.bar};--edge:${st.ring};--ring:${STATES[stateId].ring};`;
+  const enabled = ENABLED_COLORS.find((c) => c[0] === cfg.enabled_color)?.[2] || "#039be5";
+  if (sid === "none") return `--enabled:${enabled};`;
+  return `--enabled:${enabled};--body:${st.body};--base:${st.base};--window:${st.window};--window-edge:${st.edge};--win-ink:${st.winInk};--win-ink-2:${st.winInk2};--win-shadow:${st.winShadow};`;
 }
-function titleHTML(m, mid, stateId, stateText, inline, tappable, where) {
+function statusBadge() {
+  const chosen = cfg.status_badge || STATUS_BADGES.map((b) => b[0]);
+  for (const id of chosen) {
+    if (id === "heater_on" && !JOB_STATES.includes(sim.state) && heaterKeys(model()).some((k) => sim.target[k] > 0)) return { icon: "mdi-fire", color: "#ffa600", label: "A heater is on" };
+    if (id === "server_update" && ui.model === "xl") return { icon: "mdi-package-up", color: "#039be5", label: "Prusa Connect update available" };
+  }
+  return null;
+}
+function pictureHTML(stateId, connected, badge) {
   const s = STATES[stateId];
-  return `<div class="pc-title${tappable ? " tappable" : ""}" ${tappable ? `data-act="toggle" data-arg="${where}" role="button" tabindex="0" aria-expanded="${!!ui.open[where]}"` : ""}>
-    <div class="pc-pic">${modelSVG(mid)}<span class="pc-badge" title="${s.label}"><i class="mdi ${s.icon}"></i></span></div>
-    <div class="pc-text"><div class="pc-name">${esc(m.device)}</div><div class="pc-state">${stateText}</div></div>
-    ${inline ? `<div class="pc-inline" data-act="noop">${inline}</div>` : ""}
-    ${tappable ? `<i class="mdi mdi-chevron-down chev"></i>` : ""}
-  </div>`;
+  const conn = !connected ? { icon: "mdi-lan-disconnect", color: "#616161", label: "Unavailable" }
+    : cfg.connection_badge ? { icon: "mdi-lan-connect", color: "var(--enabled)", label: "Connected" } : null;
+  const color = connected ? s.color : "#616161";
+  return `<div class="pc-pic anim-${connected ? stateId : "none"}" style="--sc:${color}" role="img" aria-label="${connected ? s.label : "Unavailable"}">
+    <i class="mdi ${connected ? s.icon : "mdi-printer-3d-off"} glyph"></i>
+    ${badge ? `<span class="pc-badge status" style="--bc:${badge.color}" title="${badge.label}"><i class="mdi ${badge.icon}"></i></span>` : ""}
+    ${conn ? `<span class="pc-badge connection" style="--bc:${conn.color}" title="${conn.label}"><i class="mdi ${conn.icon}"></i></span>` : ""}</div>`;
+}
+function edgeHTML() {
+  const p = cfg.progress_edge;
+  if (p.edge === "none" || !ui.connected || !p.show_while.includes(sim.state)) return "";
+  const value = sim.state === "finished" ? 1 : (sim.progress ?? 0) / 100;
+  const color = p.color === "thresholds" ? (value > 0.6 ? "#43a047" : value > 0.2 ? "#ffa600" : "#db4437") : p.color === "state" ? STATES[sim.state].color : p.color;
+  const track = "rgba(127,127,127,.35)", th = clamp(Number(p.thickness) || 4, 1, 24);
+  const counter = p.direction === "counterclockwise";
+  let style;
+  if (p.edge === "around") {
+    const deg = Math.round(value * 36000) / 100;
+    style = `padding:${th}px;background:${counter ? `conic-gradient(from 0deg, ${track} 0deg ${360 - deg}deg, ${color} ${360 - deg}deg 360deg)` : `conic-gradient(from 0deg, ${color} 0deg ${deg}deg, ${track} ${deg}deg 360deg)`}`;
+  } else {
+    const dirs = { top: ["to right", "to left"], bottom: ["to left", "to right"], left: ["to top", "to bottom"], right: ["to bottom", "to top"] };
+    const start = clamp(+p.starts_at, 0, 100), end = clamp(+p.ends_at, 0, 100), stop = start + (end - start) * value;
+    const size = p.edge === "top" || p.edge === "bottom" ? `height:${th}px` : `width:${th}px`;
+    style = `${size};background:linear-gradient(${dirs[p.edge][counter ? 1 : 0]}, ${track} 0%, ${track} ${start}%, ${color} ${start}%, ${color} ${stop}%, ${track} ${stop}%, ${track} 100%)`;
+  }
+  return `<div class="pc-edge ${p.edge}" data-edge style="${style}"></div>${p.show_percentage ? `<div class="pc-pct" style="color:${color}">${Math.round(value * 100)}%</div>` : ""}`;
 }
 function cardHTML(where) {
   const m = model(), sid = styleId(), st = STYLES[sid];
   const feats = cfg.features.filter((f) => supported(f.kind, m));
   const open = !cfg.collapsible || ui.open[where];
-  const first = feats[0];
-  const inlineFirst = first && first.kind === "print_controls";
-  const inline = inlineFirst ? featureBody(first, m, true) : "";
-  const rest = (inlineFirst ? feats.slice(1) : feats);
-  const cls = `pc-card fs-${cfg.features_style}${st.themeBody ? " theme-body" : ""}${open ? " open" : ""}`;
-  return `<div class="${cls}" style="${styleVars(sid, sim.state)}" data-card="${where}">
-    <svg class="pc-edge" aria-hidden="true"><rect rx="17" ry="17" pathLength="100"/></svg>
-    ${titleHTML(m, ui.model, sim.state, L("stateline"), inline, cfg.collapsible, where)}
-    ${open && rest.length ? `<div class="pc-features">${rest.map((f) => {
-      const full = f.kind === "camera" && cfg.camera.full_width;
-      return `<div class="pc-feature${full ? " full" : ""}" data-kind="${f.kind}">${featureBody(f, m, false)}</div>`;
-    }).join("")}</div>` : ""}
+  const inline = feats[0] && !isWide(feats[0], m);
+  const rest = inline ? feats.slice(1) : feats;
+  const cls = ["pc-card", `fs-${cfg.features_style}`, sid !== "none" ? `styled tone-${st.tone}` : ""].join(" ");
+  // Features in two columns; a wide one takes both; with Last feature full width, one alone at the end of its row does too
+  const shown = open ? rest : [];
+  let col = 0;
+  const places = shown.map((f, i) => {
+    if (isWide(f, m)) { col = 0; return "wide"; }
+    const lastAlone = col === 0 && (i === shown.length - 1 || isWide(shown[i + 1], m));
+    col = (col + 1) % 2;
+    return lastAlone && cfg.last_feature_full_width ? "wide" : "";
+  });
+  return `<div class="${cls}" style="${styleVars(sid)}" data-card="${where}">
+    ${edgeHTML()}
+    <div class="pc-head${inline ? " inline" : ""}">
+      <div class="pc-content" data-act="toggle" data-arg="${where}" role="button" tabindex="0" ${cfg.collapsible ? `aria-expanded="${!!open}"` : ""}>
+        ${pictureHTML(sim.state, ui.connected, statusBadge())}
+        <div class="pc-text"><div class="pc-name">${esc(m.device)}</div><div class="pc-state" data-live="state">${esc(live("state"))}</div></div>
+      </div>
+      ${inline ? `<div class="pc-inline">${featureBody(feats[0], m, true)}</div>` : ""}
+    </div>
+    ${shown.length ? `<div class="pc-features">${shown.map((f, i) => `<div class="pc-f ${places[i]}" data-kind="${f.kind}">${featureBody(f, m)}</div>`).join("")}</div>` : ""}
   </div>`;
 }
-function featureBody(f, m, inline) {
-  const ctrls = controlsOf(f, m);
-  return RENDER[f.kind](ctrls, m, inline);
+const isWide = (f, m) => !!FEATURES[f.kind].wide?.(m);
+function featureBody(f, m) { return RENDER[f.kind](controlsOf(f, m), m, f); }
+
+// A key: what it shows follows Show (icons, names or both)
+function keyHTML({ act, arg = "", icon, name, label, color, pressed, disabled, extra = "", cls = "" }, show) {
+  const showIcon = show !== "names", showName = show !== "icons";
+  return `<button class="key ${cls}" data-act="${act}" data-arg="${arg}" ${color ? `style="--c:${color}"` : ""} ${pressed != null ? `aria-pressed="${pressed}"` : ""}
+    ${disabled ? "disabled" : ""} title="${esc(label || name)}" aria-label="${esc(label || name)}" ${extra}>
+    ${showIcon ? `<i class="mdi ${icon}"></i>` : ""}${showName ? `<span>${esc(name)}</span>` : ""}</button>`;
+}
+const readout = (icon, key, { color, title, iconOnly, spin } = {}) =>
+  `<div class="readout${iconOnly ? " icon-only" : ""}" ${color ? `style="--c:${color}"` : ""} title="${esc(title || "")}" data-min="${iconOnly ? 36 : 84}">
+    <i class="mdi ${icon}${spin ? " spin" : ""}"></i>${iconOnly ? "" : key.startsWith("=") ? `<span class="t">${esc(key.slice(1))}</span>` : L(key)}</div>`;
+// A number field and its plus-minus key move as a group
+function fieldGroup(id, value, unit, label) {
+  return `<span class="group"><label class="field${value ? "" : " off"}" title="${esc(label)}" data-min="72"><input type="number" inputmode="numeric" value="${value}" data-change="target" data-arg="${id}" aria-label="${esc(label)}">
+      <span>${value ? unit : "Off"}</span></label>
+    <button class="key scrub" data-scrub="${id}" title="Press and slide to change ${esc(label)}" aria-label="Change ${esc(label)}" data-min="36"><i class="mdi mdi-plus-minus-variant"></i></button></span>`;
 }
 const RENDER = {
-  print_controls(ctrls, m, inline) {
-    const s = sim.state, can = JOB_STATES.includes(s);
+  print_controls(ctrls, m, f) {
+    const s = sim.state, show = showOf(f), on = ui.connected;
     const keys = ctrls.map((id) => {
       if (id === "pause_resume") {
         const resume = s === "paused";
-        return `<button class="key" data-act="pause_resume" ${can && s !== "attention" ? "" : "disabled"} title="${resume ? "Resume" : "Pause"}">
-          <i class="mdi ${resume ? "mdi-play" : "mdi-pause"}"></i>${inline ? "" : resume ? "Resume" : "Pause"}</button>`;
+        return keyHTML({ act: resume ? "resume" : "pause", icon: resume ? "mdi-play" : "mdi-pause", name: resume ? "Resume" : "Pause",
+          color: resume ? STATES.printing.color : STATES.paused.color, disabled: !on || !["printing", "paused"].includes(s) }, show);
       }
-      const confirm = ui.confirmStop > Date.now();
-      return `<button class="key${confirm ? " danger" : ""}" data-act="stop" ${can ? "" : "disabled"} title="Stop">
-        <i class="mdi mdi-stop"></i>${confirm ? "Tap to stop" : inline ? "" : "Stop"}</button>`;
-    }).join("");
-    return inline ? keys : `<div class="row">${keys}</div>`;
+      if (id === "pause") return keyHTML({ act: "pause", icon: "mdi-pause", name: "Pause", color: STATES.paused.color, disabled: !on || s !== "printing" }, show);
+      if (id === "resume") return keyHTML({ act: "resume", icon: "mdi-play", name: "Resume", color: STATES.printing.color, disabled: !on || s !== "paused" }, show);
+      return keyHTML({ act: "stop", icon: "mdi-stop", name: "Stop", color: STATES.error.color, disabled: !on || !JOB_STATES.includes(s) }, show);
+    });
+    return `<div class="row">${keys.join("")}</div>`;
   },
   job(ctrls) {
-    const reads = [];
-    for (const id of ctrls) {
-      if (id === "progress") {
-        const p = sim.progress != null && sim.state !== "idle" ? sim.progress : 0;
-        reads.push(`<div class="bar read wide" style="padding:0"><div class="fill" data-live-w="progress" style="width:${p}%"></div>
-          <div class="t"><span>${L("progress")}</span><span>${esc(STATES[sim.state].label)}</span></div></div>`);
-      } else if (id === "file") {
-        const f = sim.state === "idle" ? "—" : model().job.file;
-        reads.push(`<div class="read wide"><div class="l"><i class="mdi mdi-file-outline"></i>File</div><div class="v" title="${esc(f)}">${esc(f)}</div></div>`);
-      } else {
-        const c = FEATURES.job.controls().find((x) => x[0] === id);
-        reads.push(`<div class="read"><div class="l"><i class="mdi ${c[2]}"></i>${c[1]}</div><div class="v">${L(id)}</div></div>`);
-      }
-    }
-    return `<div class="reads">${reads.join("")}</div>`;
+    const icons = Object.fromEntries(FEATURES.job.controls().map((c) => [c[0], c]));
+    return `<div class="row">${ctrls.map((id) => readout(icons[id][2], id, { title: icons[id][1], color: id === "progress" ? STATES[sim.state].color : undefined })).join("")}</div>`;
   },
-  temperatures(ctrls, m) {
-    return ctrls.map((id) => {
-      if (id === "graph") return graphHTML(m);
-      if (id === "preheat") {
-        return `<div class="row">${PRESETS.map(([n]) => `<button class="key small" data-act="preheat" data-arg="${n}">${n}</button>`).join("")}
-          <button class="key small" data-act="preheat" data-arg="off"><i class="mdi mdi-snowflake"></i>Cooldown</button></div>`;
-      }
-      const tg = Math.round(sim.target[id] || 0);
-      return `<div class="trow"><div class="who"><span class="sw" style="--c:${heaterColor(id)}"></span>
-          <div><div>${heaterLabel(id)}</div><div class="now">Now ${L(`cur:${id}`)}</div></div></div>
-        <div class="num" role="group" aria-label="${heaterLabel(id)} target">
-          <button data-act="tstep" data-arg="${id}" data-d="-5" aria-label="Lower"><i class="mdi mdi-minus"></i></button>
-          <input type="number" inputmode="numeric" min="0" max="${heaterMax(id, m)}" value="${tg}" data-change="tset" data-arg="${id}" aria-label="Target">
-          <span class="u">${tg ? "°C" : "off"}</span>
-          <button data-act="tstep" data-arg="${id}" data-d="5" aria-label="Raise"><i class="mdi mdi-plus"></i></button></div></div>`;
-    }).join("");
+  temperatures(ctrls, m, f) {
+    const show = showOf(f), parts = [];
+    const heaters = ctrls.filter((id) => heaterKeys(m).includes(id));
+    if (ctrls.includes("graph")) parts.push([ctrls.indexOf("graph"), graphHTML(m)]);
+    // Each heater: its temperature, its target and the plus-minus key, in one row; two heaters side by side when the card is wide enough
+    const rows = heaters.map((k) => `<div class="row">${readout(heaterIcon(k), `cur:${k}`, { title: heaterLabel(k), color: heaterColor(k) })}
+        ${fieldGroup(k, Math.round(sim.target[k] || 0), "°C", `${heaterLabel(k)} target`)}</div>`);
+    if (rows.length) parts.push([ctrls.indexOf(heaters[0]), `<div class="heaters">${rows.join("")}</div>`]);
+    const acts = [];
+    if (ctrls.includes("preheat")) acts.push([ctrls.indexOf("preheat"), `<label class="pick" style="--c:${STATES.printing.color}" data-min="120"><i class="mdi mdi-fire"></i><span>${ui.preheat || "Preheat"}</span><i class="mdi mdi-menu-down"></i>
+      <select data-change="preheat" aria-label="Preheat"><option value="">Preheat</option>${PRESETS.map(([n, nz, b]) => `<option value="${n}">${n} · ${nz} / ${b} °C</option>`).join("")}</select></label>`]);
+    if (ctrls.includes("cooldown")) acts.push([ctrls.indexOf("cooldown"), keyHTML({ act: "cooldown", icon: "mdi-snowflake", name: "Cooldown", color: STATES.idle.color.replace("#9aa0a6", "#4fc3f7") }, show)]);
+    if (acts.length) parts.push([Math.min(...acts.map((a) => a[0])), `<div class="row">${acts.sort((a, b) => a[0] - b[0]).map((a) => a[1]).join("")}</div>`]);
+    return parts.sort((a, b) => a[0] - b[0]).map((p) => p[1]).join("");
   },
   tools(ctrls, m) {
-    const activeTool = 1;
     const rows = [];
+    const printing = sim.state === "printing";
     for (let i = 1; i <= m.tools; i++) {
-      const chips = [];
+      const items = [];
       for (const id of ctrls) {
-        if (id === "material") chips.push(`<span class="tchip"><i class="mdi mdi-printer-3d-nozzle-outline"></i>${m.materials[i - 1]}</span>`);
-        if (id === "nozzle_diameter") chips.push(`<span class="tchip"><i class="mdi mdi-diameter-variant"></i>${m.dia[i - 1].toFixed(1)} mm</span>`);
-        if (id === "nozzle_type") {
-          if (m.hf[i - 1]) chips.push(`<span class="tchip"><i class="mdi mdi-speedometer"></i>High-flow</span>`);
-          if (m.hard[i - 1]) chips.push(`<span class="tchip"><i class="mdi mdi-diamond-stone"></i>Hardened</span>`);
-          if (!m.hf[i - 1] && !m.hard[i - 1]) chips.push(`<span class="tchip">Standard nozzle</span>`);
-        }
-        if (id === "print_fan") chips.push(`<span class="tchip"><i class="mdi mdi-fan"></i>${L(`fan:${i}`)}</span>`);
-        if (id === "heatbreak_fan") chips.push(`<span class="tchip"><i class="mdi mdi-fan-chevron-up"></i>${L(`hb:${i}`)}</span>`);
+        if (id === "material") items.push(readout("mdi-printer-3d-nozzle-outline", `=${m.tools > 1 ? `T${i} ` : ""}${m.materials[i - 1]}`, { title: `${m.tools > 1 ? `Tool ${i} ` : ""}material`, color: printing && i === 1 ? STATES.printing.color : undefined }));
+        if (id === "nozzle_diameter") items.push(readout("mdi-diameter-variant", `=${m.dia[i - 1].toFixed(1)} mm`, { title: "Nozzle diameter" }));
+        if (id === "nozzle_type" && (m.hf[i - 1] || m.hard[i - 1])) items.push(readout(m.hf[i - 1] ? "mdi-speedometer" : "mdi-diamond-stone", "", { iconOnly: true, title: m.hf[i - 1] ? "High-flow nozzle" : "Hardened nozzle" }));
+        if (id === "print_fan") items.push(readout("mdi-fan", `fan:${i}`, { title: "Print fan speed (RPM)", spin: printing && i === 1 }));
+        if (id === "heatbreak_fan") items.push(readout("mdi-fan-chevron-up", `hb:${i}`, { title: "Heatbreak fan speed (RPM)", spin: (sim.now[m.tools > 1 ? `nozzle_${i}` : "nozzle"] || 0) > 50 }));
       }
-      const act = ctrls.includes("active") && i === activeTool && JOB_STATES.includes(sim.state);
-      if (chips.length || ctrls.includes("active")) {
-        rows.push(`<div class="tool"><span class="tbadge${act ? " active" : ""}" title="${act ? "Active tool" : ""}">${m.tools > 1 ? `T${i}` : "Nozzle"}</span>${chips.join("")}</div>`);
-      }
+      if (items.length) rows.push([ctrls.find((c) => c !== "mmu_slots"), `<div class="row">${items.join("")}</div>`]);
     }
     if (ctrls.includes("mmu_slots") && m.mmu) {
-      rows.splice(ctrls.indexOf("mmu_slots") === 0 ? 0 : rows.length, 0, `<div class="tool"><span class="tbadge">MMU</span><div class="slots">${m.slots.map((mat, j) =>
-        `<div class="slot${JOB_STATES.includes(sim.state) && j === 1 ? " active" : ""}"><b>Slot ${j + 1}</b>${mat}</div>`).join("")}</div></div>`);
+      const row = `<div class="row">${m.slots.map((mat, j) => readout("mdi-numeric-" + (j + 1) + "-circle-outline", `=${mat}`, { title: `Slot ${j + 1}`, color: JOB_STATES.includes(sim.state) && j === 1 ? STATES.printing.color : "var(--disabled)" })).join("")}</div>`;
+      if (ctrls.indexOf("mmu_slots") === 0) rows.unshift(["mmu", row]); else rows.push(["mmu", row]);
     }
-    return rows.join("");
+    return rows.map((r) => r[1]).join("");
   },
   motion(ctrls) {
-    const parts = [];
-    const reads = [];
-    for (const id of ctrls) {
-      if (id === "speed") {
-        parts.push(`<div class="trow"><div class="who"><i class="mdi mdi-speedometer"></i>Print speed</div>
-          <div class="num"><button data-act="speed" data-d="-10" aria-label="Slower"><i class="mdi mdi-minus"></i></button>
-          <input type="number" min="20" max="999" value="${ui.speed}" data-change="speed" aria-label="Print speed"><span class="u">%</span>
-          <button data-act="speed" data-d="10" aria-label="Faster"><i class="mdi mdi-plus"></i></button></div></div>`);
-      } else {
-        reads.push(`<div class="read"><div class="l">${id.toUpperCase()} position</div><div class="v">${L(id)}</div></div>`);
-        if (ctrls.filter((c) => c !== "speed").at(-1) === id) parts.push(`<div class="reads">${reads.join("")}</div>`);
-      }
-    }
-    return parts.join("");
+    return `<div class="row">${ctrls.map((id) => id === "speed" ? fieldGroup("speed", ui.speed, "%", "Print speed")
+      : readout("mdi-axis-arrow", "position", { title: "Position X, Y, Z (mm)" })).join("")}</div>`;
   },
-  camera(ctrls) {
-    const c = cfg.camera, v = camView(c, ui.fullFrame);
-    const out = [];
+  camera(ctrls, m, f) {
+    const c = cfg.camera, show = showOf(f), name = m.cameras[ui.camera] || m.cameras[0];
+    const crop = ui.crops[`${ui.model}:${ui.camera}`];
+    const v = crop && ui.cropping ? crop : { x: 0, y: 0, w: 100, h: 100 };
     const keys = [];
     for (const id of ctrls) {
-      if (id === "picture") {
-        out.push(`<div class="cam" style="aspect-ratio:${v.w} / ${v.h}">
-          <svg viewBox="${v.x} ${v.y} ${v.w} ${v.h}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(model().camera)}">
-          <g class="scene" transform="${camTransform(c)}">${camScene(sim.state, sim.progress, ui.live, sim.t)}</g></svg>
-          ${ctrls.includes("last_updated") ? `<div class="over">${L("camtime")}</div>` : ""}
-          ${ui.live ? `<span class="live">LIVE</span>` : ""}</div>`);
-      }
-      if (id === "live") keys.push(`<button class="key" data-act="live" aria-pressed="${ui.live}"><i class="mdi ${ui.live ? "mdi-video" : "mdi-video-outline"}"></i>${ui.live ? "Live" : "Snapshot"}</button>`);
-      if (id === "full_frame") keys.push(`<button class="key" data-act="fullframe" aria-pressed="${ui.fullFrame}" ${c.crop ? "" : "disabled"}><i class="mdi ${ui.fullFrame ? "mdi-crop" : "mdi-crop-free"}"></i>${ui.fullFrame ? "Cropped" : "Full frame"}</button>`);
+      if (id === "camera_buttons") m.cameras.forEach((cam, i) => keys.push(keyHTML({ act: "camera", arg: i, icon: "mdi-cctv", name: cam, label: `Camera ${cam}`, pressed: i === ui.camera }, show)));
+      if (id === "camera_toggle") { const next = (ui.camera + 1) % m.cameras.length; keys.push(keyHTML({ act: "camera", arg: next, icon: "mdi-camera-switch", name, label: `Camera ${name}. Tap for ${m.cameras[next]}`, pressed: false }, show)); }
+      if (id === "custom_crop") keys.push(keyHTML({ act: "crop", icon: "mdi-crop", name: "Crop", label: ui.cropping ? "Custom crop: on. Tap two corners on the picture; tap again to go back" : "Custom crop", pressed: ui.cropping }, show));
     }
-    if (keys.length) out.push(`<div class="row">${keys.join("")}</div>`);
-    if (!ctrls.includes("picture") && ctrls.includes("last_updated")) out.unshift(`<div class="read"><div class="l">Camera</div><div class="v">${L("camtime")}</div></div>`);
-    return out.join("");
+    const hint = !ui.cropping ? "" : ui.first ? "Tap the opposite corner of the custom crop area" : "Tap a corner to start selection of a crop area";
+    const W = 1600 * v.w / 100, H = 900 * v.h / 100;
+    return `<div class="shot${ui.cropping ? " cropping" : ""}" data-shot style="aspect-ratio:${W} / ${H}" role="img" aria-label="Camera ${esc(name)}">
+        <svg viewBox="${16 * v.x} ${9 * v.y} ${W} ${H}" preserveAspectRatio="xMidYMid slice"><g class="scene">${camScene()}</g></svg>
+        <div class="area" hidden></div><div class="hint">${hint}</div><div class="time" data-live="time">${esc(live("time"))}</div></div>
+      ${keys.length ? `<div class="row wraps">${keys.join("")}</div>` : ""}`;
   },
 };
 
-// ---------- Graph ----------
-function graphHTML(m) {
-  const keys = heaterKeys(m);
-  return `<div class="graph" data-graph>
-    <div class="g-top">
-      <div class="g-chips" role="group" aria-label="Time range">${RANGES.map(([s, l]) => `<button class="chip" data-act="range" data-arg="${s}" aria-pressed="${cfg.temps.range === s}">${l}</button>`).join("")}</div>
-      <button class="chip" data-act="targets" aria-pressed="${cfg.temps.show_targets}"><span class="ln dash"></span>Targets</button>
-    </div>
-    <div class="g-chips" style="margin-bottom:4px">${keys.map((k) => `<button class="chip lg" data-act="legend" data-arg="${k}" aria-pressed="${!ui.hidden.has(k)}" style="--c:${heaterColor(k)}"><span class="ln"></span>${heaterLabel(k, m.tools > 1)}</button>`).join("")}</div>
-    <div class="g-box"><svg class="g" role="img" aria-label="Temperature history"></svg><div class="g-tip"></div></div>
-    <div class="g-note">Solid lines are temperatures, dashed lines are targets. Tap the legend to hide a line.</div>
-  </div>`;
+// ---------- The camera's picture (simulated) ----------
+function camScene() {
+  const state = sim.state, p = sim.progress == null ? 0 : sim.progress / 100;
+  const hasObj = !["idle", "error", "busy"].includes(state) && p > 0;
+  const hObj = hasObj ? 240 * p : 0, top = 700 - hObj, parked = !JOB_STATES.includes(state);
+  const gy = parked ? 150 : top - 200, tx = parked ? 1180 : cfg.camera.view === "live" ? 700 + Math.sin(sim.t / 3) * 90 : 740;
+  const cam2 = ui.camera === 1;
+  return `<defs><linearGradient id="cbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34373c"/><stop offset="1" stop-color="#141517"/></linearGradient>
+    <linearGradient id="csh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a352f"/><stop offset="1" stop-color="#211e1b"/></linearGradient></defs>
+    <rect width="1600" height="900" fill="url(#cbg)"/>
+    ${cam2 ? `<rect x="300" y="120" width="1000" height="660" rx="10" fill="url(#csh)" stroke="#9a8558" stroke-width="5"/>
+      ${hasObj ? `<rect x="700" y="360" width="200" height="180" fill="#e8622e" opacity="${0.4 + p * 0.6}"/>` : ""}
+      <rect x="0" y="${parked ? 60 : 420}" width="1600" height="26" fill="#9aa0a6"/><rect x="${tx - 10}" y="${parked ? 30 : 390}" width="150" height="90" rx="14" fill="#fa6831"/>` : `
+    <rect x="80" y="0" width="70" height="900" fill="#1b1c1e"/><rect x="1450" y="0" width="70" height="900" fill="#1b1c1e"/>
+    <path d="M250 830 L1350 830 L1215 560 L385 560 Z" fill="url(#csh)" stroke="#9a8558" stroke-width="5"/>
+    ${hasObj ? `<rect x="680" y="${top}" width="240" height="${hObj}" fill="#e8622e"/><path d="M680 ${top} L920 ${top} L890 ${top - 40} L710 ${top - 40} Z" fill="#ff8a55"/>` : ""}
+    <rect x="150" y="${gy}" width="1300" height="26" fill="#9aa0a6"/>
+    <rect x="${tx}" y="${gy - 50}" width="130" height="160" rx="16" fill="#fa6831"/>
+    <circle cx="${tx + 65}" cy="${gy + 25}" r="38" fill="#232427"/>
+    <path d="M${tx + 52} ${gy + 110} L${tx + 78} ${gy + 110} L${tx + 65} ${gy + 140} Z" fill="#d4a94a"/>`}`;
 }
-function graphGeom(box) {
-  const m = model(), W = box.clientWidth, H = 180, pad = { l: 34, r: 74, t: 8, b: 20 };
-  const range = cfg.temps.range, tEnd = sim.t, tStart = tEnd - range;
-  let i0 = sim.times.findIndex((t) => t >= tStart); if (i0 < 0) i0 = 0;
-  const keys = heaterKeys(m).filter((k) => !ui.hidden.has(k));
-  let max = 60;
-  for (const k of keys) for (let i = i0; i < sim.times.length; i++) { max = Math.max(max, sim.cur[k][i], cfg.temps.show_targets ? sim.tgt[k][i] : 0); }
-  const step = max > 150 ? 50 : 25, top = Math.ceil((max + 8) / step) * step;
-  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
-  const x = (t) => pad.l + ((t - tStart) / range) * pw, y = (v) => pad.t + (1 - v / top) * ph;
-  return { m, W, H, pad, range, tStart, tEnd, i0, keys, top, step, pw, ph, x, y };
+
+// ---------- The graph ----------
+function graphHTML(m) {
+  return `<div class="graph" data-graph>
+    <div class="g-top"><div class="g-chips" role="group" aria-label="Time range">${RANGES.map(([s, l]) => `<button class="chip" data-act="range" data-arg="${s}" aria-pressed="${cfg.temps.range === s}">${l}</button>`).join("")}</div>
+      <button class="chip" data-act="targets" aria-pressed="${cfg.temps.show_targets}"><span class="ln dash"></span>Targets</button></div>
+    <div class="g-chips" style="margin-bottom:4px">${heaterKeys(m).map((k) => `<button class="chip lg" data-act="legend" data-arg="${k}" aria-pressed="${!ui.hidden.has(k)}" style="--c:${heaterColor(k)}"><span class="ln"></span>${heaterLabel(k, m.tools > 1)}</button>`).join("")}</div>
+    <div class="g-box"><svg role="img" aria-label="Temperature history"></svg><div class="g-tip"></div></div>
+  </div>`;
 }
 function drawGraph(panel) {
   const box = $(".g-box", panel), svg = $("svg", box);
-  if (!box.clientWidth) return;
-  const g = graphGeom(box);
-  const { W, H, pad, keys, top, step, x, y, i0 } = g;
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const W = box.clientWidth;
+  if (!W) return;
+  const m = model(), H = 170, pad = { l: 34, r: 70, t: 8, b: 20 };
+  const range = cfg.temps.range, tStart = sim.t - range;
+  let i0 = sim.times.findIndex((t) => t >= tStart); if (i0 < 0) i0 = 0;
+  const keys = heaterKeys(m).filter((k) => !ui.hidden.has(k));
+  let max = 60;
+  for (const k of keys) for (let i = i0; i < sim.times.length; i++) max = Math.max(max, sim.cur[k][i], cfg.temps.show_targets ? sim.tgt[k][i] : 0);
+  const step = max > 150 ? 50 : 25, top = Math.ceil((max + 8) / step) * step;
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  const x = (t) => pad.l + ((t - tStart) / range) * pw, y = (v) => pad.t + (1 - v / top) * ph;
   let s = "";
   for (let v = 0; v <= top; v += step) s += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${pad.l - 6}" y="${y(v) + 4}" text-anchor="end" font-size="10" fill="var(--axis)">${v}°</text>`;
-  const ticks = g.pw < 260 ? 2 : g.pw < 380 ? 3 : 4;
+  const ticks = pw < 260 ? 2 : pw < 380 ? 3 : 4;
   for (let j = 0; j <= ticks; j++) {
-    const t = g.tStart + (g.range * j) / ticks;
+    const t = tStart + (range * j) / ticks;
     s += `<text x="${x(t)}" y="${H - 5}" text-anchor="${j === 0 ? "start" : j === ticks ? "end" : "middle"}" font-size="10" fill="var(--axis)">${fmtClock(clock(t))}</text>`;
   }
   const ends = [];
@@ -800,28 +834,23 @@ function drawGraph(panel) {
     const col = heaterColor(k);
     if (cfg.temps.show_targets) {
       let d = "", on = false;
-      for (let i = i0; i < sim.times.length; i++) {
-        const v = sim.tgt[k][i];
-        if (v > 0) { d += `${on ? "L" : "M"}${x(sim.times[i]).toFixed(1)} ${y(v).toFixed(1)}`; on = true; } else on = false;
-      }
+      for (let i = i0; i < sim.times.length; i++) { const v = sim.tgt[k][i]; if (v > 0) { d += `${on ? "L" : "M"}${x(sim.times[i]).toFixed(1)} ${y(v).toFixed(1)}`; on = true; } else on = false; }
       if (d) s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="1.5" stroke-dasharray="5 4" opacity=".85"/>`;
     }
     let d = "";
     for (let i = i0; i < sim.times.length; i++) d += `${i === i0 ? "M" : "L"}${x(sim.times[i]).toFixed(1)} ${y(sim.cur[k][i]).toFixed(1)}`;
     s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`;
-    const last = sim.cur[k][sim.cur[k].length - 1];
+    const last = sim.cur[k].at(-1);
     ends.push({ k, y: y(last), v: last, col });
   }
   ends.sort((a, b) => a.y - b.y);
   for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
   const xe = W - pad.r;
-  for (const e of ends) {
-    s += `<circle cx="${xe}" cy="${y(e.v)}" r="3.5" fill="${e.col}" stroke="var(--graph-bg)" stroke-width="2"/>`;
-    s += `<text x="${xe + 8}" y="${e.y + 4}" font-size="11" fill="var(--text)">${heaterLabel(e.k, true)} ${Math.round(e.v)}°</text>`;
-  }
-  s += `<g class="hover"></g><rect class="hit" x="${pad.l}" y="0" width="${g.pw}" height="${H}" fill="transparent"/>`;
+  for (const e of ends) s += `<circle cx="${xe}" cy="${y(e.v)}" r="3.5" fill="${e.col}" stroke="#121315" stroke-width="2"/><text x="${xe + 8}" y="${e.y + 4}" font-size="11" fill="#e6e6e8">${heaterLabel(e.k, true)} ${Math.round(e.v)}°</text>`;
+  s += `<g class="hover"></g>`;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = s;
-  panel._g = g;
+  panel._g = { W, H, pad, pw, range, tStart, i0, keys, x, y };
   if (!svg._bound) {
     svg._bound = true;
     svg.addEventListener("pointermove", (ev) => { panel._hx = ev.clientX - svg.getBoundingClientRect().left; drawHover(panel); });
@@ -830,19 +859,18 @@ function drawGraph(panel) {
   drawHover(panel);
 }
 function drawHover(panel) {
-  const g = panel._g, svg = $("svg", panel), tip = $(".g-tip", panel), layer = $("g.hover", svg);
+  const g = panel._g, tip = $(".g-tip", panel), layer = $("g.hover", panel);
   if (!g || !layer) return;
   if (panel._hx == null || panel._hx < g.pad.l || panel._hx > g.W - g.pad.r) { layer.innerHTML = ""; tip.style.display = "none"; return; }
   const t = g.tStart + ((panel._hx - g.pad.l) / g.pw) * g.range;
   let i = g.i0, best = Infinity;
   for (let j = g.i0; j < sim.times.length; j++) { const d = Math.abs(sim.times[j] - t); if (d < best) { best = d; i = j; } }
   const X = g.x(sim.times[i]);
-  let s = `<line x1="${X}" x2="${X}" y1="${g.pad.t}" y2="${g.H - g.pad.b}" stroke="var(--axis)" stroke-dasharray="2 3"/>`;
-  let rows = "";
+  let s = `<line x1="${X}" x2="${X}" y1="${g.pad.t}" y2="${g.H - g.pad.b}" stroke="var(--axis)" stroke-dasharray="2 3"/>`, rows = "";
   for (const k of g.keys) {
     const v = sim.cur[k][i], tg = sim.tgt[k][i], col = heaterColor(k);
-    s += `<circle cx="${X}" cy="${g.y(v)}" r="4" fill="${col}" stroke="var(--graph-bg)" stroke-width="2"/>`;
-    rows += `<div class="tr"><span class="sw" style="--c:${col}"></span><span>${heaterLabel(k)}</span><span class="tv">${v.toFixed(1)}°${tg > 0 ? ` → ${tg}°` : ""}</span></div>`;
+    s += `<circle cx="${X}" cy="${g.y(v)}" r="4" fill="${col}" stroke="#121315" stroke-width="2"/>`;
+    rows += `<div class="tr"><span class="sw" style="--c:${col}"></span><span>${heaterLabel(k)}</span><span>${v.toFixed(1)}°${tg > 0 ? ` → ${tg}°` : ""}</span></div>`;
   }
   layer.innerHTML = s;
   tip.innerHTML = `<div class="tt">${fmtClock(clock(sim.times[i]))}</div>${rows}`;
@@ -851,315 +879,305 @@ function drawHover(panel) {
   tip.style.left = `${X + 12 + tw > g.W ? X - 12 - tw : X + 12}px`;
 }
 
+// ---------- Rows that never overflow: items that do not fit are left out, the last first ----------
+function fitRows(root = document) {
+  for (const row of $$(".row:not(.wraps)", root)) {
+    const items = [...row.children].flatMap((el) => (el.classList.contains("group") ? [el] : [el]));
+    items.forEach((el) => { el.removeAttribute("data-dropped"); if (el.classList.contains("group")) [...el.children].forEach((c) => c.removeAttribute("data-dropped")); });
+    const width = row.clientWidth;
+    if (!width) continue;
+    const gap = parseFloat(getComputedStyle(row).columnGap) || 10;
+    let used = 0, dropping = false;
+    for (const el of items) {
+      const parts = el.classList.contains("group") ? [...el.children] : [el];
+      const need = parts.reduce((a, p) => a + (Number(p.dataset.min) || 36), 0) + (parts.length - 1) * gap;
+      const next = used + (used ? gap : 0) + need;
+      if (dropping || next > width + 0.5) { dropping = true; parts.forEach((p) => p.setAttribute("data-dropped", "")); continue; }
+      used = next;
+    }
+  }
+}
+
 // ---------- Live update (each simulated step) ----------
 function updateLive() {
   $$("[data-live]").forEach((el) => { const v = live(el.dataset.live); if (el.textContent !== v) el.textContent = v; });
-  $$("[data-live-w]").forEach((el) => { el.style.width = `${sim.state === "idle" ? 0 : sim.progress ?? 0}%`; });
   $$("[data-graph]").forEach(drawGraph);
-  $$(".cam g.scene, .crop-stage g.scene").forEach((g) => { g.innerHTML = camScene(sim.state, sim.progress, ui.live, sim.t); });
-  $$(".pc-card[data-card]").forEach(updateEdge);
-}
-function updateEdge(card) {
-  const svg = $(".pc-edge", card), r = $("rect", svg);
-  const w = card.clientWidth, h = card.clientHeight;
-  r.setAttribute("x", 1.5); r.setAttribute("y", 1.5); r.setAttribute("width", Math.max(0, w - 3)); r.setAttribute("height", Math.max(0, h - 3));
-  const p = JOB_STATES.includes(sim.state) ? sim.progress : 0;
-  r.style.strokeDasharray = `${p} ${100 - p + 0.01}`;
-  r.style.display = p ? "" : "none";
+  $$(".shot g.scene").forEach((g) => { g.innerHTML = camScene(); });
+  $$("[data-card]").forEach((card) => {
+    const e = $("[data-edge]", card), html = edgeHTML();
+    if (e) { const t = document.createElement("div"); t.innerHTML = html; const n = $("[data-edge]", t); if (n) e.setAttribute("style", n.getAttribute("style")); }
+  });
 }
 
 // ---------- Editor ----------
-function sw(name, label, help, checked) {
-  return `<div class="sw-row"><div class="d"><span>${label}</span>${help ? `<span class="help">${help}</span>` : ""}</div>
+function sw(name, label, helper, checked) {
+  return `<div class="sw-row"><div class="d"><span>${label}</span>${helper ? `<span class="help">${helper}</span>` : ""}</div>
     <label class="switch"><input type="checkbox" data-change="opt" data-arg="${name}" ${checked ? "checked" : ""} aria-label="${esc(label)}"><span></span></label></div>`;
 }
-function sortableHTML(listId, ids, labelOf, opts = {}) {
-  const min = opts.min ?? 1;
-  return `<div class="sortable" data-list="${listId}">${ids.map((id) => {
-    const [label, icon] = labelOf(id);
-    return `<div class="srow" data-id="${id}"><i class="mdi mdi-drag handle" aria-label="Drag to sort"></i>
-      <span class="lbl"><i class="mdi ${icon}"></i><span>${esc(label)}</span></span>
-      ${opts.edit ? `<button class="ib" data-act="edit" data-arg="${id}" aria-label="Edit"><i class="mdi mdi-pencil"></i></button>` : ""}
-      <button class="ib" data-act="rm" data-list="${listId}" data-arg="${id}" aria-label="Remove" ${ids.length <= min ? "disabled" : ""}><i class="mdi mdi-close"></i></button></div>`;
-  }).join("")}</div>`;
+function sel(name, label, options, value, helper) {
+  return `<div class="field-ed"><label>${label}</label><select data-change="opt-sel" data-arg="${name}">${options.map(([v, l]) => `<option value="${v}" ${String(v) === String(value) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>${helper ? `<span class="help">${helper}</span>` : ""}</div>`;
 }
-function addSelect(listId, choices, placeholder) {
-  if (!choices.length) return "";
-  return `<select class="add-sel" data-change="add" data-list="${listId}" aria-label="${esc(placeholder)}"><option value="">${esc(placeholder)}</option>
-    ${choices.map(([id, l]) => `<option value="${id}">${esc(l)}</option>`).join("")}</select>`;
+// Home Assistant's select selector with multiple and reorder: chips to drag, and Add below
+function chipsField(listId, label, ids, all, helper) {
+  const name = (id) => all.find((c) => c[0] === id)?.[1] ?? id;
+  const more = all.filter((c) => !ids.includes(c[0]));
+  return `<div class="field-ed"><span class="flabel">${label}</span>
+    <div class="chips" data-list="${listId}">${ids.map((id) => `<span class="ichip" data-id="${id}"><i class="mdi mdi-drag"></i>${esc(name(id))}
+      <button data-act="rm" data-list="${listId}" data-arg="${id}" aria-label="Remove ${esc(name(id))}" ${ids.length <= 1 ? "disabled" : ""}><i class="mdi mdi-close-circle"></i></button></span>`).join("")}</div>
+    ${more.length ? `<select class="add-sel" data-change="add" data-list="${listId}" aria-label="Add to ${esc(label)}"><option value="">Add</option>${more.map(([id, l]) => `<option value="${id}">${esc(l)}</option>`).join("")}</select>` : ""}
+    ${helper ? `<span class="help">${helper}</span>` : ""}</div>`;
 }
-function editorHTML() {
-  return ui.editing ? featureEditorHTML(ui.editing) : mainEditorHTML();
-}
+function editorHTML() { return ui.editing ? featureEditorHTML(ui.editing) : mainEditorHTML(); }
 function mainEditorHTML() {
-  const m = model();
-  const feats = cfg.features.filter((f) => supported(f.kind, m)).map((f) => f.kind);
-  const missing = Object.keys(FEATURES).filter((k) => supported(k, m) && !cfg.features.some((f) => f.kind === k)).map((k) => [k, FEATURES[k].name]);
-  return `<div class="ed">
-    <div class="ed-head"><i class="mdi mdi-printer-3d"></i>Prusa Connect card configuration</div>
-    <div class="ed-body">
-      <div class="field"><label for="ed-dev">Printer</label>
-        <select id="ed-dev" data-change="model">${Object.entries(MODELS).map(([id, x]) => `<option value="${id}" ${id === ui.model ? "selected" : ""}>${esc(x.device)} (${x.name})</option>`).join("")}</select>
-        <span class="help">Only printers from the Prusa Connect integration are listed. The card finds the printer's entities itself.</span></div>
-      <details class="exp"><summary><i class="mdi mdi-text-box-outline"></i>Content <span class="tag">Tile card</span></summary>
-        <div class="exp-body">
-          <div class="field"><label>Name</label><input type="text" value="" placeholder="${esc(m.device)} (device name)" aria-label="Name"></div>
-          <div class="field"><label>State content</label><input type="text" value="State, Progress, Time remaining" aria-label="State content" readonly></div>
-          <span class="help">This is Home Assistant's own tile card editor. The icon and entity fields are hidden, because the card sets them.</span>
-        </div></details>
-      <details class="exp"><summary><i class="mdi mdi-gesture-tap"></i>Interactions <span class="tag">Tile card</span></summary>
-        <div class="exp-body"><span class="help">Tap the title row: expand or collapse. Hold and double tap: as in any tile card.</span></div></details>
-      <details class="exp" open><summary><i class="mdi mdi-list-box-outline"></i>Features <span class="tag">Tile card</span></summary>
-        <div class="exp-body">
-          <div class="field"><span class="flabel">Features position</span><div class="segf"><button aria-pressed="true">Inline</button><button aria-pressed="false">Bottom</button></div></div>
-          ${sortableHTML("features", feats, (k) => [FEATURES[k].name, FEATURES[k].icon], { edit: true, min: 0 })}
-          ${addSelect("features", missing, "Add feature")}
-          <span class="help">The Prusa features appear in the tile card's own feature picker, next to Home Assistant's features.</span>
-        </div></details>
-      <details class="exp" open><summary><i class="mdi mdi-palette-outline"></i>Prusa</summary>
-        <div class="exp-body">
-          <div class="field"><label for="ed-style">Style</label>
-            <select id="ed-style" data-change="style"><option value="">Model's style (${esc(STYLES[m.style].label)})</option>
-            ${Object.entries(STYLES).map(([id, s]) => `<option value="${id}" ${cfg.style === id ? "selected" : ""}>${esc(s.label)}</option>`).join("")}</select></div>
-          <div class="field"><span class="flabel">Features style</span><div class="segf" role="group">
-            ${[["match", "Match style"], ["flat", "Flat"], ["console", "Console"]].map(([id, l]) => `<button data-act="fstyle" data-arg="${id}" aria-pressed="${cfg.features_style === id}">${l}</button>`).join("")}</div></div>
-          ${sw("collapsible", "Collapsible", "Tap the title row to show or hide the features.", cfg.collapsible)}
-          ${sw("expanded_at_load", "Expanded at load", "Until you tap it, after which the card remembers.", cfg.expanded_at_load)}
-          ${sw("expand_when_job_starts", "Expand when a job starts", "When the printer starts printing.", cfg.expand_when_job_starts)}
-          ${sw("collapse_when_job_ends", "Collapse when the job ends", "When the job finishes or is stopped.", cfg.collapse_when_job_ends)}
-        </div></details>
-    </div></div>`;
+  const m = model(), sid = styleId(), styled = sid !== "none", p = cfg.progress_edge;
+  const feats = cfg.features.filter((f) => supported(f.kind, m));
+  const missing = Object.keys(FEATURES).filter((k) => supported(k, m) && !featureOf(k));
+  return `<div class="ed"><div class="ed-head">Prusa Connect card configuration</div><div class="ed-body">
+    <div class="field-ed"><label for="ed-dev">Printer *</label>
+      <select id="ed-dev" data-change="model">${Object.entries(MODELS).map(([id, x]) => `<option value="${id}" ${id === ui.model ? "selected" : ""}>${esc(x.device)}</option>`).join("")}</select></div>
+    <details class="exp"><summary><i class="mdi mdi-text-short"></i>Content</summary><div class="exp-body">
+      <div class="field-ed"><label>Name</label><input type="text" placeholder="Device name" aria-label="Name"></div>
+      <div class="field-ed"><label>State content</label><input type="text" value="State, Progress, Time remaining" aria-label="State content" readonly></div>
+    </div></details>
+    <details class="exp"><summary><i class="mdi mdi-gesture-tap"></i>Interactions</summary><div class="exp-body">
+      <div class="field-ed"><label>Icon tap behavior</label><select><option>More info</option></select></div></div></details>
+    <details class="exp" open><summary><i class="mdi mdi-list-box-outline"></i>Features</summary><div class="exp-body">
+      ${sel("features_position", "Features position", [["inline", "Inline"], ["bottom", "Bottom"]], "inline")}
+      <div class="feat-list" data-flist>${feats.map((f) => `<div class="list-row" data-id="${f.kind}"><i class="mdi mdi-drag handle"></i><i class="mdi ${FEATURES[f.kind].icon}"></i><span class="nm">${FEATURES[f.kind].picker}</span>
+        <button class="ib" data-act="edit" data-arg="${f.kind}" aria-label="Edit"><i class="mdi mdi-pencil"></i></button><button class="ib" data-act="rmf" data-arg="${f.kind}" aria-label="Remove"><i class="mdi mdi-delete-outline"></i></button></div>`).join("")}</div>
+      ${missing.length ? `<select class="add-sel" data-change="addf" aria-label="Add feature"><option value="">Add feature</option>${missing.map((k) => `<option value="${k}">${FEATURES[k].picker}</option>`).join("")}</select>` : ""}
+    </div></details>
+    <details class="exp" open><summary><i class="mdi mdi-printer-3d"></i>Prusa</summary><div class="exp-body">
+      ${sel("style", "Prusa style", Object.entries(STYLES).map(([id, s]) => [id, s.label]), sid, "Defaults to your printer model's style. None follows your theme.")}
+      ${styled ? sel("features_style", "Features style", [["match", "Match style"], ["flat", "Flat"], ["console", "Console"]], cfg.features_style, "Match style: the controls sit on the body. Flat: on a plain patch of the body's color. Console: in a channel pressed into the body.") : ""}
+      ${sel("enabled_color", "Enabled color", ENABLED_COLORS.map((c) => [c[0], c[1]]), cfg.enabled_color, "The color of keys that are on. Print controls keep their own colors.")}
+      ${sw("collapsible", "Collapsible", "Tapping the card shows or hides its features, in place of the card's Tap behavior (under Interactions). Tapping the icon still works as set.", cfg.collapsible)}
+      ${cfg.collapsible ? sw("expanded_at_load", "Expanded at load", "", cfg.expanded_at_load) + sw("expand_when_job_starts", "Expand when a job starts", "", cfg.expand_when_job_starts) + sw("collapse_when_job_ends", "Collapse when the job ends", "", cfg.collapse_when_job_ends) : ""}
+      ${sw("last_feature_full_width", "Last feature full width", "The features sit beside the title in two columns. When the last one ends up alone in its row, it stretches across both columns instead of leaving the other empty.", cfg.last_feature_full_width)}
+      ${chipsField("status_badge", "Status badge", cfg.status_badge || STATUS_BADGES.map((b) => b[0]), STATUS_BADGES, "Shown at the top right of the picture. When several apply, the first in this list shows.")}
+      ${sw("connection_badge", "Connection badge", "Shown at the bottom right of the picture: that the printer is connected, or that it is unavailable.", cfg.connection_badge)}
+      <details class="exp"><summary>Progress edge</summary><div class="exp-body">
+        ${sel("edge", "Edge", EDGES, p.edge)}
+        <div class="grid3">${[["thickness", "Thickness (px)"], ["starts_at", "Starts at (%)"], ["ends_at", "Ends at (%)"]].map(([k, l]) => `<div class="field-ed"><label>${l}</label><input type="number" value="${p[k]}" data-change="edge-num" data-arg="${k}"></div>`).join("")}</div>
+        ${sel("direction", "Direction", [["clockwise", "Clockwise"], ["counterclockwise", "Counterclockwise"]], p.direction)}
+        ${sel("color", "Color", [["state", "Follows the state"], ["thresholds", "Thresholds"]], p.color, "Follows the state: Prusa orange while printing, amber when paused, green when finished. Thresholds: green above 60%, amber above 20%, red below.")}
+        ${sw("show_percentage", "Show the percentage", "", p.show_percentage)}
+        <div class="field-ed"><span class="flabel">Show while</span><div class="checks">${SHOW_WHILE.map(([v, l]) => `<label><input type="checkbox" data-change="show-while" value="${v}" ${p.show_while.includes(v) ? "checked" : ""}>${l}</label>`).join("")}</div></div>
+      </div></details>
+    </div></details>
+  </div></div>`;
 }
 function featureEditorHTML(kind) {
-  const m = model(), f = cfg.features.find((x) => x.kind === kind), def = FEATURES[kind];
-  const ids = controlsOf(f, m);
-  const all = offered(kind, m);
-  const labelOf = (id) => { const c = all.find((x) => x[0] === id); return [c[1], c[2]]; };
-  const more = all.filter((c) => !ids.includes(c[0])).map((c) => [c[0], c[1]]);
+  const m = model(), f = featureOf(kind), def = FEATURES[kind];
   let extra = "";
-  if (kind === "temperatures") {
-    extra = `<div class="field"><label for="ed-range">Time range at load</label><select id="ed-range" data-change="range">${RANGES.map(([s, l]) => `<option value="${s}" ${cfg.temps.range === s ? "selected" : ""}>${l}</option>`).join("")}</select></div>
-      ${sw("show_targets", "Show targets", "Dashed lines for each heater's target.", cfg.temps.show_targets)}
-      ${m.chamber ? `<span class="help"><i class="mdi mdi-information-outline"></i> The chamber controls appear when the integration reports the chamber.</span>` : ""}`;
+  if (def.show) extra += sel("show", "Show", [["icons", "Icons"], ["names", "Names"], ["both", "Icons and names"]], showOf(f));
+  for (const [k, l, d] of def.options || []) extra += sw(`f:${k}`, l, "", f.opts[k] ?? d);
+  if (kind === "temperatures") extra += sel("range", "Hours to show", RANGES.map(([s, l]) => [s, l]), cfg.temps.range) + sw("show_targets", "Show targets", "Dashed lines for each heater's target.", cfg.temps.show_targets);
+  if (kind === "camera") {
+    extra = (m.cameras.length > 1 ? sel("camera", "Camera", m.cameras.map((c, i) => [i, c]), cfg.camera.camera ?? 0) : "")
+      + sel("view", "Camera view", [["auto", "Auto"], ["live", "Live"]], cfg.camera.view)
+      + sw("show_last_updated", "Show last updated", "", cfg.camera.show_last_updated)
+      + sw("full_width", "Full width", "", cfg.camera.full_width) + extra;
   }
-  if (kind === "camera") extra = cameraEditorHTML(m);
-  return `<div class="ed">
-    <div class="ed-head"><button data-act="back" aria-label="Back"><i class="mdi mdi-arrow-left"></i></button>${esc(def.name)} feature</div>
-    <div class="ed-body">
-      <div class="field"><span class="flabel">Controls</span>
-        ${sortableHTML(`ctrl:${kind}`, ids, labelOf)}
-        ${addSelect(`ctrl:${kind}`, more, "Add a control")}
-        <span class="help">Choose any of the controls, at least one, and drag them into order. ${f.controls ? `<a href="#" data-act="ctrl-reset" data-arg="${kind}">Back to the defaults</a>` : "These are the defaults."}</span></div>
-      ${extra}
-    </div></div>`;
-}
-function cameraEditorHTML(m) {
-  const c = cfg.camera, b = camBase(c.rotate);
-  const cr = c.crop;
-  const hint = ui.crop.mode === 1 ? "Tap a corner of the area to keep" : ui.crop.mode === 2 ? "Tap the opposite corner" : "";
-  return `<div class="field"><label for="ed-cam">Camera</label><select id="ed-cam"><option>${esc(m.camera)}</option></select></div>
-    <div class="field"><span class="flabel">View</span><div class="segf">${[["auto", "Auto"], ["live", "Live"]].map(([id, l]) => `<button data-act="camview" data-arg="${id}" aria-pressed="${c.view === id}">${l}</button>`).join("")}</div></div>
-    <div class="field"><span class="flabel">Crop</span>
-      <div class="crop-stage" data-crop style="aspect-ratio:${b.w} / ${b.h}">
-        <svg viewBox="${b.x} ${b.y} ${b.w} ${b.h}" aria-label="Camera picture, full frame"><g class="scene" transform="${camTransform(c)}">${camScene(sim.state, sim.progress, false, sim.t)}</g></svg>
-        <svg class="ov" viewBox="0 0 100 100" preserveAspectRatio="none">${cr ? `<path d="M0 0H100V100H0Z M${cr.x} ${cr.y}v${cr.h}h${cr.w}v${-cr.h}Z" fill="rgba(0,0,0,.55)" fill-rule="evenodd"/>
-          <rect x="${cr.x}" y="${cr.y}" width="${cr.w}" height="${cr.h}" fill="none" stroke="#fa6831" stroke-width="2" vector-effect="non-scaling-stroke"/>` : ""}<rect class="drag" fill="rgba(250,104,49,.18)" stroke="#fff" stroke-dasharray="4 3" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>
-        ${hint ? `<span class="crop-hint">${hint}</span>` : ""}
-      </div>
-      <div class="row" style="margin-top:6px">
-        <button class="key small" style="--key-bg:var(--field);--key-ink:var(--text)" data-act="crop-start"><i class="mdi mdi-crop"></i>${ui.crop.mode ? "Cancel" : cr ? "Crop again" : "Crop"}</button>
-        <button class="key small" style="--key-bg:var(--field);--key-ink:var(--text)" data-act="crop-reset" ${cr ? "" : "disabled"}><i class="mdi mdi-crop-free"></i>Reset</button>
-      </div>
-      <span class="help">${cr ? `Keeps x ${cr.x} %, y ${cr.y} %, ${cr.w} % wide, ${cr.h} % high.` : "Shows the full frame."} The crop is stored in the card, not on the printer.</span></div>
-    <div class="field"><span class="flabel">Rotate</span><div class="segf">${[0, 90, 180, 270].map((r) => `<button data-act="rotate" data-arg="${r}" aria-pressed="${c.rotate === r}">${r}°</button>`).join("")}</div></div>
-    ${sw("flip_h", "Flip horizontally", "", c.flip_h)}
-    ${sw("flip_v", "Flip vertically", "", c.flip_v)}
-    ${sw("full_width", "Full width", "The picture reaches the card's edges.", c.full_width)}`;
+  return `<div class="ed"><div class="ed-head"><button data-act="back" aria-label="Back"><i class="mdi mdi-arrow-left"></i></button>${esc(def.picker)}</div><div class="ed-body">
+    ${chipsField(`ctrl:${kind}`, "Controls", controlsOf(f, m), offered(kind, m).map((c) => [c[0], c[1]]))}
+    ${extra}</div></div>`;
 }
 
-// ---------- YAML ----------
+// ---------- YAML (options at their default are left out) ----------
 function yaml() {
-  const m = model(), out = ["type: custom:prusa-connect-card", `device: ${ui.model}_device_id`];
+  const m = model(), out = ["type: custom:prusa-connect-card", `entity: sensor.${m.device.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_state`];
   if (cfg.style) out.push(`style: ${cfg.style}`);
   if (cfg.features_style !== "console") out.push(`features_style: ${cfg.features_style}`);
-  for (const [k, d] of [["collapsible", true], ["expanded_at_load", false], ["expand_when_job_starts", true], ["collapse_when_job_ends", true]]) if (cfg[k] !== d) out.push(`${k}: ${cfg[k]}`);
-  const feats = cfg.features.filter((f) => supported(f.kind, m));
-  if (feats.length) out.push("features:");
-  for (const f of feats) {
+  if (cfg.enabled_color !== "info") out.push(`enabled_color: ${cfg.enabled_color}`);
+  for (const [k, d] of [["collapsible", true], ["expanded_at_load", false], ["expand_when_job_starts", true], ["collapse_when_job_ends", true], ["last_feature_full_width", true], ["connection_badge", true]]) if (cfg[k] !== d) out.push(`${k}: ${cfg[k]}`);
+  if (cfg.status_badge) { out.push("status_badge:"); cfg.status_badge.forEach((b) => out.push(`  - ${b}`)); }
+  const pe = Object.entries(cfg.progress_edge).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(PROGRESS_DEFAULTS[k]));
+  if (pe.length) { out.push("progress_edge:"); pe.forEach(([k, v]) => out.push(`  ${k}: ${Array.isArray(v) ? `[${v.join(", ")}]` : v}`)); }
+  out.push("features:");
+  for (const f of cfg.features.filter((x) => supported(x.kind, m))) {
     out.push(`  - type: ${FEATURES[f.kind].type}`);
     if (f.controls) { out.push("    controls:"); controlsOf(f, m).forEach((id) => out.push(`      - ${id}`)); }
-    if (f.kind === "temperatures") {
-      if (cfg.temps.range !== 3600) out.push(`    hours_to_show: ${+(cfg.temps.range / 3600).toFixed(2)}`);
-      if (!cfg.temps.show_targets) out.push("    show_targets: false");
-    }
+    if (f.show) out.push(`    show: ${f.show}`);
+    for (const [k, v] of Object.entries(f.opts)) out.push(`    ${k}: ${v}`);
+    if (f.kind === "temperatures") { if (cfg.temps.range !== 3600) out.push(`    hours_to_show: ${+(cfg.temps.range / 3600).toFixed(2)}`); if (!cfg.temps.show_targets) out.push("    show_targets: false"); }
     if (f.kind === "camera") {
       const c = cfg.camera;
+      if (c.camera) out.push(`    camera: ${m.cameras[c.camera].toLowerCase()}`);
       if (c.view !== "auto") out.push(`    camera_view: ${c.view}`);
-      if (c.crop) out.push(`    crop: { x: ${c.crop.x}, y: ${c.crop.y}, width: ${c.crop.w}, height: ${c.crop.h} }`);
-      if (c.rotate) out.push(`    rotate: ${c.rotate}`);
-      if (c.flip_h) out.push("    flip_horizontal: true");
-      if (c.flip_v) out.push("    flip_vertical: true");
-      if (c.full_width) out.push("    full_width: true");
+      if (!c.show_last_updated) out.push("    show_last_updated: false");
+      if (!c.full_width) out.push("    full_width: false");
     }
   }
+  out.push("features_position: inline");
   return out.join("\n");
 }
 
-// ---------- Gallery and colorways ----------
+// ---------- Gallery and styles ----------
 const GALLERY = [["mk4s", "printing", 42], ["coreone", "idle", null], ["xl", "paused", 63], ["mini", "finished", 100]];
+function miniCard(mid, sid, state, text, conn = true) {
+  const m = MODELS[mid], st = STYLES[sid];
+  return `<div class="pc-card fs-console ${sid !== "none" ? `styled tone-${st.tone}` : ""}" style="${styleVars(sid)}">
+    <div class="pc-head inline"><div class="pc-content">${pictureHTML(state, conn, null)}<div class="pc-text"><div class="pc-name">${esc(m.device)}</div><div class="pc-state">${text}</div></div></div>
+    <div class="pc-inline"><div class="row">${keyHTML({ act: "noop", icon: state === "paused" ? "mdi-play" : "mdi-pause", name: "", color: state === "paused" ? STATES.printing.color : STATES.paused.color, disabled: !JOB_STATES.includes(state) }, "icons")}${keyHTML({ act: "noop", icon: "mdi-stop", name: "", color: STATES.error.color, disabled: !JOB_STATES.includes(state) }, "icons")}</div></div></div></div>`;
+}
 function galleryHTML() {
   return GALLERY.map(([id, state, p]) => {
-    const m = MODELS[id], sid = m.style;
-    const text = JOB_STATES.includes(state) ? `${STATES[state].label} · ${p} %` : STATES[state].label;
-    return `<div class="g-item" tabindex="0" role="button" data-act="pick" data-arg="${id}" aria-label="Show the ${m.name}">
-      <div class="pc-card fs-console" style="${styleVars(sid, state)}">${titleHTML(m, id, state, text, "", false, "")}</div>
-      <div class="g-cap">${m.name}${id === ui.model ? " (shown)" : ""}</div></div>`;
+    const text = JOB_STATES.includes(state) ? `${STATES[state].label} · ${p} %` : `${STATES[state].label} · 12 minutes ago`;
+    return `<div class="g-item" tabindex="0" role="button" data-act="pick" data-arg="${id}" aria-label="Show the ${MODELS[id].name}">${miniCard(id, MODELS[id].style, state, text)}
+      <div class="g-cap">${MODELS[id].name}${id === ui.model ? " (shown)" : ""}</div></div>`;
   }).join("");
 }
-function colorwaysHTML() {
-  return Object.entries(STYLES).map(([id, s]) => `<div class="cw-item">
-    <div class="cw-body" style="${styleVars(id, "idle")}"><div class="cw-win">${Object.keys(MODELS).map((mid) => `<div class="pc-pic" style="--ring:transparent">${modelSVG(mid)}</div>`).join("")}</div></div>
-    <div class="cw-meta"><b>${esc(s.label)}</b><span class="muted">Default for: ${esc(s.models)}</span><br>
-      ${s.hex.map(([n, h]) => `<span class="hex"><i style="background:${h}"></i>${n} ${h}</span>`).join("") || `<span class="muted">Follows your Home Assistant theme.</span>`}</div></div>`).join("");
+function stylesHTML() {
+  return Object.entries(STYLES).map(([sid, s]) => `<div>${miniCard(sid === "none" ? "coreone" : Object.keys(MODELS).find((k) => MODELS[k].style === sid), sid, "printing", "Printing · 42 %")}
+    <div class="cw-meta"><b>${esc(s.label)}</b>${s.models ? `<span class="muted">Default for: ${esc(s.models)}</span><br>${s.hex.map(([n, h]) => `<span class="hex"><i style="background:${h}"></i>${n} ${h}</span>`).join("")}` : `<span class="muted">Follows your Home Assistant theme.</span>`}</div></div>`).join("");
 }
 
 // ---------- Rendering ----------
 function render() {
-  const m = model();
   $("#tb-model").innerHTML = Object.entries(MODELS).map(([id, x]) => `<button data-act="pick" data-arg="${id}" aria-pressed="${id === ui.model}">${x.name}</button>`).join("");
   $("#tb-state").innerHTML = Object.entries(STATES).map(([id, s]) => `<option value="${id}" ${id === sim.state ? "selected" : ""}>${s.label}</option>`).join("");
+  $("#tb-conn").innerHTML = [[true, "Yes"], [false, "No"]].map(([v, l]) => `<button data-act="conn" data-arg="${v}" aria-pressed="${ui.connected === v}">${l}</button>`).join("");
   $("#tb-theme").innerHTML = [["auto", "Auto"], ["light", "Light"], ["dark", "Dark"]].map(([id, l]) => `<button data-act="theme" data-arg="${id}" aria-pressed="${ui.theme === id}">${l}</button>`).join("");
   $("#dash-card").innerHTML = cardHTML("dash");
   $("#preview-card").innerHTML = cardHTML("preview");
   $("#editor").innerHTML = editorHTML();
   $("#gallery").innerHTML = galleryHTML();
-  $("#colorways").innerHTML = colorwaysHTML();
+  $("#styles").innerHTML = stylesHTML();
   $("#yaml").textContent = yaml();
+  $("#dialog").innerHTML = ui.dialog ? dialogHTML() : "";
+  fitRows();
   $$("[data-graph]").forEach(drawGraph);
-  $$(".pc-card[data-card]").forEach(updateEdge);
-  bindSortables();
-  bindCrop();
-  if (!m) return;
+  bindChips(); bindFeatureList(); bindScrubs(); bindShots();
+}
+function dialogHTML() {
+  return `<div class="dlg-scrim"><div class="dlg" role="alertdialog" aria-labelledby="dlg-t"><h3 id="dlg-t">Stop the print?</h3>
+    <p>${esc(model().device)} stops printing ${esc(model().job.file)}. A stopped print cannot be resumed.</p>
+    <div class="acts"><button data-act="dlg-no">Cancel</button><button class="warn" data-act="dlg-yes">Stop</button></div></div></div>`;
 }
 
-// ---------- Sorting by drag (pointer events, so touch works) ----------
-function bindSortables() {
-  $$(".sortable").forEach((list) => {
-    $$(".handle", list).forEach((hd) => {
-      hd.addEventListener("pointerdown", (ev) => {
-        ev.preventDefault();
-        const row = hd.closest(".srow");
-        row.classList.add("dragging");
-        hd.setPointerCapture(ev.pointerId);
-        const move = (e) => {
-          const rows = $$(".srow", list), at = rows.indexOf(row);
-          for (const [i, r] of rows.entries()) {
-            if (r === row) continue;
-            const bx = r.getBoundingClientRect(), mid = bx.top + bx.height / 2;
-            if (i < at && e.clientY < mid) { list.insertBefore(row, r); break; }
-            if (i > at && e.clientY > mid) { list.insertBefore(row, r.nextSibling); break; }
-          }
-        };
-        const up = () => {
-          hd.removeEventListener("pointermove", move); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up);
-          row.classList.remove("dragging");
-          setList(list.dataset.list, $$(".srow", list).map((r) => r.dataset.id));
-        };
-        hd.addEventListener("pointermove", move); hd.addEventListener("pointerup", up); hd.addEventListener("pointercancel", up);
-      });
+// ---------- Dragging: chips, and the features list ----------
+function dragSort(container, itemSel, handleSel, done) {
+  $$(handleSel, container).forEach((hd) => {
+    hd.addEventListener("pointerdown", (ev) => {
+      if (ev.target.closest("button")) return;
+      ev.preventDefault();
+      const item = hd.closest(itemSel);
+      item.classList.add("dragging");
+      hd.setPointerCapture(ev.pointerId);
+      const move = (e) => {
+        const items = $$(itemSel, container);
+        let best = null, bd = Infinity;
+        for (const it of items) { const b = it.getBoundingClientRect(); const d = Math.hypot(e.clientX - (b.left + b.width / 2), e.clientY - (b.top + b.height / 2)); if (d < bd) { bd = d; best = it; } }
+        if (!best || best === item) return;
+        const ai = items.indexOf(item), bi = items.indexOf(best);
+        container.insertBefore(item, ai < bi ? best.nextSibling : best);
+      };
+      const up = () => {
+        hd.removeEventListener("pointermove", move); hd.removeEventListener("pointerup", up); hd.removeEventListener("pointercancel", up);
+        item.classList.remove("dragging");
+        done($$(itemSel, container).map((r) => r.dataset.id));
+      };
+      hd.addEventListener("pointermove", move); hd.addEventListener("pointerup", up); hd.addEventListener("pointercancel", up);
     });
   });
 }
+function bindChips() { $$(".chips").forEach((c) => dragSort(c, ".ichip", ".ichip", (ids) => setList(c.dataset.list, ids))); }
+function bindFeatureList() {
+  const list = $("[data-flist]");
+  if (list) dragSort(list, ".list-row", ".handle", (ids) => { const m = model(); cfg.features = [...ids.map(featureOf), ...cfg.features.filter((f) => !supported(f.kind, m))]; render(); });
+}
 function getList(listId) {
-  const m = model();
-  if (listId === "features") return cfg.features.filter((f) => supported(f.kind, m)).map((f) => f.kind);
-  const f = cfg.features.find((x) => x.kind === listId.slice(5));
-  return controlsOf(f, m);
+  if (listId === "status_badge") return cfg.status_badge || STATUS_BADGES.map((b) => b[0]);
+  return controlsOf(featureOf(listId.slice(5)), model());
 }
 function setList(listId, ids) {
-  const m = model();
-  if (listId === "features") {
-    const keep = cfg.features.filter((f) => !supported(f.kind, m));
-    cfg.features = [...ids.map((k) => cfg.features.find((f) => f.kind === k) || { kind: k, controls: null }), ...keep];
-  } else {
-    const f = cfg.features.find((x) => x.kind === listId.slice(5));
-    f.controls = ids.join() === defaultsOf(f.kind, m).join() ? null : ids;
-  }
+  if (listId === "status_badge") cfg.status_badge = ids.join() === STATUS_BADGES.map((b) => b[0]).join() ? null : ids;
+  else { const f = featureOf(listId.slice(5)); f.controls = ids.join() === defaultsOf(f.kind, model()).join() ? null : ids; }
   render();
 }
 
-// ---------- Crop tool ----------
-function bindCrop() {
-  const stage = $("[data-crop]");
-  if (!stage) return;
-  const pt = (ev) => { const r = stage.getBoundingClientRect(); return { x: clamp(((ev.clientX - r.left) / r.width) * 100, 0, 100), y: clamp(((ev.clientY - r.top) / r.height) * 100, 0, 100) }; };
-  stage.addEventListener("click", (ev) => {
-    if (!ui.crop.mode) return;
-    const p = pt(ev);
-    if (ui.crop.mode === 1) { ui.crop = { mode: 2, p1: p }; render(); return; }
-    const a = ui.crop.p1, x = Math.min(a.x, p.x), y = Math.min(a.y, p.y), w = Math.abs(a.x - p.x), h = Math.abs(a.y - p.y);
-    if (w >= 5 && h >= 5) cfg.camera.crop = { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) };
-    ui.crop = { mode: 0, p1: null }; ui.fullFrame = false;
-    render();
+// ---------- Plus-minus keys: press and slide; the farther, the faster ----------
+function bindScrubs() {
+  $$("[data-scrub]").forEach((key) => {
+    key.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      key.setPointerCapture(ev.pointerId);
+      key.classList.add("active");
+      const id = key.dataset.scrub, x0 = ev.clientX, y0 = ev.clientY;
+      let dx = 0, acc = 0;
+      const input = key.parentElement.querySelector("input");
+      const get = () => (id === "speed" ? ui.speed : Math.round(sim.target[id] || 0));
+      const set = (v) => { if (id === "speed") ui.speed = clamp(v, 20, 999); else setTarget(id, v); input.value = get(); input.closest(".field").classList.toggle("off", !get()); };
+      const move = (e) => { const ddx = e.clientX - x0, ddy = y0 - e.clientY; dx = Math.abs(ddx) > Math.abs(ddy) ? ddx : ddy; };
+      const timer = setInterval(() => {
+        if (Math.abs(dx) < 6) return;
+        acc += Math.sign(dx) * Math.pow(Math.abs(dx) / 60, 1.5);
+        const whole = Math.trunc(acc);
+        if (whole) { acc -= whole; set(get() + whole); }
+      }, 50);
+      const up = () => { clearInterval(timer); key.classList.remove("active"); key.removeEventListener("pointermove", move); key.removeEventListener("pointerup", up); key.removeEventListener("pointercancel", up); render(); };
+      key.addEventListener("pointermove", move); key.addEventListener("pointerup", up); key.addEventListener("pointercancel", up);
+    });
   });
-  stage.addEventListener("pointermove", (ev) => {
-    const r = $("rect.drag", stage);
-    if (ui.crop.mode !== 2) { r.setAttribute("width", 0); return; }
-    const a = ui.crop.p1, p = pt(ev);
-    r.setAttribute("x", Math.min(a.x, p.x)); r.setAttribute("y", Math.min(a.y, p.y));
-    r.setAttribute("width", Math.abs(a.x - p.x)); r.setAttribute("height", Math.abs(a.y - p.y));
+}
+
+// ---------- Crop: two taps on the picture ----------
+function bindShots() {
+  $$("[data-shot]").forEach((shot) => {
+    const area = $(".area", shot);
+    const placeOf = (ev) => { const b = shot.getBoundingClientRect(); return { left: ev.clientX - b.left, top: ev.clientY - b.top, u: (ev.clientX - b.left) / b.width, v: (ev.clientY - b.top) / b.height }; };
+    const showArea = (a, b) => { Object.assign(area.style, { left: `${Math.min(a.left, b.left)}px`, top: `${Math.min(a.top, b.top)}px`, width: `${Math.abs(b.left - a.left)}px`, height: `${Math.abs(b.top - a.top)}px` }); area.hidden = false; };
+    if (ui.first && ui.first.shot === shot.closest("[data-card]").dataset.card) showArea(ui.first, ui.first);
+    shot.addEventListener("click", (ev) => {
+      if (!ui.cropping) return;
+      const where = shot.closest("[data-card]").dataset.card, pt = placeOf(ev);
+      const key = `${ui.model}:${ui.camera}`, cur = ui.crops[key] || { x: 0, y: 0, w: 100, h: 100 };
+      // The tapped point on the whole picture (%), through the crop shown
+      const whole = { x: cur.x + pt.u * cur.w, y: cur.y + pt.v * cur.h };
+      if (!ui.first) { ui.first = { ...pt, ...whole, shot: where }; render(); return; }
+      const a = ui.first;
+      ui.first = null;
+      const w = Math.abs(whole.x - a.x), h = Math.abs(whole.y - a.y);
+      if (w > 2 && h > 2) ui.crops[key] = { x: Math.min(a.x, whole.x), y: Math.min(a.y, whole.y), w, h };
+      render();
+    });
+    shot.addEventListener("pointermove", (ev) => { if (ui.first && ui.first.shot === shot.closest("[data-card]").dataset.card) showArea(ui.first, placeOf(ev)); });
   });
 }
 
 // ---------- Actions ----------
-function setTarget(key, v) {
-  const m = model();
-  sim.target[key] = clamp(Math.round(v) || 0, 0, heaterMax(key, m));
-}
+function setTarget(key, v) { sim.target[key] = clamp(Math.round(v) || 0, 0, heaterMax(key, model())); }
 function act(name, arg, el) {
   const m = model();
   switch (name) {
     case "noop": return;
     case "toggle": if (cfg.collapsible) { setOpen(!ui.open[arg], arg); render(); } return;
-    case "pick": if (arg !== ui.model) { ui.model = arg; ui.hidden.clear(); ui.editing = null; ui.crop = { mode: 0, p1: null }; startScenario(sim.state); loadOpen(); render(); } return;
+    case "pick": if (arg !== ui.model) { ui.model = arg; ui.hidden.clear(); ui.editing = null; ui.camera = 0; ui.cropping = !!ui.crops[`${arg}:0`]; ui.first = null; startScenario(sim.state); loadOpen(); render(); } return;
     case "theme": ui.theme = arg; if (arg === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", arg); render(); return;
-    case "pause_resume": changeState(sim.state === "paused" ? "printing" : "paused"); return;
-    case "stop":
-      if (ui.confirmStop > Date.now()) { ui.confirmStop = 0; changeState("stopped"); return; }
-      ui.confirmStop = Date.now() + 4000; render();
-      setTimeout(() => { if (ui.confirmStop && ui.confirmStop <= Date.now()) { ui.confirmStop = 0; render(); } }, 4100);
-      return;
-    case "tstep": setTarget(arg, (sim.target[arg] || 0) + Number(el.dataset.d)); render(); return;
-    case "preheat": {
-      const p = PRESETS.find((x) => x[0] === arg);
-      for (const k of heaterKeys(m)) setTarget(k, !p ? 0 : k === "bed" ? p[2] : k === "chamber" ? p[3] : p[1]);
-      render(); return;
-    }
+    case "conn": ui.connected = arg === "true"; render(); return;
+    case "pause": changeState("paused"); return;
+    case "resume": changeState("printing"); return;
+    case "stop": if (featureOf("print_controls")?.opts.ask_before_stopping === false) changeState("stopped"); else { ui.dialog = "stop"; render(); } return;
+    case "dlg-no": ui.dialog = null; render(); return;
+    case "dlg-yes": ui.dialog = null; changeState("stopped"); return;
+    case "cooldown": heaterKeys(m).forEach((k) => setTarget(k, 0)); ui.preheat = ""; render(); return;
     case "range": cfg.temps.range = Number(arg); render(); return;
     case "targets": cfg.temps.show_targets = !cfg.temps.show_targets; render(); return;
     case "legend": ui.hidden.has(arg) ? ui.hidden.delete(arg) : ui.hidden.add(arg); render(); return;
-    case "speed": ui.speed = clamp(ui.speed + Number(el.dataset.d), 20, 999); render(); return;
-    case "live": ui.live = !ui.live; render(); return;
-    case "fullframe": ui.fullFrame = !ui.fullFrame; render(); return;
-    case "fstyle": cfg.features_style = arg; render(); return;
-    case "edit": ui.editing = arg; ui.crop = { mode: 0, p1: null }; render(); return;
-    case "back": ui.editing = null; ui.crop = { mode: 0, p1: null }; render(); return;
-    case "rm": {
-      const listId = el.dataset.list, ids = getList(listId).filter((x) => x !== arg);
-      if (listId === "features" || ids.length) { if (listId === "features" && ui.editing === arg) ui.editing = null; setList(listId, ids); }
-      return;
-    }
-    case "ctrl-reset": cfg.features.find((f) => f.kind === arg).controls = null; render(); return;
-    case "camview": cfg.camera.view = arg; ui.live = arg === "live"; render(); return;
-    case "crop-start": ui.crop = { mode: ui.crop.mode ? 0 : 1, p1: null }; render(); return;
-    case "crop-reset": cfg.camera.crop = null; ui.fullFrame = false; render(); return;
-    case "rotate": { const r = Number(arg); if (r % 180 !== cfg.camera.rotate % 180) cfg.camera.crop = null; cfg.camera.rotate = r; render(); return; }
+    case "camera": ui.camera = Number(arg); ui.cropping = !!ui.crops[`${ui.model}:${ui.camera}`]; ui.first = null; render(); return;
+    case "crop": // On: taps on the picture choose a crop. Off: the whole picture again
+      if (ui.cropping) { ui.cropping = false; ui.first = null; delete ui.crops[`${ui.model}:${ui.camera}`]; } else ui.cropping = true;
+      render(); return;
+    case "edit": ui.editing = arg; render(); return;
+    case "back": ui.editing = null; render(); return;
+    case "rm": setList(el.dataset.list, getList(el.dataset.list).filter((x) => x !== arg)); return;
+    case "rmf": cfg.features = cfg.features.filter((f) => f.kind !== arg); render(); return;
   }
 }
 document.addEventListener("click", (ev) => {
   const el = ev.target.closest("[data-act]");
   if (!el || el.disabled) return;
-  if (el.tagName === "A") ev.preventDefault();
   act(el.dataset.act, el.dataset.arg, el);
 });
 document.addEventListener("keydown", (ev) => {
@@ -1168,40 +1186,51 @@ document.addEventListener("keydown", (ev) => {
 document.addEventListener("change", (ev) => {
   const el = ev.target;
   if (el.id === "tb-state") { setState(el.value); return; }
-  const kind = el.dataset.change;
+  const kind = el.dataset.change, arg = el.dataset.arg;
   if (!kind) return;
-  if (kind === "tset") { setTarget(el.dataset.arg, Number(el.value)); render(); }
-  else if (kind === "speed") { ui.speed = clamp(Number(el.value) || 100, 20, 999); render(); }
-  else if (kind === "model") act("pick", el.value);
-  else if (kind === "style") { cfg.style = el.value || null; render(); }
-  else if (kind === "range") { cfg.temps.range = Number(el.value); render(); }
-  else if (kind === "add") {
-    if (!el.value) return;
-    setList(el.dataset.list, [...getList(el.dataset.list), el.value]);
-  } else if (kind === "opt") {
-    const k = el.dataset.arg, v = el.checked;
-    if (k in cfg.camera) cfg.camera[k] = v;
-    else if (k === "show_targets") cfg.temps.show_targets = v;
-    else {
-      cfg[k] = v;
-      if (k === "collapsible" && v) loadOpen();
-      if (k === "expanded_at_load") ui.open.preview = v;
+  const f = ui.editing && featureOf(ui.editing);
+  switch (kind) {
+    case "target": if (arg === "speed") ui.speed = clamp(Number(el.value) || 100, 20, 999); else setTarget(arg, Number(el.value)); break;
+    case "preheat": { const p = PRESETS.find((x) => x[0] === el.value); if (p) { for (const k of heaterKeys(model())) setTarget(k, k === "bed" ? p[2] : k === "chamber" ? p[3] : p[1]); ui.preheat = p[0]; } break; }
+    case "model": act("pick", el.value); return;
+    case "add": if (el.value) { setList(el.dataset.list, [...getList(el.dataset.list), el.value]); return; } break;
+    case "addf": if (el.value) cfg.features.push({ kind: el.value, controls: null, show: null, opts: {} }); break;
+    case "edge-num": cfg.progress_edge[arg] = Number(el.value); break;
+    case "show-while": { const s = new Set(cfg.progress_edge.show_while); el.checked ? s.add(el.value) : s.delete(el.value); cfg.progress_edge.show_while = SHOW_WHILE.map((x) => x[0]).filter((x) => s.has(x)); break; }
+    case "opt-sel": {
+      const v = el.value;
+      if (arg === "style") cfg.style = v === model().style ? null : v;
+      else if (["features_style", "enabled_color"].includes(arg)) cfg[arg] = v;
+      else if (["edge", "direction", "color"].includes(arg)) cfg.progress_edge[arg] = v;
+      else if (arg === "show") f.show = v === "icons" ? null : v;
+      else if (arg === "range") cfg.temps.range = Number(v);
+      else if (arg === "view") cfg.camera.view = v;
+      else if (arg === "camera") { cfg.camera.camera = Number(v) || null; ui.camera = Number(v); }
+      break;
     }
-    render();
+    case "opt": {
+      const v = el.checked;
+      if (arg.startsWith("f:")) { const k = arg.slice(2), d = FEATURES[f.kind].options.find((o) => o[0] === k)[2]; if (v === d) delete f.opts[k]; else f.opts[k] = v; }
+      else if (arg in cfg.camera) cfg.camera[arg] = v;
+      else if (arg === "show_targets") cfg.temps.show_targets = v;
+      else if (arg === "show_percentage") cfg.progress_edge.show_percentage = v;
+      else { cfg[arg] = v; if (arg === "collapsible" && v) loadOpen(); if (arg === "expanded_at_load") ui.open.preview = v; }
+      break;
+    }
   }
+  render();
 });
-window.addEventListener("resize", () => { $$("[data-graph]").forEach(drawGraph); $$(".pc-card[data-card]").forEach(updateEdge); });
+window.addEventListener("resize", () => { fitRows(); $$("[data-graph]").forEach(drawGraph); });
 
-// ---------- Start ----------
-// Links can open a view: ?model=xl&state=paused&theme=light&edit=camera&open=0
+// ---------- Start (a link can open a view: ?model=xl&state=paused&theme=light&edit=camera&open=0&crop=1) ----------
 const q = new URLSearchParams(location.search);
 if (MODELS[q.get("model")]) ui.model = q.get("model");
 startScenario(STATES[q.get("state")] ? q.get("state") : "printing");
 loadOpen();
-ui.open.dash = q.has("open") ? q.get("open") !== "0" : storedOpen() ?? true; // open on first visit, so the features are visible
-ui.open.preview = true;
+if (q.has("open")) ui.open.dash = q.get("open") !== "0";
 if (FEATURES[q.get("edit")]) ui.editing = q.get("edit");
 if (["light", "dark"].includes(q.get("theme"))) { ui.theme = q.get("theme"); document.documentElement.setAttribute("data-theme", ui.theme); }
+if (q.get("crop") === "1") { ui.cropping = true; ui.crops[`${ui.model}:0`] = { x: 20, y: 25, w: 60, h: 70 }; }
 render();
 setInterval(tick, 1000);
 </script>
