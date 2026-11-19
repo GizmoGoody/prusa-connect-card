@@ -1,0 +1,6 @@
+# Session notes that do not belong on GitHub
+ClaudeCodeNextSession.md
+# Editor and OS files
+.vscode/
+.DS_Store
+Thumbs.db
