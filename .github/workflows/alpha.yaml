@@ -1,0 +1,39 @@
+# Publishes every push to the card branch as a new alpha pre-release, so
+# the Marketplace (with the repository's Pre-release switch on) offers it as
+# an update. The Marketplace only sees a new version when a new release tag
+# is published, so each push gets its own tag: v0.1.0-alpha.<run number>.
+name: Alpha pre-release
+
+on:
+  push:
+    branches: [card]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alpha
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stamp the version
+        id: version
+        run: |
+          version="0.1.0-alpha.${GITHUB_RUN_NUMBER}"
+          sed -i "s/^const VERSION = \".*\";/const VERSION = \"${version}\";/" prusa-connect-card.js
+          grep -q "const VERSION = \"${version}\";" prusa-connect-card.js
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git log -1 --format=%B > notes.md
+          gh release create "v${VERSION}" prusa-connect-card.js \
+            --target "${GITHUB_SHA}" --prerelease --title "v${VERSION}" --notes-file notes.md

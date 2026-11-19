@@ -30,16 +30,22 @@ The editor lists them as "(not offered yet)". A feature shows them as soon as th
 
 ## Installation
 
-### HACS
+### Marketplace (Home Assistant 2026.11 and later)
 
-1. In HACS, open the menu (⋮) and choose **Custom repositories**.
-2. Add `https://github.com/GizmoGoody/prusa-connect-card` with the type **Dashboard**.
-3. Find **Prusa Connect Card** in HACS and download it.
-4. Reload the browser.
+The card is published only as alpha pre-releases for now, so the Marketplace offers it once you turn on its **Pre-release** switch.
+
+1. Go to **Settings → Marketplace**, open the menu (⋮) at the top right, and choose **Add from link**.
+2. Under **GitHub link**, enter `GizmoGoody/prusa-connect-card`. If you are asked for a type, choose **Dashboard**. Select **Add**.
+3. Go to **Settings → Devices & services → Marketplace**, and open the **Prusa Connect Card** device. Enable its **Pre-release** entity, then turn the switch on.
+4. Install the card from its page under **Settings → Marketplace**, and reload the browser.
+
+Each new alpha then shows up as an update.
+
+On Home Assistant 2026.10 or earlier, use HACS the same way: under **Custom repositories**, add the link with the type **Dashboard**, then turn on its pre-releases.
 
 ### Manual
 
-1. Copy `prusa-connect-card.js` to `config/www/`.
+1. Download `prusa-connect-card.js` from the [latest release](https://github.com/GizmoGoody/prusa-connect-card/releases) and copy it to `config/www/`.
 2. In **Settings → Dashboards → ⋮ → Resources**, add `/local/prusa-connect-card.js` as a **JavaScript module**.
 3. Reload the browser.
 
