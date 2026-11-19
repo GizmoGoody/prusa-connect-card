@@ -71,10 +71,10 @@ a { color: var(--accent-ink); }
 
 /* =================== The card (Home Assistant's tile card, wrapped) =================== */
 .pc-card {
-  /* The theme's corners, as the xTool card takes them: the card never rounder than half its title row; the window concentric with the card
+  /* The theme's corners, as the xTool card takes them: the card never rounder than half its title row; the door concentric with the card
      and with the controls in it (each the theme's feature radius) */
-  --enabled: #039be5; --radius: min(var(--ha-card-border-radius, 12px), 31px); --fr: var(--feature-border-radius, 12px); --gap: 10px; --fh: 42px;
-  --window-radius: max(calc(var(--radius) - 4px), calc(var(--fr) + 6px)); --win-margin: 4px; --pad: 0px;
+  --enabled: #039be5; --radius: min(var(--ha-card-border-radius, 12px), 28px); --fr: var(--feature-border-radius, 12px); --gap: 12px; --fh: 42px;
+  --window-radius: max(calc(var(--radius) - 4px), calc(var(--fr) + 6px)); --win-margin: 0px; --pad: 0px;
   /* Prusa Connect's heater tints: warning text while heating, info text while cooling */
   --heating: oklch(35.7% .044 93.87); --cooling: oklch(54.3% .1681 267.1);
   --ink: var(--text); --ink-2: var(--muted); --backing: transparent; --chan: 0 0 0 transparent;
@@ -82,7 +82,7 @@ a { color: var(--accent-ink); }
   position: relative; border-radius: var(--radius); background: var(--surface); color: var(--ink);
   box-shadow: 0 1px 2px rgba(0, 0, 0, .14), 0 0 0 1px var(--border); overflow: hidden; -webkit-tap-highlight-color: transparent;
 }
-.pc-card.styled { background: var(--body); box-shadow: 0 2px 6px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .2); }
+.pc-card.styled { --win-margin: 4px; background: var(--body); box-shadow: 0 2px 6px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .2); }
 .pc-card.styled.tone-dark { --ink: rgba(255, 255, 255, .95); --ink-2: rgba(235, 235, 240, .72); --gc3: #71c7a2; --gc4: #fbd23c; --gc5: #ff8f8b; --heating: #fbd23c; --cooling: oklch(77.7% .1231 267.1); }
 .pc-card.styled.tone-light { --ink: rgba(0, 0, 0, .85); --ink-2: rgba(40, 40, 48, .66); --gc3: #008257; --gc4: oklch(35.7% .044 93.87); --gc5: oklch(55.7% .1933 23.03); --heating: oklch(35.7% .044 93.87); --cooling: oklch(54.3% .1681 267.1); }
 :root[data-theme="dark"] .pc-card:not(.styled) { --heating: #fbd23c; --cooling: oklch(77.7% .1231 267.1); }
@@ -96,13 +96,22 @@ a { color: var(--accent-ink); }
 .pc-card.styled.fs-console { --pad: 3px; --chan: 0 0 0 3px rgba(0, 0, 0, .22), 0 1px 0 3px rgba(255, 255, 255, .14); }
 .pc-card.styled.fs-flat { --pad: 2px; --chan: 0 0 0 2px var(--base); }
 
-/* The title row; on a style, on the machine's window */
-.pc-head { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap); align-items: center; padding: 10px; }
+/* The title row; on a style, on the printer's door */
+/* Home Assistant's title row: 56 px tall, 10 px in from the left; a feature beside the title keeps the icon's height (36 px) and sits 12 px in from the right */
+.pc-head { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-items: center; min-height: 56px; box-sizing: border-box; padding: 0 12px 0 10px; --fh: 36px; }
+.pc-head > * { position: relative; z-index: 1; }
 .pc-head.inline { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-/* The window, on the CORE family; on every other family, the theme's own card in its place.
+/* The door, on the CORE and CORE INDX families; on every other family, the theme's own card in its place.
    The glass and its reflections are the xTool card's (the reflections in front of the glass, behind the title) */
 .styled .pc-head::before { content: ""; position: absolute; inset: var(--win-margin); border-radius: var(--window-radius); background: var(--surface); }
 .styled.glazed .pc-head::before { background: var(--gloss), var(--window); box-shadow: var(--window-edge); }
+/* The RGB status bar's light, rising from the bottom of the door */
+.styled.glazed .pc-head[data-bar]::after { content: ""; position: absolute; z-index: 0; inset: var(--win-margin); border-radius: var(--window-radius); pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 125%, rgb(var(--bar) / .65) 0%, rgb(var(--bar) / 0) 65%); }
+.styled.glazed .pc-head[data-bar="warn"]::after { animation: bar-pulse 2s ease-in-out infinite; }
+.styled.glazed .pc-head[data-bar="error"]::after { animation: bar-pulse 1s ease-in-out infinite; }
+@keyframes bar-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pc-head[data-bar]::after { animation: none !important; } }
 .styled:not(.glazed) .pc-head { --ink: var(--text); --ink-2: var(--muted); --backing: transparent; --chan: 0 0 0 transparent; --win-ink: var(--text); --win-ink-2: var(--muted); --win-shadow: none; }
 .styled .pc-head { color: var(--win-ink); }
 .pc-content { position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; height: var(--fh); cursor: pointer; }
@@ -126,7 +135,6 @@ a { color: var(--accent-ink); }
 @keyframes blink { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .pc-pic .glyph, .spin { animation: none !important; } }
 /* The badges: the status badge at the top right, the connection badge at the bottom right, on a ring at 83.5% of the radius */
-.pc-badge .mdi { font-size: 10px; }
 .pc-badge { position: absolute; z-index: 3; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
   display: grid; place-items: center; color: #fff; font: 700 12px/0 Roboto, sans-serif; background: var(--bc);
   border: 2px solid var(--surface); left: calc(50% + 18px * .835 * .7071); }
@@ -146,10 +154,10 @@ a { color: var(--accent-ink); }
 .pc-pct { position: absolute; z-index: 4; right: 10px; top: 6px; font: 700 14px/1 Roboto, sans-serif; text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
 
 /* Features: two columns beside and under the title. A feature draws nothing of its own: only its controls are styled */
-.pc-features { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--gap); padding: 0 10px 10px; margin-top: 0; }
-/* The xTool rule for the space under the title row: the title row keeps its padding, open or closed. On a style, from the window's edge
-   to the first control's patch or channel is as far as between two rows of them (the gap less a pad on each side) */
-.styled .pc-features { margin-top: calc(var(--gap) - var(--win-margin) - var(--pad)); }
+.pc-features { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--gap); padding: 0 12px 12px;
+  margin-top: calc(var(--gap) - var(--win-margin) - var(--pad)); }
+/* The xTool card's space under the title row (its commit 558e03a): the features start the feature gap below the title row, less the door's
+   margin and the features style's pad. The title row itself never changes, open or closed. */
 .pc-f { min-width: 0; display: grid; gap: var(--gap); align-content: start; }
 .pc-f.wide { grid-column: 1 / -1; }
 .pc-f.beside { align-self: start; }
@@ -167,7 +175,8 @@ a { color: var(--accent-ink); }
 .row.wraps .key { flex: 1 1 calc(25% - var(--gap)); }
 /* Temperatures: each entity a cell, in the order chosen */
 .cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(96px, 100%), 1fr)); gap: var(--gap); }
-.cells > * { height: var(--fh); }
+.pc-card .cells > * { height: var(--fh); }
+.cells > .row { grid-column: 1 / -1; }
 .cells .pick { grid-column: 1 / -1; }
 
 .key, .field, .readout, .pick { position: relative; height: 100%; border: 0; border-radius: var(--fr); overflow: hidden;
@@ -190,12 +199,14 @@ a { color: var(--accent-ink); }
 .readout.dim::before { background: var(--disabled); }
 .readout.dim .mdi { color: var(--ink-2); }
 .readout .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
-/* A number field: on a style, a pane of its window's glass. A tap types in it; a press and slide changes it, faster the farther the slide */
+/* A number field: on a style, a pane of its door's glass. A tap types in it; a press and slide changes it, faster the farther the slide */
 .field { cursor: ew-resize; touch-action: none; gap: 2px; }
 .field::before { content: ""; position: absolute; inset: 0; background: var(--enabled); opacity: .2; }
 .styled.glazed .field { color: var(--win-ink); box-shadow: var(--window-edge), var(--chan); }
 .styled.glazed .field::before { background: var(--window); opacity: 1; }
 .styled:not(.glazed) .pc-head .key { background-image: none !important; box-shadow: none !important; transform: none !important; }
+.field .mdi { font-size: 22px; line-height: 1; flex: none; margin-right: 4px; }
+.field:has(input:disabled) { cursor: default; opacity: .55; }
 .field input { flex: 1 1 0; width: 0; min-width: 0; border: 0; outline: none; background: none; text-align: right; padding: 0; font-weight: 500; font-variant-numeric: tabular-nums; cursor: inherit; }
 .field .u { flex: 1 1 0; min-width: 0; text-align: left; opacity: .8; white-space: nowrap; }
 .field.sliding::before { opacity: .45; }
@@ -386,21 +397,21 @@ footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
   </div>
 
   <h2>Styles</h2>
-  <p class="lede">One style for each printer family, grouped and named as PrusaSlicer 2.9's configuration wizard groups them, in alphabetical order. A style has a frame, behind the features. Only the CORE family has a window, behind the title, drawn as the xTool card draws its windows: dark glass with Prusa orange glowing through and reflections across it (Randomize reflections in the editor draws them in a new pattern). The other families show the theme's own card where the window would be. The editor can replace the frame and window colors. A new card gets its printer's family. None follows your theme. The Pro HT90 is not in the PrusaSlicer wizard, so it has a style of its own for now.</p>
+  <p class="lede">One style for each printer family, named as PrusaSlicer 2.9's configuration wizard names them (the legacy profiles in their own families), in alphabetical order, plus the Pro HT90 on its own. A style has a frame, behind the features. Only the CORE and CORE INDX families have a door, behind the title, drawn as the xTool card draws its windows: dark smoked glass with reflections across it (Randomize reflections in the editor draws them in a new pattern). With RGB status bar on, the door lights up from below as the printer's status bar does. The other families show the theme's own card where the door would be. The editor can replace the frame and door colors. A new card gets its printer's family. None follows your theme.</p>
   <div class="cw" id="styles"></div>
 
   <h2>Notes</h2>
   <ol class="notes">
     <li><b>Features.</b> Prusa print (Now, Current print), Prusa temperatures (Controls, Temperatures and Chamber), Prusa nozzles (Controls, Nozzles), Prusa movement (Controls, Coordinates and Speed), Prusa cameras (the Cameras tab) and Prusa history (the History tab, Measurements).</li>
     <li><b>State content.</b> As in the xTool card, the Print sensors (progress, time remaining, print time, finish time and file) become attributes of the State sensor, so Home Assistant's own State content can show any of them beside the state.</li>
-    <li><b>Layout.</b> As in the xTool card: each feature takes one column. A camera with Full width takes both, and so does the history with Full width (off by default); a camera without it takes one column, as tall as its picture, with the next features beside it. With Last feature full width, a feature alone at the end of its row takes both. The title row keeps the same padding open or closed, and on a style, the window's edge sits as far from the first control below it as two rows of controls sit from each other.</li>
+    <li><b>Layout.</b> As in the xTool card: each feature takes one column. A camera with Full width takes both, and so does the history with Full width (off by default); a camera without it takes one column, as tall as its picture, with the next features beside it. With Last feature full width, a feature alone at the end of its row takes both. The title row keeps the same padding open or closed, and on a style, the features below start as the xTool card's do: Home Assistant's 12 px feature gap below the 56 px title row, less the door's 4 px margin and the features style's pad (3 px Console, 2 px Flat).</li>
     <li><b>Prusa history.</b> In the real card this is Home Assistant's history graph card, embedded. The card hands it the temperature entities and sets its line colors to Prusa Connect's chart palette, in Prusa Connect's order: each reading, then its target. Each heater keeps one color, its target the same color at half strength. Home Assistant's graph takes its line colors from the theme's graph color variables, and the card sets those itself, so it can give a target its reading's color, dimmed. Its legend hides and shows lines, and its tooltip follows each entity's precision.</li>
     <li><b>Heater readings.</b> As in Prusa Connect: within 2 °C of the target, the plain text color; below it, the warning tint, an up arrow and a slow pulse; above it, the info tint and a down arrow. With no target, a heater above 40 °C is cooling, and below it is off, with Off under the number. A chamber with no target is off.</li>
     <li><b>Precision.</b> Every number shows as Home Assistant formats its entity: the precision set on the entity, or the integration's default (one decimal for temperatures, two for the nozzle diameter). Fan speeds and the nozzle diameter show without units. Timers show seconds only under a minute.</li>
     <li><b>Left out for now.</b> The MMU entities (slots and feeder), until they can be checked on a printer that has one.</li>
     <li><b>Crop.</b> The Crop key works as in the xTool card. The printer camera has no crop of its own, so the card keeps the crop in memory for as long as the page is open. Turning Crop off shows the whole picture.</li>
-    <li><b>Only Z while printing.</b> Prusa movement shows only Z while a print runs, since X and Y change too fast to read. The integration turns the axis entities off by default; enable them to see them here.</li>
-    <li><b>Chamber.</b> The integration does not report the chamber yet. The card looks for a chamber temperature and a chamber target named like the bed's, and the CORE One here shows them as if they existed.</li>
+    <li><b>Only Z while printing.</b> Prusa movement shows only Z while a print runs, since X and Y change too fast to read. The integration turns the axis entities off by default; enable them to see them here. The positions show no unit unless Units is on (they are in millimetres).</li>
+    <li><b>Chamber.</b> The integration does not report the chamber yet. The card looks for a chamber temperature and a chamber target named like the bed's, and the CORE One here shows them as if they existed. Prusa temperatures also offers the chamber's fan (Off, Auto or Manual, and its speed while Manual) and its light, as Prusa Connect's Chamber section does; the integration does not report these yet either.</li>
   </ol>
   <footer>Mockup only. Prusa, Original Prusa, CORE One and Prusa Connect are names of Prusa Research. This page is not made by or affiliated with Prusa Research.</footer>
 </div>
@@ -445,35 +456,35 @@ const MODELS = {
 };
 
 // ---------- Styles: one for each family of PrusaSlicer 2.9's configuration wizard, colors from Prusa's drawings ----------
-// The window's glass, as the xTool card draws it: a dark pane with Prusa orange glowing through from inside
+// The door's glass, as the xTool card draws its windows: a dark smoked pane, its reflections from the pattern
 const DARK_EDGE = "inset 0 1px 0 rgba(255,255,255,.18), inset 0 0 0 1px rgba(255,255,255,.06), inset 0 3px 8px rgba(0,0,0,.6)";
 const WINDOWS = {
-  smoke_orange: { glass: "radial-gradient(120% 90% at 50% 120%, rgba(248,101,27,.3) 0%, rgba(248,101,27,0) 60%), linear-gradient(175deg,#1d2024 0%,#141619 60%,#0f1113 100%)",
+  smoke: { glass: "linear-gradient(175deg,#1d2024 0%,#141619 60%,#0f1113 100%)",
     edge: DARK_EDGE, winInk: "rgba(255,255,255,.95)", winInk2: "rgba(235,235,240,.76)", winShadow: "0 1px 2px rgba(0,0,0,.8)", glare: .5 },
 };
 // A frame: the body behind the features
 const frame = (tone, hi, mid, lo) => ({ tone, frame: mid, base: mid, body: `linear-gradient(160deg,${hi} 0%,${mid} 55%,${lo} 100%)` });
-// [id, family (as the wizard names it), frame, window (only the CORE family has one), Prusa Connect's product ids in the family]
+// [id, family (as the wizard names it), frame, door (only the CORE families have one), Prusa Connect's product ids in the family]
 const CATALOGUE = [
-  ["core", "CORE", frame("dark", "#5b5b5b", "#434242", "#2b2a29"), "smoke_orange",
-    ["core_one", "core_one_mmu3", "core_one_indx", "core_one_oak", "core_one_l", "core_one_l_mmu3", "core_one_l_indx"]],
-  ["mini", "MINI", frame("light", "#e2e3e3", "#c5c6c6", "#b2b3b3"), null, ["mini"]],
-  ["mk25", "MK2.5", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk25", "mk25s"]],
-  ["mk3", "MK3", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk3", "mk3mmu2", "mk3s", "mk3smmu2s", "mk3smmu3"]],
-  ["mk35", "MK3.5", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk35", "mk35mmu3", "mk35s", "mk35smmu3"]],
-  ["mk39", "MK3.9", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk39", "mk39mmu3", "mk39s", "mk39smmu3"]],
-  ["mk4", "MK4", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk4", "mk4mmu2s", "mk4mmu3", "mk4s", "mk4smmu2s", "mk4smmu3"]],
+  ["core", "CORE Family", frame("dark", "#5b5b5b", "#434242", "#2b2a29"), "smoke", ["core_one", "core_one_mmu3", "core_one_oak", "core_one_l", "core_one_l_mmu3"]],
+  ["core_indx", "CORE INDX Family", frame("dark", "#5b5b5b", "#434242", "#2b2a29"), "smoke", ["core_one_indx", "core_one_l_indx"]],
+  ["mini", "MINI Family", frame("light", "#e2e3e3", "#c5c6c6", "#b2b3b3"), null, ["mini"]],
+  ["mk25", "MK2.5 Family", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk25", "mk25s"]],
+  ["mk3", "MK3 Family", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk3", "mk3mmu2", "mk3s", "mk3smmu2s", "mk3smmu3"]],
+  ["mk35", "MK3.5 Family", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk35", "mk35mmu3", "mk35s", "mk35smmu3"]],
+  ["mk39", "MK3.9 Family", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk39", "mk39mmu3", "mk39s", "mk39smmu3"]],
+  ["mk4", "MK4 Family", frame("dark", "#4a4a49", "#2b2a29", "#1f1e1d"), null, ["mk4", "mk4mmu2s", "mk4mmu3", "mk4s", "mk4smmu2s", "mk4smmu3"]],
   ["ht90", "Pro HT90", frame("dark", "#4f4f4f", "#2b2a29", "#1f1b20"), null, ["ht90"]],
-  ["xl_multi", "XL Multi-Tool", frame("dark", "#4a4a4a", "#303030", "#232323"), null,
+  ["xl_multi", "XL Multi-Tool Family", frame("dark", "#4a4a4a", "#303030", "#232323"), null,
     ["xlmultitool2", "xlmultitool3", "xlmultitool4", "xlmultitool5", "xl_multitool_2_enclosure", "xl_multitool_3_enclosure", "xl_multitool_4_enclosure", "xl_multitool_5_enclosure"]],
-  ["xl_single", "XL Single-Tool", frame("dark", "#4a4a4a", "#303030", "#232323"), null, ["xl", "xl_enclosure"]],
+  ["xl_single", "XL Single-Tool Family", frame("dark", "#4a4a4a", "#303030", "#232323"), null, ["xl", "xl_enclosure"]],
 ];
 CATALOGUE.sort((a, b) => a[1].localeCompare(b[1], "en", { numeric: true }));
 const familyOf = (product) => CATALOGUE.find((c) => c[4].includes(product))?.[0] ?? "none";
-// A custom frame or window color, drawn the way the styles draw theirs
+// A custom frame or door color, drawn the way the styles draw theirs
 const shade = (hex, amt) => `color-mix(in srgb, ${hex} ${100 - Math.abs(amt)}%, ${amt < 0 ? "#000" : "#fff"})`;
 const isLight = (hex) => { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) > 150; };
-// The reflections on the window, as the xTool card draws them (seeded, so a pattern always draws the same reflections)
+// The reflections on the door, as the xTool card draws them (seeded, so a pattern always draws the same reflections)
 function seeded(seed) {
   let s = seed | 0;
   return () => {
@@ -507,9 +518,9 @@ function lookOf(sid, custom = cfg) {
     glare: win.glare, pane: "#141619" } : { glazed: false }) };
   if (custom.frame_color) Object.assign(look, { frame: custom.frame_color, base: custom.frame_color, tone: isLight(custom.frame_color) ? "light" : "dark",
     body: `linear-gradient(160deg, ${shade(custom.frame_color, 25)} 0%, ${custom.frame_color} 55%, ${shade(custom.frame_color, -30)} 100%)` });
-  if (look.glazed && custom.window_color) Object.assign(look, { pane: custom.window_color,
-    window: `radial-gradient(120% 90% at 50% 120%, rgba(248,101,27,.3) 0%, rgba(248,101,27,0) 60%), linear-gradient(175deg, ${shade(custom.window_color, 12)} 0%, ${custom.window_color} 60%, ${shade(custom.window_color, -25)} 100%)`,
-    ...(isLight(custom.window_color) ? { winInk: "rgba(0,0,0,.85)", winInk2: "rgba(40,40,48,.7)", winShadow: "none" } : {}) });
+  if (look.glazed && custom.door_color) Object.assign(look, { pane: custom.door_color,
+    window: `linear-gradient(175deg, ${shade(custom.door_color, 12)} 0%, ${custom.door_color} 60%, ${shade(custom.door_color, -25)} 100%)`,
+    ...(isLight(custom.door_color) ? { winInk: "rgba(0,0,0,.85)", winInk2: "rgba(40,40,48,.7)", winShadow: "none" } : {}) });
   return look;
 }
 const styleName = (sid) => (sid === "none" ? "None (theme)" : CATALOGUE.find((c) => c[0] === sid)?.[1] ?? sid);
@@ -582,8 +593,9 @@ const FEATURES = {
   // Each heater: its reading, its target, or both as one control
   temperatures: { name: "Temperatures", picker: "Prusa temperatures", icon: "mdi-thermometer-lines", type: "custom:prusa-temperatures",
     controls: (m) => [...heaterKeys(m).flatMap((k) => [[`${k}_pair`, `${heaterLabel(k)} / ${heaterLabel(k, true)}`, heaterIcon(k)], [k, heaterLabel(k), heaterIcon(k)], [`${k}_target`, heaterLabel(k, true), "mdi-thermometer-chevron-up"]]),
+      ...(m.chamber ? [["chamber_fan", "Chamber fan", "mdi-fan"], ["chamber_light", "Chamber light", "mdi-lightbulb-on-outline"]] : []),
       ["presets", "Presets", "mdi-fire"], ["cool_down", "Cool down", "mdi-snowflake"]],
-    defaults: [...["nozzle", "nozzle_1", "nozzle_2", "nozzle_3", "nozzle_4", "nozzle_5", "bed", "chamber"].map((k) => `${k}_pair`), "presets", "cool_down"], show: true },
+    defaults: [...["nozzle", "nozzle_1", "nozzle_2", "nozzle_3", "nozzle_4", "nozzle_5", "bed", "chamber"].map((k) => `${k}_pair`), "chamber_fan", "chamber_light", "presets", "cool_down"], show: true },
   history: { name: "History", picker: "Prusa history", icon: "mdi-chart-line", type: "custom:prusa-history", wide: () => !!featureOf("history")?.opts.full_width,
     controls: (m) => seriesOf(m).map((id) => [id, seriesLabel(id), "mdi-chart-line"]), options: [["full_width", "Full width", false]] },
   nozzles: { name: "Nozzles", picker: "Prusa nozzles", icon: "mdi-printer-3d-nozzle-outline", type: "custom:prusa-nozzles",
@@ -594,7 +606,7 @@ const FEATURES = {
     defaults: ["material", "nozzle_diameter", "active", "print_fan_speed"] },
   movement: { name: "Movement", picker: "Prusa movement", icon: "mdi-axis-arrow", type: "custom:prusa-movement",
     controls: () => [["axis_x", "X", "mdi-axis-x-arrow"], ["axis_y", "Y", "mdi-axis-y-arrow"], ["axis_z", "Z", "mdi-axis-z-arrow"], ["speed", "Speed", "mdi-speedometer"]],
-    defaults: ["speed", "axis_z", "axis_x", "axis_y"], options: [["only_z_while_printing", "Only Z while printing", true]] },
+    defaults: ["speed", "axis_z", "axis_x", "axis_y"], options: [["only_z_while_printing", "Only Z while printing", true], ["units", "Units", false]] },
   cameras: { name: "Cameras", picker: "Prusa cameras", icon: "mdi-cctv", type: "custom:prusa-cameras", requires: (m) => m.cameras.length > 0, wide: () => cfg.camera.full_width,
     controls: (m) => [...(m.cameras.length > 1 ? [["camera_buttons", "Camera buttons", "mdi-cctv"], ["camera_toggle", "Camera toggle", "mdi-camera-switch"]] : []), ["crop", "Crop", "mdi-crop"]],
     defaults: ["camera_buttons", "crop"], show: true },
@@ -611,6 +623,8 @@ function controlsOf(f, m) {
 }
 const supported = (kind, m) => !FEATURES[kind].requires || FEATURES[kind].requires(m);
 const optOf = (f, k) => f.opts[k] ?? FEATURES[f.kind].options.find((o) => o[0] === k)[2];
+// The positions are in millimetres; Units (off by default) shows it
+const axisUnit = () => { const f = featureOf("movement"); return f && optOf(f, "units") ? "mm" : ""; };
 
 // ---------- Badges ----------
 // The status badge: [id, editor label, whether this printer has it]
@@ -623,14 +637,14 @@ const PROGRESS_DEFAULTS = { edge: "top", thickness: 4, starts_at: 0, ends_at: 10
 
 // ---------- Configuration (what the card's YAML holds) ----------
 const cfg = {
-  style: null, frame_color: null, window_color: null, pattern: null, features_style: "console", enabled_color: "info", collapsible: true, expanded_at_load: false,
+  style: null, frame_color: null, door_color: null, pattern: null, status_bar: false, features_style: "console", enabled_color: "info", collapsible: true, expanded_at_load: false,
   expand_when_job_starts: true, collapse_when_job_ends: true, last_feature_full_width: true,
   status_badge: null, connection_badge: true, progress_edge: { ...PROGRESS_DEFAULTS },
   features: ["print", "temperatures", "history", "nozzles", "movement", "cameras"].map((kind) => ({ kind, controls: null, show: null, opts: {} })),
   history: { hours_to_show: 1 },
   camera: { camera: null, view: "auto", show_last_updated: true, full_width: true },
 };
-const ui = { model: "coreone", open: { dash: true, preview: true }, editing: null, hidden: new Set(), speed: 100, theme: "auto", shape: "default",
+const ui = { model: "coreone", open: { dash: true, preview: true }, editing: null, hidden: new Set(), num: { speed: 100, chamber_fan_speed: 60, chamber_light: 100 }, chamberFan: "auto", theme: "auto", shape: "default",
   conn: "connected", update: false, camera: 0, cropping: false, crops: {}, first: null, dialog: null, preheat: "" };
 const model = () => MODELS[ui.model];
 const styleId = () => cfg.style || familyOf(model().product);
@@ -744,9 +758,9 @@ function live(key) {
     case "finish_time": return running ? fmtClock(clock(sim.t + sim.total * (1 - p / 100))) : "Unknown";
     case "time_printing": return job ? fmtDur((sim.total * p) / 100) : "Unknown";
     case "job_name": return sim.state === "idle" ? "Unknown" : m.job.file;
-    case "axis_x": return fmtNum(axis("x"), 1, "mm");
-    case "axis_y": return fmtNum(axis("y"), 1, "mm");
-    case "axis_z": return fmtNum(axis("z"), 1, "mm");
+    case "axis_x": return fmtNum(axis("x"), 1, axisUnit());
+    case "axis_y": return fmtNum(axis("y"), 1, axisUnit());
+    case "axis_z": return fmtNum(axis("z"), 1, axisUnit());
     case "time": return cfg.camera.show_last_updated ? (cfg.camera.view === "live" ? "" : `Updated ${(sim.t / STEP) % 6 + 2} seconds ago`) : "";
   }
   if (key.startsWith("cur:")) return fmtNum(sim.now[key.slice(4)], 1, "°C");
@@ -773,11 +787,11 @@ function statusBadge(m) {
 }
 // Glyphs that read at the badge's size: a bold digit, or a solid, simple icon
 const BADGE = {
-  active_tool: (n) => ({ text: String(n), color: "var(--enabled)", label: `Active tool: ${n}` }),
-  server_update: { icon: "mdi-arrow-up-bold", color: "var(--enabled)", label: "Prusa Connect update available" },
+  active_tool: (n) => ({ text: String(n), color: "var(--enabled, #039be5)", label: `Active tool: ${n}` }),
+  server_update: { icon: "mdi-arrow-up-bold", color: "var(--enabled, #039be5)", label: "Prusa Connect update available" },
   unavailable: { icon: "mdi-close-thick", color: "#616161", label: "Unavailable" },
   disconnected: { icon: "mdi-link-variant-off", color: "#616161", label: "Printer disconnected from Prusa Connect" },
-  connected: { icon: "mdi-link-variant", color: "var(--enabled)", label: "Connected to Prusa Connect" },
+  connected: { icon: "mdi-link-variant", color: "var(--enabled, #039be5)", label: "Connected to Prusa Connect" },
 };
 const badgeGlyph = (b) => (b.text ? b.text : `<i class="mdi ${b.icon}"></i>`);
 function connectionBadge(conn) {
@@ -812,6 +826,14 @@ function edgeHTML() {
   }
   return `<div class="pc-edge ${p.edge}" data-edge style="${style}"></div>${p.show_percentage ? `<div class="pc-pct" style="color:${color}">${Math.round(value * 100)}%</div>` : ""}`;
 }
+// The RGB status bar (Prusa's name, Settings on the printer): solid blue while printing, solid green when finished, yellow pulsing
+// for a warning (paused, attention), red pulsing faster for an error, and off otherwise
+const STATUS_BAR = { printing: ["0 150 255", ""], finished: ["0 255 0", ""], paused: ["255 255 0", "warn"], attention: ["255 255 0", "warn"], error: ["255 0 0", "error"] };
+function barAttr(state, sid, custom = cfg) {
+  const look = lookOf(sid, custom), bar = STATUS_BAR[state];
+  if (!cfg.status_bar || !look?.glazed || !bar || !available()) return "";
+  return ` data-bar="${bar[1] || "on"}" style="--bar:${bar[0]}"`;
+}
 const cardClass = (sid, fs, custom) => { const l = lookOf(sid, custom); return ["pc-card", `fs-${fs}`, l ? `styled tone-${l.tone}${l.glazed ? " glazed" : ""}` : ""].join(" "); };
 function cardHTML(where) {
   const m = model(), sid = styleId();
@@ -823,7 +845,7 @@ function cardHTML(where) {
   const shown = open ? rest : [];
   return `<div class="${cardClass(sid, cfg.features_style)}" style="${styleVars(sid)}" data-card="${where}">
     ${edgeHTML()}
-    <div class="pc-head${inline ? " inline" : ""}">
+    <div class="pc-head${inline ? " inline" : ""}"${barAttr(sim.state, sid)}>
       <div class="pc-content" data-act="toggle" data-arg="${where}" role="button" tabindex="0" ${cfg.collapsible ? `aria-expanded="${!!open}"` : ""}>
         ${pictureHTML(sim.state, ui.conn, available() ? statusBadge(m) : null)}
         <div class="pc-text"><div class="pc-name">${esc(m.device)}</div><div class="pc-state" data-live="state">${esc(live("state"))}</div></div>
@@ -915,9 +937,9 @@ function heatHTML(k) {
   return `<div class="readout ${state}" style="--c:var(--ink-2)" data-heat="${k}" data-state="${state}" title="${esc(heaterLabel(k))}" data-min="84">${html}</div>`;
 }
 // A number field, as in the xTool card: a tap types in it; a press and slide changes it
-function fieldHTML(id, value, unit, label) {
-  return `<label class="field" data-drag="${id}" title="${esc(label)}. Tap to type, or press and slide" data-min="72">
-    <input type="text" inputmode="decimal" enterkeyhint="done" value="${available() ? value : ""}" data-change="target" data-arg="${id}" aria-label="${esc(label)}" ${available() ? "" : "disabled"}><span class="u">${unit}</span></label>`;
+function fieldHTML(id, value, unit, label, icon, off = false) {
+  return `<label class="field${icon ? " has-icon" : ""}" data-drag="${id}" title="${esc(label)}. Tap to type, or press and slide" data-min="72">
+    ${icon ? `<i class="mdi ${icon}"></i>` : ""}<input type="text" inputmode="decimal" enterkeyhint="done" value="${available() ? value : ""}" data-change="target" data-arg="${id}" aria-label="${esc(label)}" ${available() && !off ? "" : "disabled"}><span class="u">${unit}</span></label>`;
 }
 const RENDER = {
   print(ctrls, m, f) {
@@ -941,6 +963,10 @@ const RENDER = {
     const cells = ctrls.map((id) => {
       if (id === "presets") return `<label class="pick" style="--c:${STATES.printing.color}"><i class="mdi mdi-fire"></i><span>${ui.preheat || "Presets"}</span><i class="mdi mdi-menu-down"></i>
         <select data-change="preheat" aria-label="Presets" ${available() ? "" : "disabled"}><option value="">Presets</option>${PRESETS.map(([n, nz, b]) => `<option value="${n}">${n}: ${nz} / ${b} °C</option>`).join("")}</select></label>`;
+      if (id === "chamber_fan") return `<div class="row">${[["off", "Off", "mdi-fan-off"], ["auto", "Auto", "mdi-fan-auto"], ["manual", "Manual", "mdi-fan"]].map(([mode, name, icon]) =>
+          keyHTML({ act: "chamber_fan", arg: mode, icon, name, label: `Chamber fan: ${name}`, pressed: ui.chamberFan === mode, disabled: !available() }, show)).join("")}
+          ${fieldHTML("chamber_fan_speed", ui.num.chamber_fan_speed, "%", "Chamber fan speed", "mdi-fan", ui.chamberFan !== "manual")}</div>`;
+      if (id === "chamber_light") return fieldHTML("chamber_light", ui.num.chamber_light, "%", "Chamber light", "mdi-lightbulb-on-outline");
       if (id === "cool_down") return keyHTML({ act: "cool_down", icon: "mdi-snowflake", name: "Cool down", color: "#4fc3f7", disabled: !available() }, show);
       if (id.endsWith("_target")) { const k = id.slice(0, -7); return fieldHTML(k, Math.round(sim.target[k] || 0), "°C", seriesLabel(id)); }
       if (id.endsWith("_pair")) { const k = id.slice(0, -5); return `<div class="combo">${heatHTML(k)}${fieldHTML(k, Math.round(sim.target[k] || 0), "°C", heaterLabel(k, true))}</div>`; }
@@ -973,7 +999,7 @@ const RENDER = {
   },
   movement(ctrls, m, f) {
     const zOnly = optOf(f, "only_z_while_printing") && JOB_STATES.includes(sim.state);
-    const items = ctrls.filter((id) => !(zOnly && (id === "axis_x" || id === "axis_y"))).map((id) => id === "speed" ? fieldHTML("speed", ui.speed, "%", "Speed")
+    const items = ctrls.filter((id) => !(zOnly && (id === "axis_x" || id === "axis_y"))).map((id) => id === "speed" ? fieldHTML("speed", ui.num.speed, "%", "Speed")
       : readout(`mdi-axis-${id.slice(5)}-arrow`, id, { title: id.slice(5).toUpperCase() }));
     return `<div class="row">${items.join("")}</div>`;
   },
@@ -1158,8 +1184,9 @@ function mainEditorHTML() {
     <details class="exp" open><summary><i class="mdi mdi-printer-3d"></i>Prusa</summary><div class="exp-body">
       ${sel("style", "Prusa style", [["none", "None (theme)"], ...CATALOGUE.map((c) => [c[0], c[1]])], sid, "Defaults to your printer's model. None follows your theme.")}
       ${styled ? colorField("frame_color", "Frame color", cfg.frame_color, lookOf(sid, {}).frame) : ""}
-      ${styled && lookOf(sid, {}).glazed ? colorField("window_color", "Window color", cfg.window_color, lookOf(sid, {}).pane)
-        + `<div class="field-ed"><button class="hbtn" data-act="randomize">Randomize reflections</button><span class="help">Draws the window's reflections in a new pattern.</span></div>` : ""}
+      ${styled && lookOf(sid, {}).glazed ? colorField("door_color", "Door color", cfg.door_color, lookOf(sid, {}).pane)
+        + `<div class="field-ed"><button class="hbtn" data-act="randomize">Randomize reflections</button><span class="help">Draws the door's reflections in a new pattern.</span></div>`
+        + sw("status_bar", "RGB status bar", "The door lights up as the printer's RGB status bar does: blue while printing, green when finished, yellow pulsing when paused or needing attention, red pulsing on an error, and dark otherwise.", cfg.status_bar) : ""}
       ${styled ? sel("features_style", "Features style", [["match", "Match style"], ["flat", "Flat"], ["console", "Console"]], cfg.features_style, "Match style: the controls sit on the body. Flat: each on a plain patch of the body's color. Console: each in a channel pressed into the body.") : ""}
       ${sel("enabled_color", "Enabled color", ENABLED_COLORS.map((c) => [c[0], c[1]]), cfg.enabled_color, "The color of keys that are on. Print keys keep their own colors.")}
       ${sw("collapsible", "Collapsible", "Tapping the card shows or hides its features, in place of the card's Tap behavior (under Interactions). Tapping the icon still works as set.", cfg.collapsible)}
@@ -1201,11 +1228,11 @@ function yaml() {
   if (cfg.style) out.push(`style: ${cfg.style}`);
   const look = lookOf(styleId(), {});
   if (look && cfg.frame_color) out.push(`frame_color: "${cfg.frame_color}"`);
-  if (look?.glazed && cfg.window_color) out.push(`window_color: "${cfg.window_color}"`);
+  if (look?.glazed && cfg.door_color) out.push(`door_color: "${cfg.door_color}"`);
   if (look?.glazed && cfg.pattern != null && cfg.pattern !== DEFAULT_PATTERN) out.push(`pattern: ${cfg.pattern}`);
   if (cfg.features_style !== "console") out.push(`features_style: ${cfg.features_style}`);
   if (cfg.enabled_color !== "info") out.push(`enabled_color: ${cfg.enabled_color}`);
-  for (const [k, d] of [["collapsible", true], ["expanded_at_load", false], ["expand_when_job_starts", true], ["collapse_when_job_ends", true], ["last_feature_full_width", true], ["connection_badge", true]]) if (cfg[k] !== d) out.push(`${k}: ${cfg[k]}`);
+  for (const [k, d] of [["collapsible", true], ["expanded_at_load", false], ["expand_when_job_starts", true], ["collapse_when_job_ends", true], ["last_feature_full_width", true], ["connection_badge", true], ["status_bar", false]]) if (cfg[k] !== d) out.push(`${k}: ${cfg[k]}`);
   if (cfg.status_badge) { out.push("status_badge:"); cfg.status_badge.forEach((b) => out.push(`  - ${b}`)); }
   const pe = Object.entries(cfg.progress_edge).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(PROGRESS_DEFAULTS[k]));
   if (pe.length) { out.push("progress_edge:"); pe.forEach(([k, v]) => out.push(`  ${k}: ${Array.isArray(v) ? `[${v.join(", ")}]` : v}`)); }
@@ -1264,7 +1291,7 @@ function stylesHTML() {
     const look = lookOf(id, {});
     return `<div>${miniCard(name, id, "printing", "Printing · 42 %")}
       <div class="cw-meta"><b>${esc(name)}</b>
-      <span class="hex"><i style="background:${look.frame}"></i>Frame ${look.frame}</span>${look.glazed ? `<span class="hex"><i style="background:${look.pane}"></i>Window ${look.pane}</span>` : `<span class="muted">No window: the theme's own card</span>`}</div></div>`;
+      <span class="hex"><i style="background:${look.frame}"></i>Frame ${look.frame}</span>${look.glazed ? `<span class="hex"><i style="background:${look.pane}"></i>Door ${look.pane}</span>` : `<span class="muted">No door: the theme's own card</span>`}</div></div>`;
   }).join("") + `<div>${miniCard("Office CORE One", "none", "printing", "Printing · 42 %")}<div class="cw-meta"><b>None (theme)</b><span class="muted">Follows your Home Assistant theme.</span></div></div>`;
 }
 
@@ -1345,8 +1372,8 @@ function bindFields() {
   $$("[data-drag]").forEach((field) => {
     const id = field.dataset.drag, input = $("input", field);
     let start, at, timer, pending;
-    const get = () => (id === "speed" ? ui.speed : Math.round(sim.target[id] || 0));
-    const range = () => (id === "speed" ? [20, 999] : [0, heaterMax(id, model())]);
+    const get = () => (id in NUMS ? ui.num[id] : Math.round(sim.target[id] || 0));
+    const range = () => (NUMS[id] || [0, heaterMax(id, model())]);
     const begin = (ev) => {
       try { field.setPointerCapture(ev.pointerId); } catch (e) { /* the slide still follows the moves the field gets */ }
       input.blur(); field.classList.add("sliding"); ui.slide = true; pending = get();
@@ -1363,7 +1390,7 @@ function bindFields() {
       const sliding = timer !== undefined;
       clearInterval(timer); timer = undefined; start = undefined;
       field.classList.remove("sliding");
-      if (sliding) { ui.slide = false; if (id === "speed") ui.speed = Math.round(pending); else setTarget(id, pending); render(); }
+      if (sliding) { ui.slide = false; setNumber(id, pending); render(); }
     };
     field.addEventListener("pointerdown", (ev) => { if (ev.button !== 0 || input.disabled) return; start = at = { x: ev.clientX, y: ev.clientY }; });
     field.addEventListener("pointermove", (ev) => {
@@ -1403,13 +1430,15 @@ function bindShots() {
 }
 
 // ---------- Actions ----------
+const NUMS = { speed: [20, 999], chamber_fan_speed: [0, 100], chamber_light: [0, 100] };
+function setNumber(id, v) { if (id in NUMS) ui.num[id] = clamp(Math.round(v) || 0, ...NUMS[id]); else setTarget(id, v); }
 function setTarget(key, v) { sim.target[key] = clamp(Math.round(v) || 0, 0, heaterMax(key, model())); }
 function act(name, arg, el) {
   const m = model();
   switch (name) {
     case "noop": return;
     case "toggle": if (cfg.collapsible) { setOpen(!ui.open[arg], arg); render(); } return;
-    case "pick": if (arg !== ui.model) { ui.model = arg; ui.hidden.clear(); ui.editing = null; ui.camera = 0; ui.cropping = false; ui.first = null; cfg.style = null; cfg.frame_color = null; cfg.window_color = null; cfg.pattern = null; startScenario(sim.state); loadOpen(); render(); } return;
+    case "pick": if (arg !== ui.model) { ui.model = arg; ui.hidden.clear(); ui.editing = null; ui.camera = 0; ui.cropping = false; ui.first = null; cfg.style = null; cfg.frame_color = null; cfg.door_color = null; cfg.pattern = null; startScenario(sim.state); loadOpen(); render(); } return;
     case "theme": ui.theme = arg; if (arg === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", arg); render(); return;
     case "shape": ui.shape = arg; if (arg === "round") document.documentElement.setAttribute("data-shape", "round"); else document.documentElement.removeAttribute("data-shape"); render(); return;
     case "update": ui.update = arg === "true"; render(); return;
@@ -1418,6 +1447,7 @@ function act(name, arg, el) {
     case "stop": if (optOf(featureOf("print") || { kind: "print", opts: {} }, "ask_before_stopping") === false) changeState("stopped"); else { ui.dialog = "stop"; render(); } return;
     case "dlg-no": ui.dialog = null; render(); return;
     case "dlg-yes": ui.dialog = null; changeState("stopped"); return;
+    case "chamber_fan": ui.chamberFan = arg; render(); return;
     case "cool_down": heaterKeys(m).forEach((k) => setTarget(k, 0)); ui.preheat = ""; render(); return;
     case "legend": ui.hidden.has(arg) ? ui.hidden.delete(arg) : ui.hidden.add(arg); render(); return;
     case "camera": ui.camera = Number(arg); ui.cropping = false; ui.first = null; render(); return;
@@ -1447,7 +1477,7 @@ document.addEventListener("change", (ev) => {
   if (!kind) return;
   const f = ui.editing && featureOf(ui.editing);
   switch (kind) {
-    case "target": { const v = Number(String(el.value).replace(",", ".")); if (arg === "speed") ui.speed = clamp(Math.round(v) || 100, 20, 999); else setTarget(arg, v); break; }
+    case "target": { const v = Number(String(el.value).replace(",", ".")); setNumber(arg, v); break; }
     case "preheat": { const p = PRESETS.find((x) => x[0] === el.value); if (p) { for (const k of heaterKeys(model())) if (k !== "chamber") setTarget(k, k === "bed" ? p[2] : p[1]); ui.preheat = p[0]; } break; }
     case "model": act("pick", el.value); return;
     case "add": if (el.value) { setList(el.dataset.list, [...getList(el.dataset.list), el.value]); return; } break;
