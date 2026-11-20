@@ -17,11 +17,17 @@ const itemMin = (el: Element): number => Number((el as HTMLElement).dataset.min)
 export function fitRow(row: HTMLElement): void {
   const width = row.clientWidth;
   if (!width) return;
+  const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
   if (row.classList.contains("wraps")) {
+    // As many to a row as fit, spread evenly over the rows; the last row's
+    // cells widen to fill it, so no row has an empty end
     for (const item of row.children) item.removeAttribute("data-dropped");
+    const count = [...row.children].filter((item) => !(item as HTMLElement).hidden).length;
+    const fit = Math.max(1, Math.floor((width + gap) / (ITEM_MIN.field + gap)));
+    const columns = count ? Math.ceil(count / Math.ceil(count / fit)) : 1;
+    row.style.setProperty("--columns", `${columns}`);
     return;
   }
-  const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
   let used = 0, shown = 0, full = false;
   for (const item of row.children) {
     if ((item as HTMLElement).hidden) continue;
@@ -51,16 +57,19 @@ export class RowFitter {
   }
 }
 
-// One line of items that fills the row (see fitRow), or (wraps) a grid of
-// equal cells, as many as fit
+// One line of items that fills the row (see fitRow), or (wraps) cells as
+// many to a row as fit, spread evenly, the last row's widened to fill it
 export const rowStyles = css`
   .rows { display: flex; flex-direction: column; gap: var(--ha-card-feature-gap, 12px); }
   .row { display: flex; flex-wrap: nowrap; align-items: center; column-gap: var(--feature-button-spacing, 12px); height: var(--feature-height, 42px); }
   .row.wraps {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(${unsafeCSS(ITEM_MIN.field)}px, 1fr)); height: auto;
+    display: flex; flex-wrap: wrap; height: auto;
     gap: var(--ha-card-feature-gap, 12px) var(--feature-button-spacing, 12px);
   }
-  .row.wraps > * { height: var(--feature-height, 42px); min-width: 0; }
+  .row.wraps > * {
+    height: var(--feature-height, 42px); min-width: 0; box-sizing: border-box;
+    flex: 1 1 calc((100% - (var(--columns, 2) - 1) * var(--feature-button-spacing, 12px)) / var(--columns, 2));
+  }
   .row [data-dropped] { display: none !important; }
   .row .key { flex: 1 1 0; min-width: ${unsafeCSS(ITEM_MIN.key)}px; }
   .row .slide { flex: 2 1 0; min-width: ${unsafeCSS(ITEM_MIN.slider)}px; }
