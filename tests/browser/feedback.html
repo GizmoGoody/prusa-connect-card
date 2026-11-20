@@ -214,6 +214,26 @@
     check("L-6 side by side", heaters && keys && Math.abs(heaters.top - keys.top) < 1 && Math.abs(heaters.left - keys.left) > 1 && Math.abs(heaters.height - keys.height) < 1 && heaters.height > 60,
       `the two the same height (${sideFeatures.map((f) => { const r = f.getBoundingClientRect(); return `${f.feature?.type} ${r.left.toFixed(0)},${r.top.toFixed(0)} ${r.width.toFixed(0)}x${r.height.toFixed(0)}`; }).join("; ")})`);
 
+    // The same for every feature: a row of keys wraps to match, a single key grows to fill
+    for (const [name, other] of [["two keys", { type: "custom:prusa-print", controls: ["pause_resume", "stop"] }], ["one key", { type: "custom:prusa-nozzles", controls: ["material"] }]]) {
+      const pairCard = addCard(`Heaters beside ${name}`, {
+        features: [
+          { type: "custom:prusa-print", controls: ["pause_resume", "stop"] },
+          { type: "custom:prusa-temperatures", controls: ["tool_1_nozzle_temperature_and_target", "bed_temperature_and_target"] },
+          other,
+          { type: "custom:prusa-history", full_width: true },
+        ],
+        last_feature_full_width: false,
+      }, { width: 340, height: 700 });
+      await wait(400);
+      const [left, right] = [...deep(pairCard.shadowRoot, 'hui-card-features[slot="features"]').shadowRoot.querySelectorAll("hui-card-feature")].map((f) => f.getBoundingClientRect());
+      const inner = deep(pairCard.shadowRoot, 'hui-card-features[slot="features"]').shadowRoot.querySelectorAll("hui-card-feature")[1].shadowRoot.firstElementChild.shadowRoot;
+      const keys = [...inner.querySelectorAll(".key, .field")].map((k) => k.getBoundingClientRect());
+      const bottom = Math.max(...keys.map((k) => k.bottom));
+      check("L-6 side by side", left && right && Math.abs(left.height - right.height) < 1 && Math.abs(bottom - right.bottom) < 2,
+        `${name}: as tall as the heaters, filled to the bottom (${left?.height.toFixed(0)}, ${right?.height.toFixed(0)}, ${(right?.bottom - bottom).toFixed(0)}px empty)`);
+    }
+
     // Badges: the xTool card's size
     const card = addCard("XL, paused", { entity: "sensor.garage_xl_state" });
     await wait(150);

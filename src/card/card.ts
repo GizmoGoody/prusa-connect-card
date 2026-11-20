@@ -547,10 +547,9 @@ export class PrusaConnectCard extends LitElement {
   }
 
   /**
-   * Two features side by side fill the same height: one whose row wraps
-   * takes as many lines as the feature beside it has of its own (as two
-   * heaters wrapped onto two lines beside Presets and Cool down, which then
-   * sit one over the other).
+   * Two features side by side fill the same height: the one of fewer lines
+   * is told how many the other has of its own (--prusa-lines), and its row
+   * of keys wraps onto as many, or its rows grow to fill (see fitRow).
    */
   private _matchLines(items: HTMLElement[]): void {
     const roots = items.map((item) => item.shadowRoot?.querySelector(FEATURE_TAGS.join(","))?.shadowRoot ?? undefined);
@@ -558,13 +557,12 @@ export class PrusaConnectCard extends LitElement {
     const beside = (a: HTMLElement, b: HTMLElement) => a !== b && a.offsetTop === b.offsetTop && a.offsetLeft !== b.offsetLeft;
     items.forEach((item, i) => {
       const rows = [...(roots[i]?.querySelectorAll<HTMLElement>(".row") ?? [])];
-      const wraps = rows.length === 1 && rows[0].classList.contains("wraps");
-      const most = wraps ? Math.max(0, ...items.map((other, j) => (beside(item, other) ? own[j] : 0))) : 0;
+      const most = rows.length ? Math.max(0, ...items.map((other, j) => (beside(item, other) ? own[j] : 0))) : 0;
       const value = most > own[i] ? `${most}` : "";
       if (item.style.getPropertyValue("--prusa-lines") === value) return;
       if (value) item.style.setProperty("--prusa-lines", value);
       else item.style.removeProperty("--prusa-lines");
-      if (wraps) fitRow(rows[0]);
+      rows.forEach(fitRow);
     });
   }
 

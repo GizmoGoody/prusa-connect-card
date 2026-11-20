@@ -40,7 +40,7 @@ The tests are in two places:
 | L-3 | Heater cells fill the feature: as many to a row as fit (two in a half-width column), spread evenly over the rows, and the last row's cells widen to fill it, so no row has an empty end. | features.html "temperatures" |
 | L-4 | Spacing follows the tile card (56 / 36 / 12), plus xTool's margin under the title row. It is the same collapsed and expanded. | real Home Assistant |
 | L-5 | Corners follow the theme, so a pill-shaped theme stays pill-shaped. A container's radius matches its children's. | real Home Assistant |
-| L-6 | Two features side by side fill the same height: one whose row wraps takes as many lines as the feature beside it (Presets and Cool down one over the other, beside two heaters wrapped onto two lines). | feedback.html |
+| L-6 | Two features side by side fill the same height, whatever they are: the one of fewer lines takes as many lines as the other has. Its one row of keys or fields wraps onto them (Presets over Cool down beside two heaters); otherwise its rows and keys grow to fill. A slider stays on its line. | feedback.html |
 
 ## Features
 | ID | Behavior | Checked in |
@@ -58,7 +58,7 @@ The tests are in two places:
 | H-6 | The reading is on top. The target goes on top once it is more than 3° above the reading, and back under once it is within 1°, so a reading that wavers near its target does not swap them. Off is always under the reading. While it heats or cools, an arrow sits over the heater's icon: red heating, blue cooling, larger than the icon and outlined so it stands off it. | feedback.html |
 | H-7 | A heater's field is in its history colors: the reading in the heater's color, the target dimmed. They are the colors given in the card's Prusa history feature, or else Prusa Connect's palette. | feedback.html |
 | H-8 | A heater's field shows the numbers alone (the units are implied). The reading is never shrunk or cut short (no ...). | feedback.html |
-| H-9 | At its target (within 2°, until it is more than 3° off), a heater shows its reading alone, larger, as the field has room for. A tap brings the target back to type in. | feedback.html |
+| H-9 | At its target (within 2°, until it is more than 3° off), a heater shows its reading alone, larger, as the field has room for. A tap brings the target back to type in. While a target slides, it shows alone, as large; a heater that is off slides from its reading, not from 0. | feedback.html |
 | P-1 | Presets (Prusa Connect's) set every nozzle and the bed, never the chamber. | feedback.html |
 | P-2 | Cool down turns every heater off, the chamber included. | feedback.html |
 | F-1 | The chamber fan has Off, A and Manual, as Prusa Connect sets it. Manual returns to the last manual speed. | feedback.html |

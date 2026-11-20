@@ -150,7 +150,7 @@ export class PrusaLights extends PrusaElement {
       // A light without a brightness has no slider
       .filter((el) => !el.hidden);
     this._showNothing(items.length === 0);
-    return html`<div class="row" role="group" aria-label=${this._type.label}>${items}</div>`;
+    return html`<div class="rows"><div class="row" role="group" aria-label=${this._type.label}>${items}</div></div>`;
   }
 
   protected override updated(): void {
