@@ -127,15 +127,27 @@ features:
     full_width: true
 ```
 
-## Tests
+## Development
 
-The tests in `tests/card` load the card in a headless browser, with stand-ins for the parts of Home Assistant's frontend it uses (a CORE One, an MK4S, a five-tool XL and a CORE One with the controls the integration does not offer yet):
+The card is written in TypeScript with [Lit](https://lit.dev) and built into one file with Rollup:
+
+- `src/prusa-connect-card.ts` registers the card, its features and its editors, and prints the console badge ([card-badge](https://github.com/GizmoGoody/card-badge)).
+- `src/printer/`: the printer's entities, controls, families and history colors.
+- `src/features/`: the tile features.
+- `src/card/`: the card that wraps the tile card.
+- `src/editor/`: the card and feature editors.
 
 ```sh
-python tests/card/run_card_tests.py
+npm install
+npm run build        # dist/prusa-connect-card.js
+npm run typecheck
+npm test             # unit tests (tests/unit)
+npm run test:browser # browser tests (tests/browser), on the built card
 ```
 
-They need Chrome, Chromium or Edge, and nothing else.
+The browser tests load the card in a headless browser, with stand-ins for the parts of Home Assistant's frontend it uses (a CORE One, an MK4S, a five-tool XL and a CORE One with the controls the integration does not offer yet). They need Python and Chrome, Chromium or Edge. [tests/SPEC.md](tests/SPEC.md) lists the behaviors they check.
+
+GitHub Actions runs every check on each push. A push to the `card` branch also publishes an alpha pre-release.
 
 ## License
 

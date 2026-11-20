@@ -1,0 +1,33 @@
+{
+  "name": "prusa-connect-card",
+  "version": "0.1.0",
+  "description": "Prusa printers at a glance: job, temperatures, history and cameras.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GizmoGoody/prusa-connect-card.git"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:browser": "python tests/browser/run.py"
+  },
+  "dependencies": {
+    "@gizmogoody/card-badge": "github:GizmoGoody/card-badge#v1.0.0",
+    "lit": "3.3.1"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "16.0.3",
+    "@rollup/plugin-replace": "6.0.3",
+    "@rollup/plugin-terser": "0.4.4",
+    "@rollup/plugin-typescript": "12.3.0",
+    "rollup": "4.52.5",
+    "tslib": "2.8.1",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
+}
