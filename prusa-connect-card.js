@@ -832,16 +832,16 @@ const FEATURE_CSS = `
   .heater .note { font-size: 10px; font-weight: 400; color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: .03em; }
   @keyframes prusa-heating { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
   /* A heater and its target as one field: the reading over the target (Off at 0) */
-  .field.pair { justify-content: flex-start; gap: 6px; padding: 0 10px; }
+  .field.pair { justify-content: center; gap: 6px; padding: 0 10px; }
   .field.pair ha-state-icon { margin-right: 0; }
-  .field.pair .two { display: grid; line-height: 1.15; min-width: 0; flex: 1 1 0; }
+  .field.pair .two { display: grid; line-height: 1.15; min-width: 0; flex: 0 1 auto; }
   .field.pair .heat { display: flex; align-items: center; gap: 2px; min-width: 0; }
   .field.pair .now { font-variant-numeric: tabular-nums; }
   .field.pair .arrow[hidden] { display: none; }
   .field.pair .target { display: flex; min-width: 0; font-size: 11px; font-weight: 400; color: var(--secondary-text-color); }
   .field.pair .target input { flex: 0 1 auto; width: 4ch; text-align: left; }
   .field.pair .target input::placeholder { color: inherit; opacity: 1; text-transform: uppercase; letter-spacing: .03em; }
-  .field.pair .target .unit { flex: 1 1 0; }
+  .field.pair .target .unit { flex: 0 1 auto; }
   .field.pair.unset .unit { display: none; }
   .field.pair.heating .heat { color: var(--prusa-heating); animation: prusa-heating 2s ease-in-out infinite; }
   .field.pair.heating ha-state-icon { color: var(--prusa-heating); }
@@ -1933,12 +1933,14 @@ class PrusaHistory extends PrusaElement {
     this.shadowRoot.innerHTML = `<style>
       :host { display: block; min-width: 0; max-width: 100%; height: 100%; }
       .graph {
-        height: 100%; min-height: 240px; box-sizing: border-box;
+        display: flex; flex-direction: column; height: 100%; min-height: 240px; box-sizing: border-box;
         --ha-card-background: transparent; --card-background-color: transparent; --ha-card-box-shadow: none;
         --ha-card-border-width: 0; --ha-card-border-color: transparent; --ha-card-backdrop-filter: none;
         border-radius: var(--feature-border-radius, 12px); overflow: hidden;
         background: var(--prusa-feature-backing, var(--prusa-feature-scrim, transparent));
       }
+      /* Home Assistant's history graph card is an inline element of its own: as a block that fills the feature, its chart fills it too */
+      .graph > * { display: block; flex: 1 1 auto; min-height: 0; height: 100%; }
     </style><div class="graph"></div>`;
     this._box = this.shadowRoot.querySelector(".graph");
   }
