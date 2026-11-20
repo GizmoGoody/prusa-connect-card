@@ -122,11 +122,14 @@
     const order = pairs.map((p) => {
       const reading = parseFloat(p.querySelector(".now").textContent), target = Number(p.querySelector("input").value || 0);
       const above = p.querySelector(".two").classList.contains("above");
-      return { key: p.dataset.key, ok: above === (target > 0 && target > reading), above };
+      return { key: p.dataset.key, ok: above === (target > 0 && target - reading > 3), above };
     });
-    check("H-6 order", pairs.length >= 2 && order.every((o) => o.ok), `the target on top only while it is above the reading (${order.map((o) => `${o.key}: ${o.above ? "target" : "reading"} on top`).join(", ")})`);
+    check("H-6 order", pairs.length >= 2 && order.every((o) => o.ok), `the reading on top, the target only when well above it (${order.map((o) => `${o.key}: ${o.above ? "target" : "reading"} on top`).join(", ")})`);
     check("H-6 arrow", pairs.every((p) => [...p.querySelectorAll(".arrow")].every((arrow) => arrow.parentElement.classList.contains("icon"))),
       "the arrow on the heater's icon");
+    const arrows = pairs.flatMap((p) => [...p.querySelectorAll(".arrow")].map((arrow) => [p, getComputedStyle(arrow).color]));
+    check("H-6 arrow", arrows.every(([p, color]) => color === (p.classList.contains("heating") ? "rgb(244, 67, 54)" : "rgb(33, 150, 243)")),
+      `red while heating, blue while cooling (${arrows.map(([p, c]) => `${p.dataset.key}: ${c}`).join(", ") || "no heater heating or cooling"})`);
 
     // A heater's colors: the history's (Prusa Connect's palette by default; the target dimmed)
     const nozzlePair = keyNamed(temps, "tool_1_nozzle_temperature_and_target");

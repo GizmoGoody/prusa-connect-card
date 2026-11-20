@@ -28,7 +28,7 @@ The tests are in two places:
 ## Style
 | ID | Behavior | Checked in |
 | --- | --- | --- |
-| Y-1 | There is one style per PrusaSlicer wizard family: core (which includes the INDX), mini, mk and xl. The Pro HT90 has its own style, ht90. There are also custom and none. Only the CORE family has a door. A door color adds a door to any family. | card.html "style", unit "styles" |
+| Y-1 | There is one style per PrusaSlicer wizard family: core (which includes the INDX), mini, mk and xl. The Pro HT90 has its own style, ht90, in the grays of Prusa Connect's drawing of it. There are also custom and none. Only the CORE family has a door. A door color adds a door to any family. | card.html "style", unit "styles" |
 | Y-2 | The RGB status bar is on by default. It is blue while printing and green when finished. It pulses yellow when paused or needing attention, and red on an error. | card.html "status bar", unit "styles" |
 | Y-3 | Wrong options are refused with a message, for example an unknown family. `style` must be a set of options. | card.html "options", editor.html "options" |
 
@@ -54,7 +54,7 @@ The tests are in two places:
 | H-3 | Tap a heater to type a target. Press and slide to change it, with a dead zone and growing speed. Hold to turn that heater off, and hold again to restore its target. | features.html "temperatures, hold" |
 | H-4 | A heater's icon, reading and target are centered in its cell; the reading and the target are centered on each other. | feedback.html |
 | H-5 | Chamber controls show once the integration offers them. | features.html "temperatures, future" |
-| H-6 | The higher number is on top: the target while it is above the reading, else the reading. Off is always under the reading. While it heats or cools, a thin arrow sits on the heater's icon. | feedback.html |
+| H-6 | The reading is on top. The target goes on top once it is more than 3° above the reading, and back under once it is within 1°, so a reading that wavers near its target does not swap them. Off is always under the reading. While it heats or cools, an arrow sits over the heater's icon: red heating, blue cooling, outlined so it stands off the icon. | feedback.html |
 | H-7 | A heater's field is in its history colors: the reading in the heater's color, the target dimmed. They are the colors given in the card's Prusa history feature, or else Prusa Connect's palette. | feedback.html |
 | H-8 | A heater's field shows the numbers alone (the units are implied). The reading is never shrunk or cut short (no ...). | feedback.html |
 | P-1 | Presets (Prusa Connect's) set every nozzle and the bed, never the chamber. | feedback.html |
