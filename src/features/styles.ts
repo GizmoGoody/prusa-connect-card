@@ -70,11 +70,11 @@ export const featureStyles = [rowStyles, css`
   /* A heater and its target as one field: the reading over the target (Off at 0), centered */
   .field.pair { justify-content: center; gap: 6px; padding: 0 10px; }
   .field.pair ha-state-icon { margin-right: 0; }
-  .field.pair .two { line-height: 1.15; flex: 0 1 auto; }
-  .field.pair .heat { display: flex; gap: 2px; }
+  .field.pair .two { line-height: 1.15; flex: 0 1 auto; text-align: center; }
+  .field.pair .heat { display: flex; justify-content: center; gap: 2px; }
   .field.pair .now { font-variant-numeric: tabular-nums; }
-  .field.pair .target { display: flex; min-width: 0; font-size: 11px; font-weight: 400; color: var(--secondary-text-color); }
-  .field.pair .target input { flex: 0 1 auto; width: 4ch; text-align: left; }
+  .field.pair .target { display: flex; justify-content: center; min-width: 0; font-size: 11px; font-weight: 400; color: var(--secondary-text-color); }
+  .field.pair .target input { flex: 0 1 auto; text-align: center; }
   .field.pair .target input::placeholder { color: inherit; opacity: 1; text-transform: uppercase; letter-spacing: .03em; }
   .field.pair .target .unit { flex: 0 1 auto; }
   .field.pair.unset .unit { display: none; }

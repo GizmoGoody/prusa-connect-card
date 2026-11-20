@@ -166,7 +166,7 @@ export class PrusaField extends LitElement {
     const unit = stateObj?.attributes.unit_of_measurement ?? "";
     const input = html`<input type="text" inputmode="decimal" enterkeyhint="done" placeholder=${this._pair ? "Off" : ""}
       aria-label=${entityName(hass, this.entity) ?? this.control.option ?? ""} ?disabled=${!this._usable}
-      @keydown=${this._key} @change=${this._typed} @click=${(ev: Event) => ev.stopPropagation()}>`;
+      @keydown=${this._key} @input=${this._fitInput} @change=${this._typed} @click=${(ev: Event) => ev.stopPropagation()}>`;
     if (!this._pair) {
       return html`${this.control.icon === true ? html`<ha-state-icon .hass=${hass} .stateObj=${stateObj}></ha-state-icon>` : nothing}${input}<span class="unit">${unit}</span>`;
     }
@@ -210,7 +210,16 @@ export class PrusaField extends LitElement {
     const input = this._input;
     const focused = (this.getRootNode() as ShadowRoot | Document).activeElement === input;
     if (input && (this._pending !== undefined || !focused)) input.value = this._format(this._pending ?? this._value());
+    this._fitInput();
   }
+
+  /** A heater's target is as wide as its number (or Off), so it sits centered under the reading with its unit beside it. */
+  private _fitInput = () => {
+    const input = this._input;
+    if (!input || !this._pair) return;
+    // Off is in capitals, spaced out
+    input.style.width = input.value ? `${input.value.length + 0.5}ch` : `${input.placeholder.length + 1}ch`;
+  };
 
   private _key = (ev: KeyboardEvent) => {
     ev.stopPropagation();
@@ -241,6 +250,7 @@ export class PrusaField extends LitElement {
     const { min = -Infinity, max = Infinity, step = 1 } = stateObj.attributes;
     this._pending = Math.min(max, Math.max(min, value + steps * Math.max(step, 10 ** -decimalsOf(this.control, stateObj))));
     this._input!.value = this._format(this._pending);
+    this._fitInput();
     this.classList.toggle("unset", this._pair && this._pending === 0);
   }
 
