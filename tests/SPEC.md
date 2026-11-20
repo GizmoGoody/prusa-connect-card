@@ -35,7 +35,7 @@ The tests are in two places:
 ## Layout and spacing
 | ID | Behavior | Checked in |
 | --- | --- | --- |
-| L-1 | Features are half width, placed as in the xTool card. Exceptions: a feature with Full width, and a last feature alone in its row when Last feature full width is on. | unit "featurePlaces" |
+| L-1 | Features are half width, placed as in the xTool card. Exceptions: a feature with Full width, and a feature alone in its row when Last feature full width is on. A feature that shows nothing takes no place. | unit "featurePlaces" |
 | L-2 | Full width is on by default for the camera and off for the history. | feedback.html |
 | L-3 | Heater cells fill the feature: two to a half-width column, with no blank space. | features.html "temperatures" |
 | L-4 | Spacing follows the tile card (56 / 36 / 12), plus xTool's margin under the title row. It is the same collapsed and expanded. | real Home Assistant |
@@ -52,7 +52,7 @@ The tests are in two places:
 | H-1 | A heater and its target are one control: the reading on top, the target or OFF under it, and the temperature sensor's icon. | features.html "temperatures", feedback.html |
 | H-2 | Heaters are tinted and marked with arrows as Prusa Connect does: heating, cooling, at temperature, off. | unit "heaterState" |
 | H-3 | Tap a heater to type a target. Press and slide to change it, with a dead zone and growing speed. Hold to turn that heater off, and hold again to restore its target. | features.html "temperatures, hold" |
-| H-4 | A heater's icon, reading and target are centered in its cell. | feedback.html |
+| H-4 | A heater's icon, reading and target are centered in its cell; the reading and the target are centered on each other. | feedback.html |
 | H-5 | Chamber controls show once the integration offers them. | features.html "temperatures, future" |
 | P-1 | Presets (Prusa Connect's) set every nozzle and the bed, never the chamber. | feedback.html |
 | P-2 | Cool down turns every heater off, the chamber included. | feedback.html |
@@ -62,10 +62,10 @@ The tests are in two places:
 | Z-1 | Nozzles has one row per tool. | features.html "nozzles" |
 | G-1 | History is Home Assistant's own history graph card, in Prusa Connect's palette. Each target is its reading's color, dimmed. | features.html "history", unit "history" |
 | G-2 | History legend names are short: Nozzle, Nozzle 2, Bed, Chamber, each with "target" after a target. | features.html "history", unit "history" |
-| G-3 | The graph and its legend fill the feature. | features.html "history" |
+| G-3 | The chart fills the feature, which has a set height (a minimum alone leaves the chart 0 px tall). Home Assistant fits the legend. | features.html "history" |
 | C-1 | Cameras shows any camera entity. The default is the printer's own. | features.html "cameras" |
 | C-2 | Crop is set with two taps on the picture. It is never set in the editor, and kept only for the session. | features.html "crop" |
-| C-3 | Once a crop is set, it is not asked for again. It stays until Crop is turned off, and its box keeps its shape through new pictures. | features.html "crop", feedback.html |
+| C-3 | Once a crop is set, it is not asked for again, and the Crop key stays on. It stays until Crop is turned off. Its box keeps its shape through new pictures, and the picture is never stretched. | features.html "crop", feedback.html |
 | C-4 | With Crop off, the whole picture shows, still sized by the last picture known, so it never collapses. | features.html "crop", feedback.html |
 | E-1 | Controls the integration does not offer yet are listed as not offered yet. The editor links to issue #14 and asks people to add their support. | features.html "feature editor" |
 

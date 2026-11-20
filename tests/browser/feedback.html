@@ -52,6 +52,11 @@
     await wait(50);
     const pair = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
     check("H-4 centered", getComputedStyle(pair).justifyContent === "center", `the icon, reading and target centered (${getComputedStyle(pair).justifyContent})`);
+    const middle = (r) => r.left + r.width / 2;
+    const shownTarget = [...pair.querySelectorAll(".target > *")].filter((el) => getComputedStyle(el).display !== "none").map((el) => el.getBoundingClientRect());
+    const targetMiddle = (Math.min(...shownTarget.map((r) => r.left)) + Math.max(...shownTarget.map((r) => r.right))) / 2;
+    const now = pair.querySelector(".now").getBoundingClientRect();
+    check("H-4 centered", Math.abs(middle(now) - targetMiddle) <= 4, `the reading and the target centered on each other (${middle(now).toFixed(1)}, ${targetMiddle.toFixed(1)})`);
     const chamber = keyNamed(temps, "chamber_temperature_and_target");
     check("H-1 pair", !!chamber && chamber.querySelector("ha-state-icon")?.stateObj?.entity_id === "sensor.future_core_one_chamber_temperature",
       "the chamber's too, with its sensor's icon");
@@ -96,6 +101,10 @@
     tapAt(0.6, 0.9);
     await wait(50);
     const shape = view().style.aspectRatio;
+    check("C-3 crop key", keyNamed(cropping, "crop").getAttribute("aria-pressed") === "true", "the Crop key stays on once the crop is set");
+    const picture = cropping.shadowRoot.querySelector("hui-image");
+    check("C-3 not stretched", picture.classList.contains("fill") && picture.style.height.endsWith("%") && picture.style.width.endsWith("%"),
+      `the picture sized both ways, so it is never stretched (${picture.style.width} x ${picture.style.height})`);
     const image = cropping.shadowRoot.querySelector("hui-image");
     for (let i = 0; i < 3; i++) {
       cropping.hass = makeHass();
