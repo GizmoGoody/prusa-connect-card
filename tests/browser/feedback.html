@@ -103,8 +103,8 @@
     const shape = view().style.aspectRatio;
     check("C-3 crop key", keyNamed(cropping, "crop").getAttribute("aria-pressed") === "true", "the Crop key stays on once the crop is set");
     const picture = cropping.shadowRoot.querySelector("hui-image");
-    check("C-3 not stretched", picture.classList.contains("fill") && picture.style.height.endsWith("%") && picture.style.width.endsWith("%"),
-      `the picture sized both ways, so it is never stretched (${picture.style.width} x ${picture.style.height})`);
+    check("C-3 not stretched", /^\d+x\d+$/.test(picture.aspectRatio ?? "") && picture.fitMode === "fill",
+      `Home Assistant's image keeps the picture's shape between pictures (${picture.aspectRatio}, ${picture.fitMode})`);
     const image = cropping.shadowRoot.querySelector("hui-image");
     for (let i = 0; i < 3; i++) {
       cropping.hass = makeHass();
@@ -116,6 +116,63 @@
     await wait(50);
     check("C-4 crop off", view().style.aspectRatio !== shape && view().classList.contains("cropped"),
       `Crop off: the whole picture, still sized by the last known picture (${view().style.aspectRatio})`);
+
+    // A heater's field: the higher number on top, Off under the reading, the arrow beside both
+    const pairs = [...temps.shadowRoot.querySelectorAll("prusa-field.pair")];
+    const order = pairs.map((p) => {
+      const reading = parseFloat(p.querySelector(".now").textContent), target = Number(p.querySelector("input").value || 0);
+      const above = p.querySelector(".two").classList.contains("above");
+      return { key: p.dataset.key, ok: above === (target > 0 && target > reading), above };
+    });
+    check("H-6 order", pairs.length >= 2 && order.every((o) => o.ok), `the target on top only while it is above the reading (${order.map((o) => `${o.key}: ${o.above ? "target" : "reading"} on top`).join(", ")})`);
+    check("H-6 arrow", pairs.every((p) => [...p.querySelectorAll(".arrow")].every((arrow) => arrow.parentElement === p)),
+      "the arrow beside both numbers, not beside the reading");
+
+    // A heater's colors: the history's (Prusa Connect's palette by default; the target dimmed)
+    const nozzlePair = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
+    check("H-7 colors", nozzlePair.style.getPropertyValue("--prusa-reading") === "#fd5000" && nozzlePair.style.getPropertyValue("--prusa-target") === "#873109",
+      `the nozzle in the history's colors (${nozzlePair.style.getPropertyValue("--prusa-reading")}, ${nozzlePair.style.getPropertyValue("--prusa-target")})`);
+    const deep = (root, selector) => {
+      const found = root.querySelector(selector);
+      if (found) return found;
+      for (const el of root.querySelectorAll("*")) {
+        const hit = el.shadowRoot && deep(el.shadowRoot, selector);
+        if (hit) return hit;
+      }
+      return null;
+    };
+    const colored = addCard("Colors from the history", {
+      features: [{ type: "custom:prusa-temperatures" }, { type: "custom:prusa-history", colors: { tool_1_nozzle_temperature: "green" } }],
+    }, { height: 520 });
+    await wait(300);
+    const coloredPair = deep(colored.shadowRoot, '[data-key="tool_1_nozzle_temperature_and_target"]');
+    const coloredGraph = window.cardHelperCalls.filter((c) => c.type === "history-graph").pop();
+    check("H-7 colors", coloredPair?.style.getPropertyValue("--prusa-reading") === "#4caf50" && coloredGraph?.entities[0].color === "#4caf50",
+      `a color given in the history is the field's too (${coloredPair?.style.getPropertyValue("--prusa-reading")}, ${coloredGraph?.entities[0].color})`);
+
+    // The history's editor: Home Assistant's own fields; Hours to show takes any number, and can be left empty
+    const historyForm = customElements.get("prusa-history").editor(hass, "sensor.office_core_one_state");
+    const fields = historyForm.schema.flatMap((s) => s.schema && s.type === "grid" ? s.schema : [s]);
+    const hours = fields.find((f) => f.name === "hours_to_show");
+    check("G-4 editor", hours?.selector.number.min === 0 && hours.selector.number.step === "any" && historyForm.data({}).hours_to_show === undefined,
+      `Hours to show: any number from 0, empty when not set (${JSON.stringify(hours?.selector)})`);
+    check("G-4 editor", ["logarithmic_scale", "expand_legend", "min_y_axis", "max_y_axis", "fit_y_data"].every((n) => fields.some((f) => f.name === n)),
+      "the history graph card's own options");
+    const colorsField = historyForm.schema.find((s) => s.name === "colors");
+    check("G-5 colors", colorsField?.type === "expandable" && colorsField.schema.every((f) => f.selector.ui_color) && colorsField.schema.map((f) => f.name).includes("bed_temperature"),
+      `a color for each heater (${colorsField?.schema.map((f) => f.name)})`);
+
+    // Timespan: the hours shown, in minutes; set on the dashboard
+    const spanned = addFeature({ type: "custom:prusa-history", hours_to_show: 2, timespan: true }, {});
+    await wait(150);
+    const span = spanned.shadowRoot.querySelector('[data-key="timespan"] input');
+    check("G-6 timespan", span?.value === "120", `Hours to show in minutes (${span?.value})`);
+    span.value = "15";
+    span.dispatchEvent(new Event("change"));
+    await wait(50);
+    const spannedGraph = spanned.shadowRoot.querySelector("hui-history-graph-card");
+    check("G-6 timespan", spannedGraph?.config?.hours_to_show === 0.25 && spanned.shadowRoot.querySelector('[data-key="timespan"] input').value === "15",
+      `15 minutes shows a quarter hour (${spannedGraph?.config?.hours_to_show})`);
 
     // Badges: the xTool card's size
     const card = addCard("XL, paused", { entity: "sensor.garage_xl_state" });

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { controlOf, heaterIds, pairOf, targetOf } from "../../src/printer/controls";
 import { heaterState, type Device } from "../../src/printer/device";
 import { familyOf } from "../../src/printer/families";
-import { dim, historyColors, historyName } from "../../src/printer/history";
+import { dim, heaterColors, historyColors, historyName } from "../../src/printer/history";
 import { lookOf, styleOptions } from "../../src/printer/look";
 
 const device = (tools: number[]): Device => ({ entities: [], roles: {}, tools, cameras: [], profile: { family: "core", model: "" }, ids: [] });
@@ -44,6 +44,11 @@ describe("history (G-1, G-2: Prusa Connect's palette, targets dimmed, short name
   it("gives each heater a color and its target the same, dimmed", () => {
     expect(historyColors(["tool_1_nozzle_temperature", "tool_1_nozzle_target_temperature", "bed_temperature", "bed_target_temperature"], true))
       .toEqual(["#fd5000", "#873109", "#547aeb", "#33467e"]);
+  });
+  it("keeps each heater's color whichever lines are shown, unless one is given (H-7, G-5)", () => {
+    const heaters = ["tool_1_nozzle_temperature", "bed_temperature"];
+    expect(heaterColors(heaters, true)).toEqual({ tool_1_nozzle_temperature: "#fd5000", bed_temperature: "#547aeb" });
+    expect(heaterColors(heaters, true, { bed_temperature: "#4caf50" }).bed_temperature).toBe("#4caf50");
   });
   it("names each line short", () => {
     expect(historyName("tool_1_nozzle_temperature", device([1]))).toBe("Nozzle");

@@ -1,8 +1,9 @@
-// A number field (a heater's target, print speed, flow): a tap types in it,
-// and a press and slide changes it (set when the slide ends). A heater and
-// its target show as one field: the reading on top, tinted as Prusa
-// Connect tints it, and the target under it (Off at 0); a hold turns that
-// heater off, and another hold sets the target it had.
+// A number field (a heater's target, print speed, flow, the history's
+// timespan): a tap types in it, and a press and slide changes it (set when
+// the slide ends). A heater and its target show as one field, in the heater's
+// history colors: the higher of the two on top (Off always under the
+// reading), and an arrow beside both while it heats or cools; a hold turns
+// that heater off, and another hold sets the target it had.
 import { html, LitElement, nothing } from "lit";
 import { entityName, known, usable, type HassEntity, type HomeAssistant } from "../ha";
 import { heaterState } from "../printer/device";
@@ -115,12 +116,19 @@ export class PrusaField extends LitElement {
   hass?: HomeAssistant;
   // Whether the printer is on: the field cannot be used while it is off
   active = true;
+  // A heater's colors: its reading's and its target's (see PrusaElement._heaterColors)
+  colors?: { reading: string; target: string };
+  // A value that is not an entity's (the history's timespan): its number and
+  // attributes, as an entity has them, and what sets it
+  source?: HassEntity;
+  set?: (value: number) => void;
   private _pending?: number;
   private _shown = "";
 
   static override properties = {
     control: { attribute: false }, entity: { attribute: false }, reading: { attribute: false },
     hass: { attribute: false }, active: { attribute: false },
+    colors: { attribute: false }, source: { attribute: false }, set: { attribute: false },
   };
 
   constructor() {
@@ -138,7 +146,7 @@ export class PrusaField extends LitElement {
   }
 
   private get _state(): HassEntity | undefined {
-    return this.entity ? this.hass?.states[this.entity] : undefined;
+    return this.source ?? (this.entity ? this.hass?.states[this.entity] : undefined);
   }
 
   private _value(): number {
@@ -157,7 +165,7 @@ export class PrusaField extends LitElement {
   }
 
   private get _usable(): boolean {
-    return !!this.hass && usable(this.hass, this.entity) && this.active;
+    return !!this.hass && (this.source ? true : usable(this.hass, this.entity)) && this.active;
   }
 
   protected override render() {
@@ -173,9 +181,13 @@ export class PrusaField extends LitElement {
     const reading = hass.states[this.reading ?? ""];
     const state = this._heat();
     const arrow = state === "heating" ? "mdi:arrow-up" : state === "cooling" ? "mdi:arrow-down" : undefined;
-    return html`<ha-state-icon .hass=${hass} .stateObj=${reading}></ha-state-icon><span class="two"
-      ><span class="heat"><span class="now">${known(reading) ? hass.formatEntityState(reading) : ""}</span>${arrow ? html`<ha-icon class="arrow" .icon=${arrow}></ha-icon>` : nothing}</span
-      ><span class="target">${input}<span class="unit">${unit}</span></span></span>`;
+    // The higher number on top: the target while it is above the reading; Off is always under it
+    const target = this._pending ?? this._value();
+    const above = known(reading) && target > 0 && target > Number(reading.state);
+    return html`<ha-state-icon .hass=${hass} .stateObj=${reading}></ha-state-icon><span class="two ${above ? "above" : ""}"
+      ><span class="heat"><span class="now">${known(reading) ? hass.formatEntityState(reading) : ""}</span></span
+      ><span class="target">${input}<span class="unit">${unit}</span></span></span
+      >${arrow ? html`<ha-icon class="arrow" .icon=${arrow}></ha-icon>` : nothing}`;
   }
 
   /** A heater's state (see heaterState), or undefined while its reading is not known. */
@@ -192,6 +204,8 @@ export class PrusaField extends LitElement {
     this.classList.add("field", "drag");
     this.classList.toggle("pair", this._pair);
     this.classList.toggle("disabled", !this._usable);
+    this.style.setProperty("--prusa-reading", this.colors?.reading ?? "");
+    this.style.setProperty("--prusa-target", this.colors?.target ?? "");
     let name: string;
     if (this._pair) {
       const state = this._heat();
@@ -252,6 +266,7 @@ export class PrusaField extends LitElement {
     this._input!.value = this._format(this._pending);
     this._fitInput();
     this.classList.toggle("unset", this._pair && this._pending === 0);
+    if (this._pair) this.requestUpdate();
   }
 
   private _release(): void {
@@ -283,7 +298,9 @@ export class PrusaField extends LitElement {
     const factor = 10 ** decimalsOf(this.control, stateObj);
     const { min = -Infinity, max = Infinity } = stateObj.attributes;
     const next = Math.min(max, Math.max(min, Math.round(value * factor) / factor));
-    if (next !== this._value()) this.hass.callService("number", "set_value", { entity_id: this.entity, value: next });
-    else if (this._input) this._input.value = this._shown;
+    if (next === this._value()) {
+      if (this._input) this._input.value = this._shown;
+    } else if (this.set) this.set(next);
+    else this.hass.callService("number", "set_value", { entity_id: this.entity, value: next });
   }
 }

@@ -70,10 +70,17 @@ export const featureStyles = [rowStyles, css`
   /* A heater and its target as one field: the reading over the target (Off at 0), centered */
   .field.pair { justify-content: center; gap: 6px; padding: 0 10px; }
   .field.pair ha-state-icon { margin-right: 0; }
-  .field.pair .two { line-height: 1.15; flex: 0 1 auto; text-align: center; }
-  .field.pair .heat { display: flex; justify-content: center; gap: 2px; }
+  .field.pair .two { display: flex; flex-direction: column; line-height: 1.15; flex: 0 1 auto; text-align: center; }
+  .field.pair .heat { display: flex; justify-content: center; }
+  /* The higher number on top: the target while it is above the reading */
+  .field.pair .two.above .target { order: -1; }
+  /* In the heater's history colors: the reading's, and its target's (dimmed) */
+  .field.pair .heat, .field.pair > ha-state-icon, .field.pair > .arrow { color: var(--prusa-reading, inherit); }
+  .field.pair .target { color: var(--prusa-target, var(--secondary-text-color)) !important; }
+  /* The arrow beside both numbers, as tall as the two */
+  .field.pair > .arrow { --mdc-icon-size: 26px; margin: 0 -4px 0 -2px; }
   .field.pair .now { font-variant-numeric: tabular-nums; }
-  .field.pair .target { display: flex; justify-content: center; min-width: 0; font-size: 11px; font-weight: 400; color: var(--secondary-text-color); }
+  .field.pair .target { display: flex; justify-content: center; min-width: 0; font-size: 11px; font-weight: 400; }
   .field.pair .target input { flex: 0 1 auto; text-align: center; }
   .field.pair .target input::placeholder { color: inherit; opacity: 1; text-transform: uppercase; letter-spacing: .03em; }
   .field.pair .target .unit { flex: 0 1 auto; }

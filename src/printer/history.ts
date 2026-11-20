@@ -29,6 +29,16 @@ export function historyColors(ids: string[], dark: boolean): string[] {
   });
 }
 
+/**
+ * Each heater's color (by its reading's id): the one given (the history's
+ * Colors), or else Prusa Connect's palette, in the order of all the
+ * printer's heaters, so a heater keeps its color whichever lines are shown.
+ */
+export function heaterColors(heaters: string[], dark: boolean, given: Record<string, string | undefined> = {}): Record<string, string> {
+  const defaults = historyColors(heaters, dark);
+  return Object.fromEntries(heaters.map((heater, i) => [heater, given[heater] ?? defaults[i]]));
+}
+
 /** A heater's short name in the legend: Nozzle (Nozzle 2 with several tools), Bed, Chamber, and "target" after a target. */
 export function historyName(id: string, device: Device): string {
   const tool = controlOf(id)?.tool;

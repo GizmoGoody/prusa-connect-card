@@ -2,9 +2,10 @@
 import { html, LitElement, nothing, type CSSResultGroup, type PropertyValues, type TemplateResult } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { styleMap } from "lit/directives/style-map.js";
-import { cssColor, ENABLED, HEAT_TINTS } from "../const";
+import { CARD_TYPE, cssColor, ENABLED, HEAT_TINTS } from "../const";
 import { darkMode, entityName, select, usable, type Config, type FeatureContext, type HomeAssistant } from "../ha";
-import { controlOf, PENDING, present, valueOf, type Control, type Moment } from "../printer/controls";
+import { controlOf, heaterIds, PENDING, present, valueOf, type Control, type Moment } from "../printer/controls";
+import { dim, heaterColors } from "../printer/history";
 import { changedFor, deviceOf, phaseNow, type Device } from "../printer/device";
 import { itemsOf, type Item } from "./keys";
 import { ITEM_MIN, RowFitter } from "./rows";
@@ -22,6 +23,32 @@ function faceOf(b: Item, display: string) {
   const showIcon = icon && (display !== "names" || !text);
   const showText = text && (display !== "icons" || !showIcon || !!b.alwaysText);
   return { showIcon, showText };
+}
+
+/** The Prusa Connect card a feature is in, if any. */
+export function cardOf(el: Element): (HTMLElement & { config?: Config }) | undefined {
+  for (let node = (el.getRootNode() as ShadowRoot).host; node; node = (node.getRootNode() as ShadowRoot).host) {
+    if (node.localName === CARD_TYPE) return node as HTMLElement & { config?: Config };
+  }
+  return undefined;
+}
+
+/** A color (one of Home Assistant's named colors, or any CSS color) as #rrggbb, read where it is used; undefined if it cannot be read. */
+let hexCanvas: CanvasRenderingContext2D | null | undefined;
+export function toHex(el: Element, color: string): string | undefined {
+  let value = cssColor(color);
+  for (let i = 0; i < 4; i++) {
+    const named = value.match(/^var\((--[\w-]+)(?:,\s*(.+))?\)$/);
+    if (!named) break;
+    value = getComputedStyle(el).getPropertyValue(named[1]).trim() || named[2] || "";
+  }
+  if (!value) return undefined;
+  hexCanvas ??= document.createElement("canvas").getContext("2d");
+  if (!hexCanvas) return undefined;
+  hexCanvas.fillStyle = "#010203";
+  hexCanvas.fillStyle = value;
+  const hex = String(hexCanvas.fillStyle);
+  return hex.startsWith("#") && (hex !== "#010203" || value === "#010203") ? hex : undefined;
 }
 
 export interface FeatureOption {
@@ -248,6 +275,23 @@ export class PrusaElement extends LitElement {
   }
 
   /**
+   * Each heater's colors, by its reading's id: the history's line colors,
+   * so a heater reads the same in the history and in its field. The colors
+   * given in the card's Prusa history feature, or else Prusa Connect's palette;
+   * a target is its reading's color, dimmed.
+   */
+  protected _heaterColors(): Record<string, { reading: string; target: string }> {
+    const dark = darkMode(this._hass);
+    const history = (cardOf(this)?.config?.features as Config[] | undefined)?.find((f) => f?.type === "custom:prusa-history");
+    const given: Record<string, string | undefined> = {};
+    for (const [id, color] of Object.entries((history?.colors ?? {}) as Record<string, unknown>)) {
+      if (typeof color === "string" && color) given[id] = toHex(this, color);
+    }
+    const colors = heaterColors(heaterIds(this._device), dark, given);
+    return Object.fromEntries(Object.entries(colors).map(([id, color]) => [id, { reading: color, target: dim(color, dark) }]));
+  }
+
+  /**
    * A feature with nothing to show shows nothing at all: neither itself nor
    * its place among the card's features.
    */
@@ -286,7 +330,11 @@ export class PrusaFeature extends PrusaElement {
     return itemsOf(this, control, entityId ?? "", moment);
   }
 
+  // The heaters' colors, read once in each render (see _heaterColors)
+  private _colors?: Record<string, { reading: string; target: string }>;
+
   protected override render(): TemplateResult {
+    this._colors = undefined;
     const tints = HEAT_TINTS[darkMode(this._hass) ? "dark" : "light"];
     this.style.setProperty("--prusa-heating", tints.heating);
     this.style.setProperty("--prusa-cooling", tints.cooling);
@@ -321,7 +369,8 @@ export class PrusaFeature extends PrusaElement {
   protected _item(b: Item): TemplateResult {
     if (b.field) {
       return html`<prusa-field data-key=${b.key} data-min=${ITEM_MIN.field} .control=${controlOf(b.field)} .entity=${b.entity_set}
-        .reading=${b.reading} .hass=${this._hass} .active=${phaseNow(this._hass, this._entityId) !== "off"}></prusa-field>`;
+        .reading=${b.reading} .hass=${this._hass} .active=${phaseNow(this._hass, this._entityId) !== "off"}
+        .colors=${b.reading ? (this._colors ??= this._heaterColors())[b.field.replace(/_and_target$/, "")] : undefined}></prusa-field>`;
     }
     const display = this._type.display ? displayOf(this._config) : "icons";
     const color = b.color ? cssColor(b.color) : ENABLED;
