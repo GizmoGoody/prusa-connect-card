@@ -99,6 +99,23 @@
     const back = lastCall(offHass);
     check("temperatures, hold", back?.data.value === 260, `a second hold returns it to its target (${JSON.stringify(back)})`);
 
+    // Slide: a heater that is off starts from its reading; while it slides, the target alone
+    await wait(100);
+    const offAgain = makeHass({ "number.office_core_one_tool_1_nozzle_target_temperature": "0" });
+    temps.hass = offAgain;
+    await wait(50);
+    const sliding = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
+    const press = (type, x) => sliding.dispatchEvent(new PointerEvent(type, { button: 0, clientX: x, clientY: 10, pointerId: 1, bubbles: true }));
+    press("pointerdown", 10);
+    for (const x of [20, 30, 40]) { press("pointermove", x); await wait(20); }
+    const slidValue = Number(sliding.querySelector("input").value);
+    const two = sliding.querySelector(".two");
+    check("temperatures, slide", slidValue > 250, `an Off heater slides from its reading, not from 0 (${slidValue})`);
+    check("temperatures, slide", two.classList.contains("sliding") && getComputedStyle(sliding.querySelector(".heat")).display === "none",
+      "while it slides, the target alone");
+    press("pointerup", 40);
+    await wait(50);
+
     // Temperatures: a future CORE One with the chamber and its fan
     hass = makeHass();
     temps = addFeature({ type: "custom:prusa-temperatures" }, { hass, entityId: "sensor.future_core_one_state" });

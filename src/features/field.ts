@@ -222,10 +222,12 @@ export class PrusaField extends LitElement {
     const off = known(reading) && target > 0 ? Math.abs(target - Number(reading.state)) : Infinity;
     this._settled = this._settled ? off <= SETTLED_OFF : off <= SETTLED_ON;
     const alone = this._settled && this._pending === undefined && !this._typing;
+    // While it slides, the target alone, as large as the reading at its target
+    const sliding = this._pending !== undefined;
     // The arrow over the heater's icon, while it heats or cools
     return html`<span class="icon"><ha-state-icon .hass=${hass} .stateObj=${reading}></ha-state-icon
       >${arrow ? html`<ha-icon class="arrow" .icon=${arrow}></ha-icon>` : nothing}</span
-      ><span class="two ${above ? "above" : ""} ${alone ? "settled" : ""}"><span class="heat"><span class="now">${number}</span></span
+      ><span class="two ${above ? "above" : ""} ${alone ? "settled" : ""} ${sliding ? "sliding" : ""}"><span class="heat"><span class="now">${number}</span></span
       ><span class="target">${input}</span></span>`;
   }
 
@@ -298,7 +300,10 @@ export class PrusaField extends LitElement {
 
   private _slide(steps: number): void {
     const stateObj = this._state;
-    const value = this._pending ?? this._value();
+    // A heater that is off starts from its reading, not from 0
+    const reading = this._pair ? this.hass?.states[this.reading ?? ""] : undefined;
+    const from = this._pair && !(this._value() > 0) && known(reading) ? Math.round(Number(reading.state)) : this._value();
+    const value = this._pending ?? from;
     if (!stateObj || !Number.isFinite(value)) return;
     const { min = -Infinity, max = Infinity, step = 1 } = stateObj.attributes;
     this._pending = Math.min(max, Math.max(min, value + steps * Math.max(step, 10 ** -decimalsOf(this.control, stateObj))));
