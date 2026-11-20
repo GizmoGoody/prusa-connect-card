@@ -81,7 +81,7 @@ The card's own options:
 | `expanded_at_load` | `false` | Expanded when the dashboard loads (the card otherwise remembers how you left it) |
 | `expand_when_job_starts` | `true` | Expand when a print starts |
 | `collapse_when_job_ends` | `true` | Collapse when a print finishes or is stopped |
-| `last_feature_full_width` | `true` | A last feature alone in its row stretches across both columns |
+| `last_feature_full_width` | `true` | A last feature alone in its row stretches across both columns (a feature left alone before a full-width feature always does) |
 
 ### Features
 
@@ -89,7 +89,7 @@ The card's own options:
 | --- | --- | --- |
 | Prusa print | **`pause_resume`**, `pause`, `resume`, **`stop`**, **`progress`**, **`time_remaining`**, `time_printing`, `finish_time`, `job_name` | `show`, `ask_before_stopping` |
 | Prusa temperatures | **`tool_N_nozzle_temperature_and_target`**, `tool_N_nozzle_temperature`, `tool_N_nozzle_target_temperature`, the same for `bed` and `chamber`, **`chamber_fan`**, **`presets`**, **`cool_down`** | `show`, `animate_fan` |
-| Prusa history | the heaters' readings and targets, as `entities` | the history graph card's `hours_to_show`, `logarithmic_scale`, `expand_legend`, `min_y_axis`, `max_y_axis`, `fit_y_data`; `colors` (a color for each heater, such as `bed_temperature: green`; its target is the same color, dimmed, and the heater's field in Prusa temperatures uses them too); `timespan` (a field under the graph that changes the time shown, in minutes); `full_width` |
+| Prusa history | the heaters' readings and targets, as `entities` | the history graph card's `hours_to_show`, `expand_legend`, `min_y_axis`, `max_y_axis`, `fit_y_data`; `colors` (a color for each heater, such as `bed_temperature: green`; its target is the same color, dimmed, and the heater's field in Prusa temperatures uses them too); `full_width` |
 | Prusa nozzles | per tool: **`material`**, **`nozzle_diameter`**, `nozzle_high_flow`, `nozzle_hardened`, **`active`**, **`print_fan_speed`**, `heatbreak_fan_speed` | `show`, `animate_fan` |
 | Prusa movement | **`speed`**, **`flow`**, **`axis_z`**, **`axis_x`**, **`axis_y`**, `home`, `disable_steppers` | `show`, `only_z_while_printing`, `units` |
 | Prusa lights | `chamber_light`, `chamber_light_brightness` | `off_at_minimum` |

@@ -78,13 +78,16 @@ export const featureStyles = [rowStyles, css`
   .field.pair .heat, .field.pair > ha-state-icon, .field.pair > .arrow { color: var(--prusa-reading, inherit); }
   .field.pair .target { color: var(--prusa-target, var(--secondary-text-color)) !important; }
   /* The arrow beside both numbers, as tall as the two */
-  .field.pair > .arrow { --mdc-icon-size: 26px; margin: 0 -4px 0 -2px; }
+  .field.pair > .arrow { --mdc-icon-size: 26px; margin: 0 -7px 0 -6px; flex: none; }
+  /* Too narrow for the units: the numbers alone, never cut short */
+  .field.pair.tight .unit { display: none; }
   .field.pair .now { font-variant-numeric: tabular-nums; }
+  .field.pair .now .unit { opacity: 1; }
   .field.pair .target { display: flex; justify-content: center; min-width: 0; font-size: 11px; font-weight: 400; }
   .field.pair .target input { flex: 0 1 auto; text-align: center; }
   .field.pair .target input::placeholder { color: inherit; opacity: 1; text-transform: uppercase; letter-spacing: .03em; }
   .field.pair .target .unit { flex: 0 1 auto; }
-  .field.pair.unset .unit { display: none; }
+  .field.pair.unset .target .unit { display: none; }
   .key {
     min-width: 0; height: 100%; padding: 0 4px; border: 0; cursor: pointer; box-sizing: border-box;
     position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 6px;

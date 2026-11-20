@@ -1,5 +1,4 @@
-// A number field (a heater's target, print speed, flow, the history's
-// timespan): a tap types in it, and a press and slide changes it (set when
+// A number field (a heater's target, print speed, flow): a tap types in it, and a press and slide changes it (set when
 // the slide ends). A heater and its target show as one field, in the heater's
 // history colors: the higher of the two on top (Off always under the
 // reading), and an arrow beside both while it heats or cools; a hold turns
@@ -118,17 +117,13 @@ export class PrusaField extends LitElement {
   active = true;
   // A heater's colors: its reading's and its target's (see PrusaElement._heaterColors)
   colors?: { reading: string; target: string };
-  // A value that is not an entity's (the history's timespan): its number and
-  // attributes, as an entity has them, and what sets it
-  source?: HassEntity;
-  set?: (value: number) => void;
   private _pending?: number;
   private _shown = "";
 
   static override properties = {
     control: { attribute: false }, entity: { attribute: false }, reading: { attribute: false },
     hass: { attribute: false }, active: { attribute: false },
-    colors: { attribute: false }, source: { attribute: false }, set: { attribute: false },
+    colors: { attribute: false },
   };
 
   constructor() {
@@ -146,7 +141,7 @@ export class PrusaField extends LitElement {
   }
 
   private get _state(): HassEntity | undefined {
-    return this.source ?? (this.entity ? this.hass?.states[this.entity] : undefined);
+    return this.entity ? this.hass?.states[this.entity] : undefined;
   }
 
   private _value(): number {
@@ -165,7 +160,7 @@ export class PrusaField extends LitElement {
   }
 
   private get _usable(): boolean {
-    return !!this.hass && (this.source ? true : usable(this.hass, this.entity)) && this.active;
+    return !!this.hass && usable(this.hass, this.entity) && this.active;
   }
 
   protected override render() {
@@ -180,12 +175,16 @@ export class PrusaField extends LitElement {
     }
     const reading = hass.states[this.reading ?? ""];
     const state = this._heat();
-    const arrow = state === "heating" ? "mdi:arrow-up" : state === "cooling" ? "mdi:arrow-down" : undefined;
+    const arrow = state === "heating" ? "mdi:arrow-up-thin" : state === "cooling" ? "mdi:arrow-down-thin" : undefined;
+    // The reading's number and its unit apart: the units are left out when the field is too narrow for them (see _fit)
+    const shown = known(reading) ? hass.formatEntityState(reading) : "";
+    const readingUnit = reading?.attributes.unit_of_measurement ?? "";
+    const number = readingUnit && shown.endsWith(readingUnit) ? shown.slice(0, -readingUnit.length) : shown;
     // The higher number on top: the target while it is above the reading; Off is always under it
     const target = this._pending ?? this._value();
     const above = known(reading) && target > 0 && target > Number(reading.state);
     return html`<ha-state-icon .hass=${hass} .stateObj=${reading}></ha-state-icon><span class="two ${above ? "above" : ""}"
-      ><span class="heat"><span class="now">${known(reading) ? hass.formatEntityState(reading) : ""}</span></span
+      ><span class="heat"><span class="now">${number.trimEnd()}<span class="unit">${shown === number ? "" : `${number.endsWith(" ") ? " " : ""}${readingUnit}`}</span></span></span
       ><span class="target">${input}<span class="unit">${unit}</span></span></span
       >${arrow ? html`<ha-icon class="arrow" .icon=${arrow}></ha-icon>` : nothing}`;
   }
@@ -225,6 +224,27 @@ export class PrusaField extends LitElement {
     const focused = (this.getRootNode() as ShadowRoot | Document).activeElement === input;
     if (input && (this._pending !== undefined || !focused)) input.value = this._format(this._pending ?? this._value());
     this._fitInput();
+    this._fit();
+  }
+
+  /** A heater's numbers with their units, or without them when they do not fit; never cut short. */
+  private _fit = () => {
+    if (!this._pair) return;
+    this.classList.remove("tight");
+    const cut = [...this.querySelectorAll<HTMLElement>(".two, .now, .target")].some((el) => el.scrollWidth > el.clientWidth + 0.5);
+    this.classList.toggle("tight", cut);
+  };
+
+  private _fitter = new ResizeObserver(this._fit);
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this._fitter.observe(this);
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._fitter.disconnect();
   }
 
   /** A heater's target is as wide as its number (or Off), so it sits centered under the reading with its unit beside it. */
@@ -298,9 +318,7 @@ export class PrusaField extends LitElement {
     const factor = 10 ** decimalsOf(this.control, stateObj);
     const { min = -Infinity, max = Infinity } = stateObj.attributes;
     const next = Math.min(max, Math.max(min, Math.round(value * factor) / factor));
-    if (next === this._value()) {
-      if (this._input) this._input.value = this._shown;
-    } else if (this.set) this.set(next);
-    else this.hass.callService("number", "set_value", { entity_id: this.entity, value: next });
+    if (next !== this._value()) this.hass.callService("number", "set_value", { entity_id: this.entity, value: next });
+    else if (this._input) this._input.value = this._shown;
   }
 }

@@ -100,22 +100,22 @@
     tapAt(0.1, 0.1);
     tapAt(0.6, 0.9);
     await wait(50);
-    const shape = view().style.aspectRatio;
-    check("C-3 crop key", keyNamed(cropping, "crop").getAttribute("aria-pressed") === "true", "the Crop key stays on once the crop is set");
+    const height = view().getBoundingClientRect().height;
     const picture = cropping.shadowRoot.querySelector("hui-image");
-    check("C-3 not stretched", /^\d+x\d+$/.test(picture.aspectRatio ?? "") && picture.fitMode === "fill",
-      `Home Assistant's image keeps the picture's shape between pictures (${picture.aspectRatio}, ${picture.fitMode})`);
-    const image = cropping.shadowRoot.querySelector("hui-image");
+    const zoom = picture.style.transform;
+    check("C-3 crop key", keyNamed(cropping, "crop").getAttribute("aria-pressed") === "true", "the Crop key stays on once the crop is set");
+    check("C-3 not stretched", /^translate\([-\d.]+%, [-\d.]+%\) scale\([\d.]+\)$/.test(zoom) && picture.fitMode === "cover",
+      `the crop only zooms the picture, the same both ways, as the xTool card's fills its box (${zoom}, ${picture.fitMode})`);
     for (let i = 0; i < 3; i++) {
       cropping.hass = makeHass();
       await wait(30);
     }
-    check("C-3 steady", view().style.aspectRatio === shape && cropping.shadowRoot.querySelector("hui-image") === image,
-      `the same picture and shape through updates (${shape} / ${view().style.aspectRatio})`);
+    check("C-3 steady", picture.style.transform === zoom && cropping.shadowRoot.querySelector("hui-image") === picture && view().getBoundingClientRect().height === height,
+      `the same picture, zoom and box through updates (${picture.style.transform}, ${view().getBoundingClientRect().height}px)`);
     keyNamed(cropping, "crop").click();
     await wait(50);
-    check("C-4 crop off", view().style.aspectRatio !== shape && view().classList.contains("cropped"),
-      `Crop off: the whole picture, still sized by the last known picture (${view().style.aspectRatio})`);
+    check("C-4 crop off", picture.style.transform === "" && view().getBoundingClientRect().height === height,
+      `Crop off: the whole picture, in the same box (${view().getBoundingClientRect().height}px)`);
 
     // A heater's field: the higher number on top, Off under the reading, the arrow beside both
     const pairs = [...temps.shadowRoot.querySelectorAll("prusa-field.pair")];
@@ -156,23 +156,23 @@
     const hours = fields.find((f) => f.name === "hours_to_show");
     check("G-4 editor", hours?.selector.number.min === 0 && hours.selector.number.step === "any" && historyForm.data({}).hours_to_show === undefined,
       `Hours to show: any number from 0, empty when not set (${JSON.stringify(hours?.selector)})`);
-    check("G-4 editor", ["logarithmic_scale", "expand_legend", "min_y_axis", "max_y_axis", "fit_y_data"].every((n) => fields.some((f) => f.name === n)),
-      "the history graph card's own options");
+    check("G-4 editor", ["expand_legend", "min_y_axis", "max_y_axis", "fit_y_data"].every((n) => fields.some((f) => f.name === n)) && !fields.some((f) => f.name === "logarithmic_scale"),
+      "the history graph card's own options, without Logarithmic scale");
     const colorsField = historyForm.schema.find((s) => s.name === "colors");
     check("G-5 colors", colorsField?.type === "expandable" && colorsField.schema.every((f) => f.selector.ui_color) && colorsField.schema.map((f) => f.name).includes("bed_temperature"),
       `a color for each heater (${colorsField?.schema.map((f) => f.name)})`);
 
-    // Timespan: the hours shown, in minutes; set on the dashboard
-    const spanned = addFeature({ type: "custom:prusa-history", hours_to_show: 2, timespan: true }, {});
-    await wait(150);
-    const span = spanned.shadowRoot.querySelector('[data-key="timespan"] input');
-    check("G-6 timespan", span?.value === "120", `Hours to show in minutes (${span?.value})`);
-    span.value = "15";
-    span.dispatchEvent(new Event("change"));
-    await wait(50);
-    const spannedGraph = spanned.shadowRoot.querySelector("hui-history-graph-card");
-    check("G-6 timespan", spannedGraph?.config?.hours_to_show === 0.25 && spanned.shadowRoot.querySelector('[data-key="timespan"] input').value === "15",
-      `15 minutes shows a quarter hour (${spannedGraph?.config?.hours_to_show})`);
+    // Too narrow for the units: the numbers alone, never cut short
+    const narrow = addFeature({ type: "custom:prusa-temperatures", controls: ["tool_1_nozzle_temperature_and_target"] }, {});
+    narrow.parentElement.style.width = "92px";
+    await wait(100);
+    const tight = keyNamed(narrow, "tool_1_nozzle_temperature_and_target");
+    const cutShort = [...tight.querySelectorAll(".two, .now, .target")].some((el) => el.scrollWidth > el.clientWidth + 0.5);
+    check("H-8 no ellipsis", tight.classList.contains("tight") && !cutShort, `the units left out, nothing cut short (${tight.className})`);
+    tight.style.width = "200px";
+    await wait(100);
+    check("H-8 no ellipsis", !tight.classList.contains("tight"), "the units back with room for them");
+
 
     // Badges: the xTool card's size
     const card = addCard("XL, paused", { entity: "sensor.garage_xl_state" });

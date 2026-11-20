@@ -35,7 +35,7 @@ The tests are in two places:
 ## Layout and spacing
 | ID | Behavior | Checked in |
 | --- | --- | --- |
-| L-1 | Features are half width, placed as in the xTool card. Exceptions: a feature with Full width, and a feature alone in its row when Last feature full width is on. A feature that shows nothing takes no place. | unit "featurePlaces" |
+| L-1 | Features are half width, placed as in the xTool card. Exceptions: a feature with Full width, and a feature alone in its row when Last feature full width is on. A feature that shows nothing takes no place. A feature left alone in its row by a full-width feature after it takes both columns, whatever Last feature full width is. | unit "featurePlaces" |
 | L-2 | Full width is on by default for the camera and off for the history. | feedback.html |
 | L-3 | Heater cells fill the feature: two to a half-width column, with no blank space. | features.html "temperatures" |
 | L-4 | Spacing follows the tile card (56 / 36 / 12), plus xTool's margin under the title row. It is the same collapsed and expanded. | real Home Assistant |
@@ -56,6 +56,7 @@ The tests are in two places:
 | H-5 | Chamber controls show once the integration offers them. | features.html "temperatures, future" |
 | H-6 | The higher number is on top: the target while it is above the reading, else the reading. Off is always under the reading. The heating or cooling arrow sits beside both numbers, as tall as the two. | feedback.html |
 | H-7 | A heater's field is in its history colors: the reading in the heater's color, the target dimmed. They are the colors given in the card's Prusa history feature, or else Prusa Connect's palette. | feedback.html |
+| H-8 | A heater's numbers are never cut short (no ...): when the field is too narrow, the units are left out. The arrow is a thin one. | feedback.html |
 | P-1 | Presets (Prusa Connect's) set every nozzle and the bed, never the chamber. | feedback.html |
 | P-2 | Cool down turns every heater off, the chamber included. | feedback.html |
 | F-1 | The chamber fan has Off, A and Manual, as Prusa Connect sets it. Manual returns to the last manual speed. | feedback.html |
@@ -65,13 +66,12 @@ The tests are in two places:
 | G-1 | History is Home Assistant's own history graph card, in Prusa Connect's palette. Each target is its reading's color, dimmed. | features.html "history", unit "history" |
 | G-2 | History legend names are short: Nozzle, Nozzle 2, Bed, Chamber, each with "target" after a target. | features.html "history", unit "history" |
 | G-3 | The chart fills the feature, which has a set height (a minimum alone leaves the chart 0 px tall). Home Assistant fits the legend. | features.html "history" |
-| G-4 | The history's editor has the history graph card's own fields. Hours to show takes any number from 0 (such as 0.25), and can be left empty (an hour). | feedback.html |
+| G-4 | The history's editor has the history graph card's own fields, except Logarithmic scale. Hours to show takes any number from 0 (such as 0.25), and can be left empty (an hour). Zoom and pan are the graph's own (pinch or scroll, and drag). | feedback.html |
 | G-5 | Colors: a color for each heater, chosen as Home Assistant's own editor chooses a line's color. The target is the same color, dimmed. | feedback.html |
-| G-6 | Timespan (an option): a field under the graph that shows the hours shown in minutes. Tap to type, or press and slide; it changes the graph until the page is reloaded or Hours to show changes. | feedback.html |
 | C-1 | Cameras shows any camera entity. The default is the printer's own. | features.html "cameras" |
 | C-2 | Crop is set with two taps on the picture. It is never set in the editor, and kept only for the session. | features.html "crop" |
-| C-3 | Once a crop is set, it is not asked for again, and the Crop key stays on. It stays until Crop is turned off. Its box keeps its shape through new pictures: Home Assistant's image is given the picture's shape (aspect_ratio) and fills it, so the picture is never stretched. | features.html "crop", feedback.html |
-| C-4 | With Crop off, the whole picture shows, still sized by the last picture known, so it never collapses. | features.html "crop", feedback.html |
+| C-3 | Once a crop is set, it is not asked for again, and the Crop key stays on. It stays until Crop is turned off. As in the xTool card, the picture fills its box (cover); a crop only zooms it, the same both ways, so neither the box nor the picture ever changes shape. | features.html "crop", feedback.html |
+| C-4 | With Crop off, the whole picture shows, in the same box. | features.html "crop", feedback.html |
 | E-1 | Controls the integration does not offer yet are listed as not offered yet. The editor links to issue #14 and asks people to add their support. | features.html "feature editor" |
 
 ## Editor
