@@ -37,7 +37,7 @@ The tests are in two places:
 | --- | --- | --- |
 | L-1 | Features are half width, placed as in the xTool card. Exceptions: a feature with Full width, and a feature alone in its row when Last feature full width is on. A feature that shows nothing takes no place. A feature left alone in its row by a full-width feature after it takes both columns, whatever Last feature full width is. | unit "featurePlaces" |
 | L-2 | Full width is on by default for the camera and off for the history. | feedback.html |
-| L-3 | Heater cells fill the feature: two to a half-width column, with no blank space. | features.html "temperatures" |
+| L-3 | Heater cells fill the feature: as many to a row as fit (two in a half-width column), spread evenly over the rows, and the last row's cells widen to fill it, so no row has an empty end. | features.html "temperatures" |
 | L-4 | Spacing follows the tile card (56 / 36 / 12), plus xTool's margin under the title row. It is the same collapsed and expanded. | real Home Assistant |
 | L-5 | Corners follow the theme, so a pill-shaped theme stays pill-shaped. A container's radius matches its children's. | real Home Assistant |
 
@@ -54,9 +54,9 @@ The tests are in two places:
 | H-3 | Tap a heater to type a target. Press and slide to change it, with a dead zone and growing speed. Hold to turn that heater off, and hold again to restore its target. | features.html "temperatures, hold" |
 | H-4 | A heater's icon, reading and target are centered in its cell; the reading and the target are centered on each other. | feedback.html |
 | H-5 | Chamber controls show once the integration offers them. | features.html "temperatures, future" |
-| H-6 | The higher number is on top: the target while it is above the reading, else the reading. Off is always under the reading. The heating or cooling arrow sits beside both numbers, as tall as the two. | feedback.html |
+| H-6 | The higher number is on top: the target while it is above the reading, else the reading. Off is always under the reading. While it heats or cools, a thin arrow sits on the heater's icon. | feedback.html |
 | H-7 | A heater's field is in its history colors: the reading in the heater's color, the target dimmed. They are the colors given in the card's Prusa history feature, or else Prusa Connect's palette. | feedback.html |
-| H-8 | A heater's numbers are never cut short (no ...): when the field is too narrow, the units are left out. The arrow is a thin one. | feedback.html |
+| H-8 | A heater's field shows the numbers alone (the units are implied). The reading is never shrunk or cut short (no ...). | feedback.html |
 | P-1 | Presets (Prusa Connect's) set every nozzle and the bed, never the chamber. | feedback.html |
 | P-2 | Cool down turns every heater off, the chamber included. | feedback.html |
 | F-1 | The chamber fan has Off, A and Manual, as Prusa Connect sets it. Manual returns to the last manual speed. | feedback.html |

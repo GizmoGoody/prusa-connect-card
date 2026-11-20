@@ -66,14 +66,18 @@
     const nozzle = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
     const pairIcon = nozzle?.querySelector("ha-state-icon");
     check("temperatures", pairIcon?.stateObj?.entity_id === "sensor.office_core_one_tool_1_nozzle_temperature", `the temperature sensor's icon (${pairIcon?.stateObj?.entity_id})`);
-    check("temperatures", nozzle?.querySelector(".now").textContent === "259.8 °C" && nozzle.querySelector("input").value === "260",
+    check("temperatures", nozzle?.querySelector(".now").textContent === "259.8" && nozzle.querySelector("input").value === "260",
       `the reading over the target (${nozzle?.querySelector(".now").textContent} / ${nozzle?.querySelector("input").value})`);
     const row = temps.shadowRoot.querySelector(".row.wraps");
-    check("temperatures", getComputedStyle(row).display === "grid" && getComputedStyle(row).gridTemplateColumns.split(" ").length === 5,
-      `equal cells, as many as fit (${getComputedStyle(row).gridTemplateColumns})`);
+    const tops = () => [...row.children].map((el) => Math.round(el.getBoundingClientRect().top));
+    const perRow = () => Object.values(tops().reduce((rows, top) => ({ ...rows, [top]: (rows[top] ?? 0) + 1 }), {}));
+    const ends = () => { const r = row.getBoundingClientRect(); return [...row.children].every((el) => el.getBoundingClientRect().right <= r.right + 0.5); };
+    const filled = () => { const r = row.getBoundingClientRect(); const last = [...row.children].pop().getBoundingClientRect(); return Math.abs(last.right - r.right) < 1; };
+    check("temperatures", row.style.getPropertyValue("--columns") !== "" && Math.max(...perRow()) - Math.min(...perRow()) <= 1 && filled() && ends(),
+      `cells spread evenly over the rows, the last row filled (${perRow().join(" + ")})`);
     row.style.width = "170px";
     await wait(20);
-    check("temperatures", getComputedStyle(row).gridTemplateColumns.split(" ").length === 2, `two in a half-width column (${getComputedStyle(row).gridTemplateColumns})`);
+    check("temperatures", perRow()[0] === 2 && filled(), `two in a half-width column (${perRow().join(" + ")})`);
     row.style.width = "";
 
     // Hold: the heater off, and a second hold back to its target

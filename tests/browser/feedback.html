@@ -125,8 +125,8 @@
       return { key: p.dataset.key, ok: above === (target > 0 && target > reading), above };
     });
     check("H-6 order", pairs.length >= 2 && order.every((o) => o.ok), `the target on top only while it is above the reading (${order.map((o) => `${o.key}: ${o.above ? "target" : "reading"} on top`).join(", ")})`);
-    check("H-6 arrow", pairs.every((p) => [...p.querySelectorAll(".arrow")].every((arrow) => arrow.parentElement === p)),
-      "the arrow beside both numbers, not beside the reading");
+    check("H-6 arrow", pairs.every((p) => [...p.querySelectorAll(".arrow")].every((arrow) => arrow.parentElement.classList.contains("icon"))),
+      "the arrow on the heater's icon");
 
     // A heater's colors: the history's (Prusa Connect's palette by default; the target dimmed)
     const nozzlePair = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
@@ -162,16 +162,15 @@
     check("G-5 colors", colorsField?.type === "expandable" && colorsField.schema.every((f) => f.selector.ui_color) && colorsField.schema.map((f) => f.name).includes("bed_temperature"),
       `a color for each heater (${colorsField?.schema.map((f) => f.name)})`);
 
-    // Too narrow for the units: the numbers alone, never cut short
+    // The numbers alone, the reading never cut short
     const narrow = addFeature({ type: "custom:prusa-temperatures", controls: ["tool_1_nozzle_temperature_and_target"] }, {});
-    narrow.parentElement.style.width = "92px";
+    narrow.parentElement.style.width = "80px";
     await wait(100);
-    const tight = keyNamed(narrow, "tool_1_nozzle_temperature_and_target");
-    const cutShort = [...tight.querySelectorAll(".two, .now, .target")].some((el) => el.scrollWidth > el.clientWidth + 0.5);
-    check("H-8 no ellipsis", tight.classList.contains("tight") && !cutShort, `the units left out, nothing cut short (${tight.className})`);
-    tight.style.width = "200px";
-    await wait(100);
-    check("H-8 no ellipsis", !tight.classList.contains("tight"), "the units back with room for them");
+    const slim = keyNamed(narrow, "tool_1_nozzle_temperature_and_target");
+    const slimNow = slim.querySelector(".now");
+    check("H-8 numbers alone", !/°/.test(slim.textContent) && !slim.querySelector(".unit"), `no units (${textOf(slim)})`);
+    check("H-8 never cut short", slimNow.scrollWidth <= slimNow.clientWidth + 0.5 && getComputedStyle(slimNow).textOverflow !== "ellipsis",
+      `the reading whole in a narrow field (${slimNow.textContent}, ${slimNow.scrollWidth} / ${slimNow.clientWidth}px)`);
 
 
     // Badges: the xTool card's size
