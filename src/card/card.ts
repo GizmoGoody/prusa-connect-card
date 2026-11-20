@@ -19,6 +19,7 @@ import { changedFor, deviceOf, phaseNow, printerStateSensors, sensorAttributes }
 import { glassReflections, lookOf, styleOptions, type Door, type Look } from "../printer/look";
 import { FEATURE_TAGS, PrusaPrint, PrusaTemperatures, TALL_FEATURES } from "../features";
 import { featurePlaces, featureRadius } from "./layout";
+import { fitRow, linesOf } from "../features/rows";
 import {
   CHANNEL_PAD, checkConfig, DEFAULT_FEATURES_POSITION, DEFAULT_FEATURES_STYLE, defaultStatusBadges, innerTileConfig, minimal,
   PROGRESS_DEFAULTS, progressOptions,
@@ -80,6 +81,8 @@ export class PrusaConnectCard extends LitElement {
   private _tapAt?: { x: number; y: number };
   private _statesProvider = new StatesProvider(this);
   private _resize = new ResizeObserver(() => this._layout());
+  // A feature's own lines changed (see fitRow): match the features beside it again
+  private _onLines = () => this._layout();
   // The tile card's hass: the card's entity with the state's icon and the printer's sensors (see _innerHass)
   private _inner?: HomeAssistant;
   private _innerState?: HassEntity;
@@ -215,11 +218,13 @@ export class PrusaConnectCard extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this._resize.observe(this);
+    this.addEventListener("prusa-lines", this._onLines);
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._resize.disconnect();
+    this.removeEventListener("prusa-lines", this._onLines);
   }
 
   // Whether the features are shown is remembered in this browser, per printer
@@ -520,6 +525,7 @@ export class PrusaConnectCard extends LitElement {
       })), gap, lastWide)
       : { places: [], rows: [] };
     const key = JSON.stringify([places, rows, all.map((item) => items.includes(item))]);
+    this._matchLines(items);
     if (group === this._placedGroup && key === this._placedKey) return;
     clearTimeout(this._placeTimer);
     this._placeTimer = setTimeout(() => {
@@ -536,7 +542,30 @@ export class PrusaConnectCard extends LitElement {
         if (place) item.style.setProperty("--feature-columns", `${place.columns}`);
         else item.style.removeProperty("--feature-columns");
       });
+      this._matchLines(items);
     }, 0);
+  }
+
+  /**
+   * Two features side by side fill the same height: one whose row wraps
+   * takes as many lines as the feature beside it has of its own (as two
+   * heaters wrapped onto two lines beside Presets and Cool down, which then
+   * sit one over the other).
+   */
+  private _matchLines(items: HTMLElement[]): void {
+    const roots = items.map((item) => item.shadowRoot?.querySelector(FEATURE_TAGS.join(","))?.shadowRoot ?? undefined);
+    const own = roots.map((root) => (root ? linesOf(root) : 0));
+    const beside = (a: HTMLElement, b: HTMLElement) => a !== b && a.offsetTop === b.offsetTop && a.offsetLeft !== b.offsetLeft;
+    items.forEach((item, i) => {
+      const rows = [...(roots[i]?.querySelectorAll<HTMLElement>(".row") ?? [])];
+      const wraps = rows.length === 1 && rows[0].classList.contains("wraps");
+      const most = wraps ? Math.max(0, ...items.map((other, j) => (beside(item, other) ? own[j] : 0))) : 0;
+      const value = most > own[i] ? `${most}` : "";
+      if (item.style.getPropertyValue("--prusa-lines") === value) return;
+      if (value) item.style.setProperty("--prusa-lines", value);
+      else item.style.removeProperty("--prusa-lines");
+      if (wraps) fitRow(rows[0]);
+    });
   }
 
   /**

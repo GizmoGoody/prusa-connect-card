@@ -20,12 +20,29 @@ export function fitRow(row: HTMLElement): void {
   const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
   if (row.classList.contains("wraps")) {
     // As many to a row as fit, spread evenly over the rows; the last row's
-    // cells widen to fill it, so no row has an empty end
+    // cells widen to fill it, so no row has an empty end. Beside a feature
+    // of more lines (--prusa-lines, set by the card), it takes as many, so
+    // the two fill the same height
     for (const item of row.children) item.removeAttribute("data-dropped");
-    const count = [...row.children].filter((item) => !(item as HTMLElement).hidden).length;
-    const fit = Math.max(1, Math.floor((width + gap) / (ITEM_MIN.field + gap)));
-    const columns = count ? Math.ceil(count / Math.ceil(count / fit)) : 1;
-    row.style.setProperty("--columns", `${columns}`);
+    const shown = [...row.children].filter((item) => !(item as HTMLElement).hidden);
+    const count = shown.length;
+    // The lines the items take at their narrowest, in order
+    let natural = 1, used = 0;
+    for (const item of shown) {
+      const min = itemMin(item);
+      if (used && used + gap + min > width + 0.5) {
+        natural += 1;
+        used = min;
+      } else used += (used ? gap : 0) + min;
+    }
+    const beside = Number(getComputedStyle(row).getPropertyValue("--prusa-lines")) || 0;
+    const lines = Math.min(Math.max(natural, beside), Math.max(count, 1));
+    row.style.setProperty("--columns", `${count ? Math.ceil(count / lines) : 1}`);
+    if (row.dataset.lines !== `${natural}`) {
+      row.dataset.lines = `${natural}`;
+      // The card matches the features beside it (see linesOf)
+      row.dispatchEvent(new Event("prusa-lines", { bubbles: true, composed: true }));
+    }
     return;
   }
   let used = 0, shown = 0, full = false;
@@ -39,6 +56,11 @@ export function fitRow(row: HTMLElement): void {
       shown += 1;
     }
   }
+}
+
+/** A feature's own lines (rows, each wrapped as it needs), not counting those it takes to match the feature beside it. */
+export function linesOf(feature: ParentNode): number {
+  return [...feature.querySelectorAll<HTMLElement>(".row")].reduce((sum, row) => sum + (Number(row.dataset.lines) || 1), 0);
 }
 
 /** Fits rows now and whenever their width changes. */
@@ -66,7 +88,7 @@ export const rowStyles = css`
     display: flex; flex-wrap: wrap; height: auto;
     gap: var(--ha-card-feature-gap, 12px) var(--feature-button-spacing, 12px);
   }
-  .row.wraps > * {
+  .row.wraps > *, .row.wraps > .key, .row.wraps > .field, .row.wraps > .slide {
     height: var(--feature-height, 42px); min-width: 0; box-sizing: border-box;
     flex: 1 1 calc((100% - (var(--columns, 2) - 1) * var(--feature-button-spacing, 12px)) / var(--columns, 2));
   }
