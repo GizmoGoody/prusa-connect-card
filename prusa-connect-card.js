@@ -932,10 +932,11 @@ function valueKey(feature, control, entityId, moment) {
   if (!stateObj) return undefined;
   const base = keyBase(control, entityId, moment);
   const noUnit = control.noUnit || (control.axis && moment.config?.units !== true);
-  const value = known(stateObj) ? formatValue(hass, stateObj, noUnit) : hass.formatEntityState(stateObj);
+  // Blank while no value is known (unknown or unavailable): only the icon shows, as in the xTool card
+  const value = known(stateObj) ? formatValue(hass, stateObj, noUnit) : undefined;
   const running = control.fan && Number(stateObj.state) > 0;
   return {
-    ...base, readout: true, text: value, alwaysText: true, label: `${base.label}: ${value}`, wide: control.wide,
+    ...base, readout: true, text: value, alwaysText: true, label: `${base.label}: ${value ?? hass.formatEntityState(stateObj)}`, wide: control.wide,
     disabled: !feature._usable(entityId), spin: running ? fanTurn(moment.config) : undefined,
     action: () => fire(feature, "hass-more-info", { entityId }),
   };
@@ -959,11 +960,12 @@ function heaterKey(feature, control, entityId, moment) {
   const base = keyBase(control, entityId, moment);
   const target = Number(hass.states[moment.device.roles[control.target]]?.state);
   const state = known(stateObj) ? heaterState(Number(stateObj.state), target, !!control.chamber) : "unknown";
-  const value = hass.formatEntityState(stateObj);
+  // Blank while no reading is known (unknown or unavailable): only the icon shows
+  const value = known(stateObj) ? hass.formatEntityState(stateObj) : undefined;
   const words = { heating: "heating", cooling: "cooling", at_temperature: "at temperature", off: "off" }[state];
   return {
-    ...base, readout: true, text: value, alwaysText: true, heat: state, wide: false,
-    label: `${base.label}: ${value}${words ? `, ${words}` : ""}`, disabled: !feature._usable(entityId),
+    ...base, readout: true, text: value, alwaysText: true, heat: value === undefined ? undefined : state, wide: false,
+    label: `${base.label}: ${value ?? hass.formatEntityState(stateObj)}${words ? `, ${words}` : ""}`, disabled: !feature._usable(entityId),
     action: () => fire(feature, "hass-more-info", { entityId }),
   };
 }
@@ -979,7 +981,8 @@ function pairKey(feature, control, entityId, moment) {
   const roles = moment.device.roles;
   const readingKey = roles[reading.role] && heaterKey(feature, reading, roles[reading.role], moment);
   const targetKey = roles[target.role] && fieldKey(feature, target, roles[target.role]);
-  return readingKey && targetKey ? { key: control.id, pair: [readingKey, targetKey] } : undefined;
+  // It shows the icon of the entity it sets, the target
+  return readingKey && targetKey ? { key: control.id, pair: [{ ...readingKey, entity: roles[target.role] }, targetKey] } : undefined;
 }
 
 // The last manual speed of each chamber fan, as Prusa Connect remembers it
@@ -1791,6 +1794,13 @@ function historyColors(ids, hass) {
   });
 }
 
+/** A heater's short name in the history's legend: Nozzle (Nozzle 2 with several tools), Bed, Chamber, and "target" after a target. */
+function historyName(id, device) {
+  const control = controlOf(id);
+  const heater = control.tool !== undefined ? `Nozzle${device.tools.length > 1 ? ` ${control.tool}` : ""}` : id.startsWith("bed") ? "Bed" : "Chamber";
+  return /_target_temperature$/.test(id) ? `${heater} target` : heater;
+}
+
 /**
  * Prusa history: Home Assistant's own history graph card of the heaters'
  * readings and targets, with its options (hours_to_show, min_y_axis,
@@ -1843,7 +1853,7 @@ class PrusaHistory extends PrusaElement {
     historyColors(ids, this._hass).forEach((color, i) => this.style.setProperty(`--graph-color-${i + 1}`, color));
     const c = this._config;
     const config = {
-      type: "history-graph", entities: ids.map((id) => ({ entity: device.roles[id] })),
+      type: "history-graph", entities: ids.map((id) => ({ entity: device.roles[id], name: historyName(id, device) })),
       hours_to_show: Number(c.hours_to_show) || 1,
       ...(Number.isFinite(c.min_y_axis) ? { min_y_axis: c.min_y_axis } : {}),
       ...(Number.isFinite(c.max_y_axis) ? { max_y_axis: c.max_y_axis } : {}),
@@ -3621,6 +3631,8 @@ class PrusaConnectCardEditor extends HTMLElement {
     });
     this._styleForm = this.shadowRoot.getElementById("style");
     this._form = this.shadowRoot.getElementById("form");
+    // Home Assistant's form cannot draw without a schema; hass can come before the configuration
+    for (const form of [this._printerForm, this._styleForm, this._form]) form.schema = [];
     for (const form of [this._styleForm, this._form]) {
       form.computeLabel = (s) => s.label ?? s.title ?? s.name;
       form.computeHelper = (s) => s.helper;

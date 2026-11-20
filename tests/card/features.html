@@ -43,6 +43,12 @@
     await wait(50);
     check("print, paused", keysOf(print)[0] === "resume", `Resume print while paused (${keysOf(print).join()})`);
 
+    // Print: a value that is not known shows only its icon, never "unknown"
+    const idlePrint = addFeature({ type: "custom:prusa-print", controls: ["time_remaining"] }, { entityId: "sensor.workshop_mk4s_state" });
+    await wait(50);
+    const remaining = keyNamed(idlePrint, "time_remaining");
+    check("print, idle", !!remaining.querySelector("ha-state-icon") && !/unknown/i.test(remaining.textContent), `only the icon while unknown (${remaining.textContent.trim()})`);
+
     // Print: idle (the MK4S), the keys cannot be used
     print = addFeature({ type: "custom:prusa-print", controls: ["pause_resume", "stop"] }, { entityId: "sensor.workshop_mk4s_state" });
     await wait(50);
@@ -55,6 +61,10 @@
     const tempKeys = keysOf(temps);
     check("temperatures", !tempKeys.some((k) => k.startsWith("chamber")), `no chamber controls until the integration offers them (${tempKeys.join()})`);
     check("temperatures", tempKeys.some((k) => k.startsWith("tool_1_nozzle")) && tempKeys.some((k) => k.startsWith("bed")), "the nozzle and the bed");
+
+    // A heater and its target show the target's icon (the entity it sets)
+    const pairIcon = temps.shadowRoot.querySelector('[data-key="tool_1_nozzle_temperature"] ha-state-icon');
+    check("temperatures", pairIcon?.dataset.entity === "number.office_core_one_tool_1_nozzle_target_temperature", `the target's icon (${pairIcon?.dataset.entity})`);
 
     // Temperatures: a future CORE One with the chamber and its fan
     hass = makeHass();
@@ -85,6 +95,11 @@
     check("history", !!graphConfig && graphConfig.entities.some((e) => e.entity === "sensor.office_core_one_tool_1_nozzle_temperature"),
       `the history graph card, with the nozzle (${JSON.stringify(graphConfig)})`);
     check("history", !!history.style.getPropertyValue("--graph-color-1"), "with the heaters' colors");
+    check("history", graphConfig.entities.map((e) => e.name).join() === "Nozzle,Nozzle target,Bed,Bed target", `short names in the legend (${graphConfig.entities.map((e) => e.name)})`);
+    const xlHistory = addFeature({ type: "custom:prusa-history" }, { entityId: "sensor.garage_xl_state" });
+    await wait(100);
+    const xlGraph = window.cardHelperCalls.filter((c) => c.type === "history-graph").pop();
+    check("history", xlGraph.entities[0].name === "Nozzle 1" && xlGraph.entities[1].name === "Nozzle 1 target", `each tool by number on the XL (${xlGraph.entities.slice(0, 2).map((e) => e.name)})`);
 
     // Utilities and lights: nothing until the integration offers them
     const utilities = addFeature({ type: "custom:prusa-utilities" }, {});

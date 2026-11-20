@@ -14,6 +14,11 @@
   const change = (form, value) => form.dispatchEvent(new CustomEvent("value-changed", { detail: { value } }));
 
   runChecks(async () => {
+    // Home Assistant's form cannot draw without a schema: hass first, as Home Assistant can give it
+    const early = document.createElement("prusa-connect-card-editor");
+    early.hass = makeHass();
+    check("editor", ["printer", "style", "form"].every((id) => Array.isArray(early.shadowRoot.getElementById(id).schema)), "every form has a schema before the configuration comes");
+
     let fired;
     const editor = document.createElement("prusa-connect-card-editor");
     editor.addEventListener("config-changed", (ev) => (fired = ev.detail.config));
