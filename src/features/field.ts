@@ -176,17 +176,18 @@ export class PrusaField extends LitElement {
     const reading = hass.states[this.reading ?? ""];
     const state = this._heat();
     const arrow = state === "heating" ? "mdi:arrow-up-thin" : state === "cooling" ? "mdi:arrow-down-thin" : undefined;
-    // The reading's number and its unit apart: the units are left out when the field is too narrow for them (see _fit)
+    // The numbers alone: the units are implied, and the reading is never cut short
     const shown = known(reading) ? hass.formatEntityState(reading) : "";
     const readingUnit = reading?.attributes.unit_of_measurement ?? "";
-    const number = readingUnit && shown.endsWith(readingUnit) ? shown.slice(0, -readingUnit.length) : shown;
+    const number = (readingUnit && shown.endsWith(readingUnit) ? shown.slice(0, -readingUnit.length) : shown).trim();
     // The higher number on top: the target while it is above the reading; Off is always under it
     const target = this._pending ?? this._value();
     const above = known(reading) && target > 0 && target > Number(reading.state);
-    return html`<ha-state-icon .hass=${hass} .stateObj=${reading}></ha-state-icon><span class="two ${above ? "above" : ""}"
-      ><span class="heat"><span class="now">${number.trimEnd()}<span class="unit">${shown === number ? "" : `${number.endsWith(" ") ? " " : ""}${readingUnit}`}</span></span></span
-      ><span class="target">${input}<span class="unit">${unit}</span></span></span
-      >${arrow ? html`<ha-icon class="arrow" .icon=${arrow}></ha-icon>` : nothing}`;
+    // The arrow on the heater's icon, while it heats or cools
+    return html`<span class="icon"><ha-state-icon .hass=${hass} .stateObj=${reading}></ha-state-icon
+      >${arrow ? html`<ha-icon class="arrow" .icon=${arrow}></ha-icon>` : nothing}</span
+      ><span class="two ${above ? "above" : ""}"><span class="heat"><span class="now">${number}</span></span
+      ><span class="target">${input}</span></span>`;
   }
 
   /** A heater's state (see heaterState), or undefined while its reading is not known. */
@@ -224,30 +225,9 @@ export class PrusaField extends LitElement {
     const focused = (this.getRootNode() as ShadowRoot | Document).activeElement === input;
     if (input && (this._pending !== undefined || !focused)) input.value = this._format(this._pending ?? this._value());
     this._fitInput();
-    this._fit();
   }
 
-  /** A heater's numbers with their units, or without them when they do not fit; never cut short. */
-  private _fit = () => {
-    if (!this._pair) return;
-    this.classList.remove("tight");
-    const cut = [...this.querySelectorAll<HTMLElement>(".two, .now, .target")].some((el) => el.scrollWidth > el.clientWidth + 0.5);
-    this.classList.toggle("tight", cut);
-  };
-
-  private _fitter = new ResizeObserver(this._fit);
-
-  override connectedCallback(): void {
-    super.connectedCallback();
-    this._fitter.observe(this);
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this._fitter.disconnect();
-  }
-
-  /** A heater's target is as wide as its number (or Off), so it sits centered under the reading with its unit beside it. */
+  /** A heater's target is as wide as its number (or Off), so it sits centered under the reading. */
   private _fitInput = () => {
     const input = this._input;
     if (!input || !this._pair) return;

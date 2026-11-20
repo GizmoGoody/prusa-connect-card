@@ -67,27 +67,27 @@ export const featureStyles = [rowStyles, css`
   .two { display: grid; line-height: 1.1; min-width: 0; text-align: left; }
   .note { font-size: 10px; font-weight: 400; color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: .03em; }
   @keyframes prusa-heating { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
-  /* A heater and its target as one field: the reading over the target (Off at 0), centered */
-  .field.pair { justify-content: center; gap: 6px; padding: 0 10px; }
+  /* A heater and its target as one field: the numbers alone (the units are implied), centered on each other */
+  .field.pair { justify-content: center; gap: 6px; padding: 0 8px; }
+  .field.pair .icon { position: relative; display: flex; flex: none; overflow: visible; }
   .field.pair ha-state-icon { margin-right: 0; }
-  .field.pair .two { display: flex; flex-direction: column; line-height: 1.15; flex: 0 1 auto; text-align: center; }
-  .field.pair .heat { display: flex; justify-content: center; }
+  .field.pair .two { display: flex; flex-direction: column; line-height: 1.15; flex: 0 1 auto; min-width: 0; text-align: center; overflow: visible; }
+  .field.pair .heat { display: flex; justify-content: center; overflow: visible; }
+  /* The reading is the field's point: it is never shrunk or cut short */
+  .field.pair .now { flex: none; overflow: visible; text-overflow: clip; font-variant-numeric: tabular-nums; }
   /* The higher number on top: the target while it is above the reading */
   .field.pair .two.above .target { order: -1; }
   /* In the heater's history colors: the reading's, and its target's (dimmed) */
-  .field.pair .heat, .field.pair > ha-state-icon, .field.pair > .arrow { color: var(--prusa-reading, inherit); }
+  .field.pair .heat, .field.pair ha-state-icon, .field.pair .arrow { color: var(--prusa-reading, inherit); }
   .field.pair .target { color: var(--prusa-target, var(--secondary-text-color)) !important; }
-  /* The arrow beside both numbers, as tall as the two */
-  .field.pair > .arrow { --mdc-icon-size: 26px; margin: 0 -7px 0 -6px; flex: none; }
-  /* Too narrow for the units: the numbers alone, never cut short */
-  .field.pair.tight .unit { display: none; }
-  .field.pair .now { font-variant-numeric: tabular-nums; }
-  .field.pair .now .unit { opacity: 1; }
+  /* Heating or cooling: a thin arrow on the icon's lower right, outlined in the field's color */
+  .field.pair .arrow {
+    position: absolute; right: -9px; bottom: -6px; --mdc-icon-size: 20px;
+    filter: drop-shadow(0 0 1px var(--prusa-field-edge-color, var(--card-background-color, #000))) drop-shadow(0 0 1px var(--card-background-color, #000));
+  }
   .field.pair .target { display: flex; justify-content: center; min-width: 0; font-size: 11px; font-weight: 400; }
   .field.pair .target input { flex: 0 1 auto; text-align: center; }
   .field.pair .target input::placeholder { color: inherit; opacity: 1; text-transform: uppercase; letter-spacing: .03em; }
-  .field.pair .target .unit { flex: 0 1 auto; }
-  .field.pair.unset .target .unit { display: none; }
   .key {
     min-width: 0; height: 100%; padding: 0 4px; border: 0; cursor: pointer; box-sizing: border-box;
     position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 6px;
