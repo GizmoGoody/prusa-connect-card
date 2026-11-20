@@ -25,6 +25,12 @@ const HOLD_TIME = 500;
 const ABOVE_ON = 3;
 const ABOVE_OFF = 1;
 
+// At its target: within this distance (°, as heaterState's at temperature)
+// the target is left out and the reading fills the field; it comes back
+// once the reading is more than the second distance off
+const SETTLED_ON = 2;
+const SETTLED_OFF = 3;
+
 // Each heater's last target before a hold turned it off
 const HEATER_TARGETS = new Map<string, number>();
 
@@ -127,6 +133,10 @@ export class PrusaField extends LitElement {
   private _shown = "";
   // Whether the target is on top (see ABOVE_ON)
   private _above = false;
+  // Whether the reading is at its target, which is then left out (see SETTLED_ON)
+  private _settled = false;
+  // Typing a target while it is left out
+  private _typing = false;
 
   static override properties = {
     control: { attribute: false }, entity: { attribute: false }, reading: { attribute: false },
@@ -137,6 +147,21 @@ export class PrusaField extends LitElement {
   constructor() {
     super();
     scrub(this, () => ({ change: (steps) => this._slide(steps), done: () => this._release(), hold: this._pair ? () => this._hold() : undefined }));
+    // A tap on a heater at its target shows the target, to type in
+    this.addEventListener("click", (ev) => {
+      if (ev.defaultPrevented || !this._settled || !this._usable) return;
+      this._typing = true;
+      this.requestUpdate();
+      this.updateComplete.then(() => {
+        this._input?.focus();
+        this._input?.select();
+      });
+    });
+    this.addEventListener("focusout", () => {
+      if (!this._typing) return;
+      this._typing = false;
+      this.requestUpdate();
+    });
   }
 
   // Drawn in the feature's own shadow root, in the feature's styles
@@ -193,10 +218,14 @@ export class PrusaField extends LitElement {
     const lead = known(reading) && target > 0 ? target - Number(reading.state) : -Infinity;
     this._above = this._above ? lead > ABOVE_OFF : lead > ABOVE_ON;
     const above = this._above;
+    // At its target, the reading alone (unless the target is being typed or slid)
+    const off = known(reading) && target > 0 ? Math.abs(target - Number(reading.state)) : Infinity;
+    this._settled = this._settled ? off <= SETTLED_OFF : off <= SETTLED_ON;
+    const alone = this._settled && this._pending === undefined && !this._typing;
     // The arrow over the heater's icon, while it heats or cools
     return html`<span class="icon"><ha-state-icon .hass=${hass} .stateObj=${reading}></ha-state-icon
       >${arrow ? html`<ha-icon class="arrow" .icon=${arrow}></ha-icon>` : nothing}</span
-      ><span class="two ${above ? "above" : ""}"><span class="heat"><span class="now">${number}</span></span
+      ><span class="two ${above ? "above" : ""} ${alone ? "settled" : ""}"><span class="heat"><span class="now">${number}</span></span
       ><span class="target">${input}</span></span>`;
   }
 
