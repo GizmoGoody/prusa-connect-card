@@ -98,6 +98,19 @@ The card's own options:
 
 `show` is `icons` (the default), `names`, or `both`.
 
+### A heater and its target
+
+`tool_N_nozzle_temperature_and_target` (and the same for `bed` and `chamber`) is one field for a heater:
+
+- **The numbers:** the reading over the target, or over Off, without units. The target goes on top only while it is more than 3° above the reading. At its target (within 2°), the reading shows alone and larger.
+- **The arrow:** while the heater heats or cools, a red or blue arrow sits over its icon.
+- **Tap** to type a target. **Press and slide** to change it: the target then shows alone, and a heater that is off starts from its reading. **Hold** to turn the heater off, and hold again for the target it had.
+- **Colors:** the heater's colors in Prusa history (Prusa Connect's palette unless you set `colors` there).
+
+### Layout
+
+The features sit in two columns below the title, as on the tile card. Two features side by side always fill the same height: the shorter one wraps its keys onto as many lines as the other has, or its keys grow taller to fill.
+
 ### Example
 
 ```yaml
