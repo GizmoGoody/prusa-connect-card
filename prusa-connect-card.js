@@ -748,7 +748,7 @@ function itemMin(el, gap) {
 function fitRow(row) {
   const width = row.clientWidth;
   if (!width) return;
-  if (getComputedStyle(row).flexWrap === "wrap") {
+  if (row.classList.contains("wraps")) {
     for (const item of row.children) item.removeAttribute("data-dropped");
     return;
   }
@@ -770,8 +770,11 @@ function fitRow(row) {
 const ROW_CSS = `
   .rows { display: flex; flex-direction: column; gap: var(--ha-card-feature-gap, 12px); }
   .row { display: flex; flex-wrap: nowrap; align-items: center; column-gap: var(--feature-button-spacing, 12px); height: var(--feature-height, 42px); }
-  .row.wraps { flex-wrap: wrap; height: auto; row-gap: var(--ha-card-feature-gap, 12px); }
-  .row.wraps > * { height: var(--feature-height, 42px); }
+  .row.wraps {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(${ITEM_MIN.wide}px, 1fr)); height: auto;
+    gap: var(--ha-card-feature-gap, 12px) var(--feature-button-spacing, 12px);
+  }
+  .row.wraps > *, .row.wraps > .group > * { height: var(--feature-height, 42px); min-width: 0; }
   .row [data-dropped] { display: none !important; }
   .row .key { flex: 1 1 0; min-width: ${ITEM_MIN.key}px; }
   .row .slide { flex: 2 1 0; min-width: ${ITEM_MIN.slider}px; }
@@ -828,6 +831,22 @@ const FEATURE_CSS = `
   .heater .two { display: grid; line-height: 1.1; min-width: 0; text-align: left; }
   .heater .note { font-size: 10px; font-weight: 400; color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: .03em; }
   @keyframes prusa-heating { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+  /* A heater and its target as one field: the reading over the target (Off at 0) */
+  .field.pair { justify-content: flex-start; gap: 6px; padding: 0 10px; }
+  .field.pair ha-state-icon { margin-right: 0; }
+  .field.pair .two { display: grid; line-height: 1.15; min-width: 0; flex: 1 1 0; }
+  .field.pair .heat { display: flex; align-items: center; gap: 2px; min-width: 0; }
+  .field.pair .now { font-variant-numeric: tabular-nums; }
+  .field.pair .arrow[hidden] { display: none; }
+  .field.pair .target { display: flex; min-width: 0; font-size: 11px; font-weight: 400; color: var(--secondary-text-color); }
+  .field.pair .target input { flex: 0 1 auto; width: 4ch; text-align: left; }
+  .field.pair .target input::placeholder { color: inherit; opacity: 1; text-transform: uppercase; letter-spacing: .03em; }
+  .field.pair .target .unit { flex: 1 1 0; }
+  .field.pair.unset .unit { display: none; }
+  .field.pair.heating .heat { color: var(--prusa-heating); animation: prusa-heating 2s ease-in-out infinite; }
+  .field.pair.heating ha-state-icon { color: var(--prusa-heating); }
+  .field.pair.cooling .heat, .field.pair.cooling ha-state-icon { color: var(--prusa-cooling); }
+  .field.pair.off .heat, .field.pair.off ha-state-icon { color: var(--secondary-text-color); }
   /* A heater and its target as one control: the reading and the field side by side, as one */
   .combo { display: flex; min-width: 0; height: var(--feature-height, 42px); }
   .combo > * { flex: 1 1 0; min-width: 0; }
@@ -975,14 +994,14 @@ function fieldKey(feature, control, entityId) {
   return entityId ? { key: control.id, field: control.id, entities: [entityId] } : undefined;
 }
 
-/** A heater and its target as one control: the heater's read-out and the target's field. */
+/**
+ * A heater and its target as one control, one field (see FieldGroup): the
+ * reading on top, tinted as Prusa Connect tints it, and the target under it
+ * (Off at 0). The icon is the target's, the entity it sets.
+ */
 function pairKey(feature, control, entityId, moment) {
-  const [reading, target] = control.parts.map((id) => controlOf(id) ?? { ...CONTROLS[id], id, role: id });
-  const roles = moment.device.roles;
-  const readingKey = roles[reading.role] && heaterKey(feature, reading, roles[reading.role], moment);
-  const targetKey = roles[target.role] && fieldKey(feature, target, roles[target.role]);
-  // It shows the icon of the entity it sets, the target
-  return readingKey && targetKey ? { key: control.id, pair: [{ ...readingKey, entity: roles[target.role] }, targetKey] } : undefined;
+  const [reading, target] = control.parts.map((id) => moment.device.roles[controlOf(id)?.role ?? id]);
+  return reading && target ? { key: control.id, field: control.id, entities: [target], reading } : undefined;
 }
 
 // The last manual speed of each chamber fan, as Prusa Connect remembers it
@@ -1100,8 +1119,8 @@ const SCRUB_POWER = 1.5;
  * the farther the pointer is from where the press started; right or up
  * raises it. A tap is left to the field, to type in.
  */
-function scrub(el, { change, done }) {
-  let start, at, timer;
+function scrub(el, { change, done, hold }) {
+  let start, at, timer, holding, held = false;
   const off = () => el.classList.contains("disabled");
   const begin = (ev) => {
     try {
@@ -1109,6 +1128,7 @@ function scrub(el, { change, done }) {
     } catch (err) {
       // A pointer the browser no longer tracks: the slide follows the moves the element gets
     }
+    clearTimeout(holding);
     el.classList.add("sliding");
     timer = setInterval(() => {
       const distance = (at.x - start.x) - (at.y - start.y);
@@ -1119,6 +1139,7 @@ function scrub(el, { change, done }) {
   const stop = (ev) => {
     if (!start) return;
     const sliding = timer !== undefined;
+    clearTimeout(holding);
     clearInterval(timer);
     timer = undefined;
     start = undefined;
@@ -1129,7 +1150,24 @@ function scrub(el, { change, done }) {
   el.addEventListener("pointerdown", (ev) => {
     if (off() || ev.button !== 0) return;
     start = at = { x: ev.clientX, y: ev.clientY };
+    held = false;
+    if (hold) {
+      holding = setTimeout(() => {
+        if (!start || timer !== undefined) return;
+        held = true;
+        start = undefined;
+        el.querySelector("input")?.blur();
+        hold();
+      }, HOLD_TIME);
+    }
   });
+  // The click after a hold does not open the field for typing
+  el.addEventListener("click", (ev) => {
+    if (!held) return;
+    held = false;
+    ev.preventDefault();
+    ev.stopPropagation();
+  }, true);
   el.addEventListener("pointermove", (ev) => {
     if (!start) return;
     at = { x: ev.clientX, y: ev.clientY };
@@ -1142,6 +1180,11 @@ function scrub(el, { change, done }) {
   el.addEventListener("pointercancel", stop);
   el.addEventListener("lostpointercapture", stop);
 }
+
+// Each heater's last target before a hold turned it off (see FieldGroup._hold)
+const HEATER_TARGETS = new Map();
+// A press held this long without sliding is a hold (ms), as Home Assistant's own hold
+const HOLD_TIME = 500;
 
 // A field is in the number color, as Home Assistant's number features are
 const NUMBER_ON = "var(--state-number-active-color, var(--state-active-color, var(--primary-color, #03a9f4)))";
@@ -1156,16 +1199,23 @@ class FieldGroup {
   constructor(feature, control) {
     this._feature = feature;
     this._control = control;
+    // A heater and its target (see pairKey): the reading over the target
+    this._pair = control.kind === "pair";
     this.el = document.createElement("div");
     this.el.className = "group";
     this._field = document.createElement("label");
-    this._field.className = "field drag";
+    this._field.className = this._pair ? "field drag pair" : "field drag";
+    this._field.dataset.key = control.id;
     this._field.style.setProperty("--feature-color", NUMBER_ON);
     this._field.dataset.min = ITEM_MIN.field;
-    this._field.innerHTML = `<input type="text" inputmode="decimal" enterkeyhint="done"><span class="unit"></span>`;
+    this._field.innerHTML = this._pair
+      ? `<span class="two"><span class="heat"><span class="now"></span><ha-icon class="arrow"></ha-icon></span><span class="target"><input type="text" inputmode="decimal" enterkeyhint="done" placeholder="Off"><span class="unit"></span></span></span>`
+      : `<input type="text" inputmode="decimal" enterkeyhint="done"><span class="unit"></span>`;
     this._input = this._field.querySelector("input");
     this._unit = this._field.querySelector(".unit");
-    if (control.icon === true) {
+    this._now = this._field.querySelector(".now");
+    this._arrow = this._field.querySelector(".arrow");
+    if (control.icon === true || this._pair) {
       this._icon = document.createElement("ha-state-icon");
       this._field.prepend(this._icon);
     }
@@ -1180,7 +1230,18 @@ class FieldGroup {
     this._input.addEventListener("change", () => this._typed());
     this._input.addEventListener("click", (ev) => ev.stopPropagation());
     this.el.append(this._field);
-    scrub(this._field, { change: (steps) => this._slide(steps), done: () => this._release() });
+    scrub(this._field, { change: (steps) => this._slide(steps), done: () => this._release(), hold: this._pair ? () => this._hold() : undefined });
+  }
+
+  /** A heater held: off, or back to the last target set while it is off. */
+  _hold() {
+    const value = this._value();
+    if (value > 0) {
+      HEATER_TARGETS.set(this._entityId, value);
+      this._commit(0);
+    } else if (HEATER_TARGETS.has(this._entityId)) {
+      this._commit(HEATER_TARGETS.get(this._entityId));
+    }
   }
 
   get _state() {
@@ -1191,7 +1252,9 @@ class FieldGroup {
     return Number(this._state?.state);
   }
 
+  // A heater's target of 0 is Off: an empty field, which shows Off
   _format(value) {
+    if (this._pair && value === 0) return "";
     return Number.isFinite(value) ? value.toFixed(decimalsOf(this._control, this._state)) : "";
   }
 
@@ -1208,6 +1271,22 @@ class FieldGroup {
       this._icon.hass = hass;
       this._icon.stateObj = stateObj;
     }
+    if (this._pair) {
+      const reading = hass.states[item.reading];
+      const chamber = item.reading.includes("chamber");
+      const state = known(reading) ? heaterState(Number(reading.state), this._value(), chamber) : undefined;
+      for (const name of ["heating", "cooling", "at_temperature", "off"]) this._field.classList.toggle(name, state === name);
+      this._now.textContent = known(reading) ? hass.formatEntityState(reading) : "";
+      this._arrow.icon = state === "heating" ? "mdi:arrow-up" : state === "cooling" ? "mdi:arrow-down" : "";
+      this._arrow.hidden = state !== "heating" && state !== "cooling";
+      this._field.classList.toggle("unset", (this._pending ?? this._value()) === 0);
+      const name = entityName(hass, item.reading) ?? this._control.option ?? "";
+      const words = { heating: "heating", cooling: "cooling", at_temperature: "at temperature", off: "off" }[state];
+      nameItem(this._field, `${name}: ${reading ? hass.formatEntityState(reading) : ""}${words ? `, ${words}` : ""}. Target: ${stateObj ? hass.formatEntityState(stateObj) : ""}. Tap to type, press and slide, or hold to turn it off or on`);
+      this._input.setAttribute("aria-label", entityName(hass, this._entityId) ?? "");
+      if (this._pending !== undefined || feature.shadowRoot.activeElement !== this._input) this._input.value = this._format(this._pending ?? this._value());
+      return;
+    }
     nameItem(this._field, `${entityName(hass, this._entityId) ?? this._control.option ?? ""}. Tap to type, or press and slide`);
     this._input.setAttribute("aria-label", entityName(hass, this._entityId) ?? this._control.option ?? "");
     if (this._pending !== undefined || feature.shadowRoot.activeElement !== this._input) this._input.value = this._format(this._pending ?? this._value());
@@ -1220,6 +1299,7 @@ class FieldGroup {
     const { min = -Infinity, max = Infinity, step = 1 } = stateObj.attributes;
     this._pending = Math.min(max, Math.max(min, value + steps * Math.max(step, 10 ** -decimalsOf(this._control, stateObj))));
     this._input.value = this._format(this._pending);
+    this._field.classList.toggle("unset", this._pair && this._pending === 0);
   }
 
   _release() {
@@ -1229,8 +1309,14 @@ class FieldGroup {
   }
 
   _typed() {
-    const value = Number(this._input.value.trim().replace(",", "."));
-    if (this._input.value.trim() === "" || !Number.isFinite(value)) {
+    const typed = this._input.value.trim();
+    // A heater's target typed empty or "off" is Off
+    if (this._pair && (typed === "" || /^off$/i.test(typed))) {
+      this._commit(0);
+      return;
+    }
+    const value = Number(typed.replace(",", "."));
+    if (typed === "" || !Number.isFinite(value)) {
       this._input.value = this._shown;
       return;
     }
@@ -1770,7 +1856,7 @@ class PrusaTemperatures extends PrusaFeature {
   static wraps = true;
   static form = {
     label: "Controls",
-    helper: "A heater's target is a field: tap it to type a temperature, or press and slide on it.",
+    helper: "A heater and its target shows the temperature over its target. Tap it to type a target, press and slide to change it, or hold it to turn that heater off (hold again for the target it had). Presets set every nozzle and the bed; Cool down turns every heater off.",
     options: [{ name: "animate_fan", label: "Animate fan", helper: "The chamber fan's icon turns while it runs, faster at a higher speed." }],
   };
 
@@ -2040,6 +2126,8 @@ const CAMERA_VIEWS = [["auto", "Auto"], ["live", "Live"]];
 // Each camera's crop ({ x, y, w, h }, shares of the whole picture), and the cameras whose crop is shown
 const CROPS = new Map();
 const CROPPING = new Set();
+// Each camera's picture size, the last one known (see _pictureSize)
+const SIZES = new Map();
 // A crop narrower than this share of the picture is a slip, not a crop
 const MIN_CROP = .02;
 // A tap moves the pointer less than this between press and release (px)
@@ -2262,20 +2350,32 @@ class PrusaCameras extends PrusaFeature {
   _dropImage() {
     this._image?.remove();
     this._image = undefined;
-    this._watched = undefined;
+    this._watchedRoot = undefined;
   }
 
-  /** A tap on the picture: while Crop is on it marks a corner; otherwise it opens the camera. */
+  /** Whether the picture is waiting for the crop's corners: Crop is on, with no crop chosen yet. */
+  get _choosing() {
+    return CROPPING.has(this._camera) && !CROPS.has(this._camera);
+  }
+
+  /** A tap on the picture: while a crop is being chosen it marks a corner; otherwise it opens the camera. */
   _tap(ev) {
     if (!this._camera) return;
-    if (CROPPING.has(this._camera)) this._cropTap(ev);
+    if (this._choosing) this._cropTap(ev);
     else fire(this, "hass-more-info", { entityId: this._camera });
   }
 
-  /** Crop on: the camera's crop shows, and taps choose another. Off: the whole picture (the crop is kept for the session). */
+  /**
+   * Crop on: two taps on the picture choose the part shown, which stays
+   * until Crop is turned off. Off: the whole picture, and the crop is forgotten.
+   */
   _toggleCropping() {
-    if (CROPPING.has(this._camera)) CROPPING.delete(this._camera);
-    else CROPPING.add(this._camera);
+    if (CROPPING.has(this._camera)) {
+      CROPPING.delete(this._camera);
+      CROPS.delete(this._camera);
+    } else {
+      CROPPING.add(this._camera);
+    }
     this._first = undefined;
     this._area.hidden = true;
     this._key = undefined;
@@ -2326,16 +2426,21 @@ class PrusaCameras extends PrusaFeature {
   }
 
   _showHint() {
-    const on = CROPPING.has(this._camera);
+    const on = this._choosing;
     this._shot.classList.toggle("cropping", on);
     this._hint.textContent = !on ? "" : this._first ? "Tap the opposite corner of the crop area" : "Tap a corner to start selection of a crop area";
   }
 
-  /** The picture's own size, once a picture has arrived (an image's, or a live stream's). */
+  /**
+   * The picture's own size (an image's, or a live stream's). While a new
+   * picture loads it has none yet, so the last size the camera had is kept:
+   * the crop and its shape stay steady between pictures.
+   */
   _pictureSize() {
     const el = this._image?.shadowRoot && findDeep(this._image.shadowRoot, "img, video", 3);
     const width = el?.naturalWidth || el?.videoWidth, height = el?.naturalHeight || el?.videoHeight;
-    return width && height ? { width, height } : undefined;
+    if (width && height) SIZES.set(this._camera, { width, height });
+    return SIZES.get(this._camera);
   }
 
   /**
@@ -2399,8 +2504,8 @@ class PrusaCameras extends PrusaFeature {
       Promise.resolve(this._image?.updateComplete).then(() => this._image?.shadowRoot && this._watchPictures());
       return;
     }
-    if (this._watched === root) return;
-    this._watched = root;
+    if (this._watchedRoot === root) return;
+    this._watchedRoot = root;
     root.addEventListener("load", () => this._arrived(), true);
     root.addEventListener("loadedmetadata", () => this._applyCrop(), true);
   }

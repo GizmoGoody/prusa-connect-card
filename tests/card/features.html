@@ -63,8 +63,33 @@
     check("temperatures", tempKeys.some((k) => k.startsWith("tool_1_nozzle")) && tempKeys.some((k) => k.startsWith("bed")), "the nozzle and the bed");
 
     // A heater and its target show the target's icon (the entity it sets)
-    const pairIcon = temps.shadowRoot.querySelector('[data-key="tool_1_nozzle_temperature"] ha-state-icon');
-    check("temperatures", pairIcon?.dataset.entity === "number.office_core_one_tool_1_nozzle_target_temperature", `the target's icon (${pairIcon?.dataset.entity})`);
+    const nozzle = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
+    const pairIcon = nozzle?.querySelector("ha-state-icon");
+    check("temperatures", pairIcon?.stateObj?.entity_id === "number.office_core_one_tool_1_nozzle_target_temperature", `the target's icon (${pairIcon?.stateObj?.entity_id})`);
+    check("temperatures", nozzle?.querySelector(".now").textContent === "259.8 °C" && nozzle.querySelector("input").value === "260",
+      `the reading over the target (${nozzle?.querySelector(".now").textContent} / ${nozzle?.querySelector("input").value})`);
+    const row = temps.shadowRoot.querySelector(".row.wraps");
+    check("temperatures", getComputedStyle(row).display === "grid" && getComputedStyle(row).gridTemplateColumns.split(" ").length === 3,
+      `equal cells, as many as fit (${getComputedStyle(row).gridTemplateColumns})`);
+
+    // Hold: the heater off, and a second hold back to its target
+    const holdOn = (el) => {
+      el.dispatchEvent(new PointerEvent("pointerdown", { button: 0, clientX: 10, clientY: 10, pointerId: 1, bubbles: true }));
+    };
+    holdOn(nozzle);
+    await wait(650);
+    nozzle.dispatchEvent(new PointerEvent("pointerup", { button: 0, clientX: 10, clientY: 10, pointerId: 1, bubbles: true }));
+    check("temperatures, hold", equal(lastCall(hass), { domain: "number", service: "set_value", data: { entity_id: "number.office_core_one_tool_1_nozzle_target_temperature", value: 0 } }),
+      `a hold turns the heater off (${JSON.stringify(lastCall(hass))})`);
+    const offHass = makeHass({ "number.office_core_one_tool_1_nozzle_target_temperature": "0" });
+    temps.hass = offHass;
+    await wait(50);
+    const offNozzle = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
+    check("temperatures, hold", offNozzle.querySelector("input").value === "" && offNozzle.querySelector("input").placeholder === "Off", "Off shows under the reading");
+    holdOn(offNozzle);
+    await wait(650);
+    const back = lastCall(offHass);
+    check("temperatures, hold", back?.data.value === 260, `a second hold returns it to its target (${JSON.stringify(back)})`);
 
     // Temperatures: a future CORE One with the chamber and its fan
     hass = makeHass();
@@ -118,6 +143,31 @@
     const other = addFeature({ type: "custom:prusa-cameras", cameras: ["camera.makerspace"] }, { entityId: "sensor.workshop_mk4s_state" });
     await wait(200);
     check("cameras, another camera", other._camera === "camera.makerspace", `shows the camera chosen (${other._camera})`);
+
+    // Crop: chosen once, kept until Crop is turned off
+    const cropping = addFeature({ type: "custom:prusa-cameras", controls: ["crop"] }, {});
+    await wait(200);
+    keyNamed(cropping, "crop").click();
+    await wait(50);
+    const hint = () => cropping.shadowRoot.querySelector(".hint").textContent;
+    check("crop", /Tap a corner/.test(hint()), `asks for the corners (${hint()})`);
+    const shot = cropping.shadowRoot.querySelector(".shot");
+    const box = cropping.shadowRoot.querySelector(".view").getBoundingClientRect();
+    const tapAt = (u, v) => shot.dispatchEvent(new MouseEvent("click", { clientX: box.left + u * box.width, clientY: box.top + v * box.height, bubbles: true }));
+    tapAt(.25, .25);
+    tapAt(.75, .75);
+    await wait(50);
+    check("crop", hint() === "" && cropping.shadowRoot.querySelector(".view").classList.contains("cropped"), "the crop shows, with no prompt");
+    cropping.hass = makeHass();
+    keyNamed(cropping, "crop");
+    await wait(50);
+    check("crop", hint() === "" && cropping.shadowRoot.querySelector(".view").classList.contains("cropped"), "and stays through updates");
+    keyNamed(cropping, "crop").click();
+    await wait(50);
+    check("crop", !cropping.shadowRoot.querySelector(".view").classList.contains("cropped"), "Crop off: the whole picture");
+    keyNamed(cropping, "crop").click();
+    await wait(50);
+    check("crop", /Tap a corner/.test(hint()), "Crop on again: a new crop is chosen");
     check("cameras, another camera", customElements.get("prusa-cameras").supports(), "offered for every printer");
     const camerasForm = customElements.get("prusa-cameras").editor(makeHass(), "sensor.office_core_one_state");
     check("cameras, editor", camerasForm.schema[0].name === "cameras" && camerasForm.schema[0].selector.entity.domain === "camera"
