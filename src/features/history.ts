@@ -36,13 +36,13 @@ export class PrusaHistory extends PrusaElement {
   static override styles = css`
     :host { display: block; min-width: 0; max-width: 100%; height: 100%; }
     .graph {
-      display: flex; flex-direction: column; height: 100%; min-height: 240px; box-sizing: border-box;
+      display: flex; flex-direction: column; height: var(--prusa-history-height, 240px); box-sizing: border-box;
       --ha-card-background: transparent; --card-background-color: transparent; --ha-card-box-shadow: none;
       --ha-card-border-width: 0; --ha-card-border-color: transparent; --ha-card-backdrop-filter: none;
       border-radius: var(--feature-border-radius, 12px); overflow: hidden;
       background: var(--prusa-feature-backing, var(--prusa-feature-scrim, transparent));
     }
-    /* Home Assistant's history graph card is an inline element of its own: as a block that fills the feature, its chart fills it too */
+    /* Home Assistant's history graph card sizes its chart from its own height: it needs a box of a set height (not a minimum) to fill, or the chart is drawn 0 px tall */
     .graph > * { display: block; flex: 1 1 auto; min-height: 0; height: 100%; }
   `;
 
@@ -50,7 +50,7 @@ export class PrusaHistory extends PrusaElement {
   private _loading = false;
   private _shown?: string;
 
-  /** The history graph card's configuration: a fixed height (grid_options rows) makes its chart fill the feature; the legend shows every line. */
+  /** The history graph card's configuration: a fixed height (grid_options rows) makes its chart fill the feature; the legend is Home Assistant's, which fits itself to the room and expands with a tap. */
   private _graphConfig(): Config | undefined {
     const device = this._device;
     const ids = this._chosen().filter((id) => this._type.controlIds(device).includes(id) && device.roles[id]);
@@ -60,7 +60,7 @@ export class PrusaHistory extends PrusaElement {
     return {
       type: "history-graph",
       entities: ids.map((id, i) => ({ entity: device.roles[id], name: historyName(id, device), color: colors[i] })),
-      hours_to_show: Number(c.hours_to_show) || 1, grid_options: { rows: 4 }, expand_legend: true,
+      hours_to_show: Number(c.hours_to_show) || 1, grid_options: { rows: 4 },
       ...(Number.isFinite(c.min_y_axis) ? { min_y_axis: c.min_y_axis } : {}),
       ...(Number.isFinite(c.max_y_axis) ? { max_y_axis: c.max_y_axis } : {}),
       ...(c.fit_y_data === true ? { fit_y_data: true } : {}),

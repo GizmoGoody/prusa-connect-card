@@ -124,9 +124,9 @@
     check("history", !!graphConfig && graphConfig.entities.some((e) => e.entity === "sensor.office_core_one_tool_1_nozzle_temperature"),
       `the history graph card, with the nozzle (${JSON.stringify(graphConfig)})`);
     check("history", graphConfig.entities[0].color === "#fd5000" && graphConfig.entities[1].color === "#873109", `each heater's color, its target dimmed (${graphConfig.entities.map((e) => e.color)})`);
-    check("history", graphConfig.grid_options?.rows > 0 && graphConfig.expand_legend === true, "the chart fills the feature, with the whole legend");
+    check("history", graphConfig.grid_options?.rows > 0 && graphConfig.expand_legend === undefined, "the chart fills the feature; Home Assistant fits the legend");
     const graphCard = history.shadowRoot.querySelector("hui-history-graph-card");
-    check("history", getComputedStyle(graphCard).display === "block" && graphCard.getBoundingClientRect().height >= 240, `the card fills the feature (${getComputedStyle(graphCard).display}, ${graphCard.getBoundingClientRect().height}px)`);
+    check("history", getComputedStyle(graphCard).display === "block" && graphCard.getBoundingClientRect().height === 240, `the card fills the feature (${getComputedStyle(graphCard).display}, ${graphCard.getBoundingClientRect().height}px)`);
     check("history", graphConfig.entities.map((e) => e.name).join() === "Nozzle,Nozzle target,Bed,Bed target", `short names in the legend (${graphConfig.entities.map((e) => e.name)})`);
     const xlHistory = addFeature({ type: "custom:prusa-history" }, { entityId: "sensor.garage_xl_state" });
     await wait(100);
