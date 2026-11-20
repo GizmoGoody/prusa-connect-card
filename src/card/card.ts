@@ -505,7 +505,9 @@ export class PrusaConnectCard extends LitElement {
    */
   private _placeFeatures(): void {
     const group = findAllDeep(this._tile?.shadowRoot, 'hui-card-features[slot="features"]')[0] as HTMLElement | undefined;
-    const items = [...(group?.shadowRoot?.querySelectorAll<HTMLElement & { feature?: Config }>("hui-card-feature") ?? [])];
+    const all = [...(group?.shadowRoot?.querySelectorAll<HTMLElement & { feature?: Config }>("hui-card-feature") ?? [])];
+    // A feature that shows nothing (none of its controls are offered) takes no place
+    const items = all.filter((item) => item.style.display !== "none");
     const c = this._config!;
     const inline = (c.features_position ?? DEFAULT_FEATURES_POSITION) === "inline";
     const lastWide = c.last_feature_full_width !== false;
@@ -517,7 +519,7 @@ export class PrusaConnectCard extends LitElement {
         tall: tall(item), full: tall(item) && (item.feature!.full_width ?? TALL_FEATURES[item.feature!.type]) !== false, height: item.offsetHeight,
       })), gap, lastWide)
       : { places: [], rows: [] };
-    const key = JSON.stringify([places, rows]);
+    const key = JSON.stringify([places, rows, all.map((item) => items.includes(item))]);
     if (group === this._placedGroup && key === this._placedKey) return;
     clearTimeout(this._placeTimer);
     this._placeTimer = setTimeout(() => {
@@ -526,8 +528,8 @@ export class PrusaConnectCard extends LitElement {
       if (!group) return;
       group.style.gridTemplateColumns = places.some((p) => p.columns === 2) && group.getAttribute("columns") !== "2" ? "repeat(2, minmax(0, 1fr))" : "";
       group.style.gridTemplateRows = rows.includes("1fr") ? rows.join(" ") : "";
-      items.forEach((item, i) => {
-        const place = places[i];
+      all.forEach((item) => {
+        const place = places[items.indexOf(item)];
         item.style.gridColumn = place?.column ?? "";
         item.style.gridRow = place?.row ?? "";
         item.style.alignSelf = place ? "start" : "";
