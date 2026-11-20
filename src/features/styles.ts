@@ -82,9 +82,14 @@ export const featureStyles = [rowStyles, css`
   .field.pair .target { color: var(--prusa-target, var(--secondary-text-color)) !important; }
   /* Heating or cooling: an arrow over the icon, red or blue, outlined so it stands off the icon */
   .field.pair .arrow {
-    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); --mdc-icon-size: 20px; pointer-events: none;
-    filter: drop-shadow(0 0 1px rgba(0, 0, 0, .9)) drop-shadow(0 0 1px rgba(0, 0, 0, .9)) drop-shadow(0 0 2px rgba(0, 0, 0, .6));
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); --mdc-icon-size: 28px; pointer-events: none;
+    filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 0 1.5px #000) drop-shadow(0 0 3px rgba(0, 0, 0, .7));
   }
+  /* At its target: the reading alone, larger, filling the field (a tap brings the target back, to type in) */
+  .field.pair .two.settled .target { display: none; }
+  .field.pair { container-type: inline-size; }
+  /* As large as the field has room for (beside the icon), up to half as large again */
+  .field.pair .two.settled .now { font-size: clamp(1em, calc((100cqi - 48px) / 3), 1.5em); line-height: 1; }
   .field.pair.heating .arrow { color: var(--red-color, #f44336); }
   .field.pair.cooling .arrow { color: var(--blue-color, #2196f3); }
   .field.pair .target { display: flex; justify-content: center; min-width: 0; font-size: 11px; font-weight: 400; }

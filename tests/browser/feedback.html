@@ -48,7 +48,11 @@
       `positions in mm only with Units (${textOf(keyNamed(plain, "axis_z"))}, ${textOf(keyNamed(units, "axis_z"))})`);
 
     // A heater and its target: centered in its cell
-    const temps = addFeature({ type: "custom:prusa-temperatures" }, { hass: makeHass(), entityId: FUTURE_PRINTER });
+    // (the nozzle well under its target, so the target shows)
+    const heatingHass = makeHass();
+    const nozzleTarget = "number.future_core_one_tool_1_nozzle_target_temperature";
+    heatingHass.states[nozzleTarget] = { ...heatingHass.states[nozzleTarget], state: "275" };
+    const temps = addFeature({ type: "custom:prusa-temperatures" }, { hass: heatingHass, entityId: FUTURE_PRINTER });
     await wait(50);
     const pair = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
     check("H-4 centered", getComputedStyle(pair).justifyContent === "center", `the icon, reading and target centered (${getComputedStyle(pair).justifyContent})`);
@@ -175,6 +179,40 @@
     check("H-8 never cut short", slimNow.scrollWidth <= slimNow.clientWidth + 0.5 && getComputedStyle(slimNow).textOverflow !== "ellipsis",
       `the reading whole in a narrow field (${slimNow.textContent}, ${slimNow.scrollWidth} / ${slimNow.clientWidth}px)`);
 
+
+    // At its target: the reading alone, larger; a tap brings the target back to type in
+    const settled = addFeature({ type: "custom:prusa-temperatures", controls: ["tool_1_nozzle_temperature_and_target"] }, {});
+    settled.parentElement.style.width = "160px";
+    await wait(100);
+    const level = keyNamed(settled, "tool_1_nozzle_temperature_and_target");
+    const levelTarget = level.querySelector(".target");
+    const bigger = parseFloat(getComputedStyle(level.querySelector(".now")).fontSize) > parseFloat(getComputedStyle(level).fontSize);
+    check("H-9 at target", getComputedStyle(levelTarget).display === "none" && bigger,
+      `the target left out, the reading larger (${getComputedStyle(levelTarget).display}, ${getComputedStyle(level.querySelector(".now")).fontSize})`);
+    level.click();
+    await wait(100);
+    const typing = level.querySelector("input");
+    check("H-9 at target", getComputedStyle(level.querySelector(".target")).display !== "none" && settled.shadowRoot.activeElement === typing,
+      "a tap shows the target, ready to type");
+    typing.blur();
+    await wait(100);
+    check("H-9 at target", getComputedStyle(level.querySelector(".target")).display === "none", "and leaves it out again after");
+
+    // Side by side: a feature that wraps takes as many lines as the one beside it
+    const sides = addCard("Heaters beside Presets and Cool down", {
+      features: [
+        { type: "custom:prusa-print", controls: ["pause_resume", "stop"] },
+        { type: "custom:prusa-temperatures", controls: ["tool_1_nozzle_temperature_and_target", "bed_temperature_and_target"] },
+        { type: "custom:prusa-temperatures", controls: ["presets", "cool_down"] },
+        { type: "custom:prusa-history", full_width: true },
+      ],
+      last_feature_full_width: false,
+    }, { width: 340, height: 700 });
+    await wait(400);
+    const sideFeatures = [...deep(sides.shadowRoot, 'hui-card-features[slot="features"]').shadowRoot.querySelectorAll("hui-card-feature")];
+    const [heaters, keys] = sideFeatures.map((f) => f.getBoundingClientRect());
+    check("L-6 side by side", heaters && keys && Math.abs(heaters.top - keys.top) < 1 && Math.abs(heaters.left - keys.left) > 1 && Math.abs(heaters.height - keys.height) < 1 && heaters.height > 60,
+      `the two the same height (${sideFeatures.map((f) => { const r = f.getBoundingClientRect(); return `${f.feature?.type} ${r.left.toFixed(0)},${r.top.toFixed(0)} ${r.width.toFixed(0)}x${r.height.toFixed(0)}`; }).join("; ")})`);
 
     // Badges: the xTool card's size
     const card = addCard("XL, paused", { entity: "sensor.garage_xl_state" });
