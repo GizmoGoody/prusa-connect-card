@@ -6,10 +6,10 @@
 // kept in this browser's memory until Crop is turned off or the page is
 // reloaded (the camera is not changed).
 import { css, html, nothing, unsafeCSS, type TemplateResult } from "lit";
-import { CARD_TYPE, ENABLED, TIME_FORMATS } from "../const";
-import { adopt, entityName, findDeep, moreInfo, select, sheetOf, type Config, type HomeAssistant } from "../ha";
+import { ENABLED, TIME_FORMATS } from "../const";
+import { entityName, findDeep, moreInfo, select, type Config, type HomeAssistant } from "../ha";
 import { deviceOf, type Camera } from "../printer/device";
-import { displayField, displayOf, PrusaFeature, type FeatureForm } from "./base";
+import { cardOf, displayField, displayOf, PrusaFeature, type FeatureForm } from "./base";
 import type { Item } from "./keys";
 
 const CAMERA_VIEWS: [string, string][] = [["auto", "Auto"], ["live", "Live"]];
@@ -24,15 +24,10 @@ const MIN_CROP = 0.02;
 // A tap moves the pointer less than this between press and release (px)
 const TAP_SLOP = 10;
 const WHOLE: Crop = { x: 0, y: 0, w: 1, h: 1 };
-// Inside Home Assistant's image, once the box is sized: the picture fills the
-// image exactly. Home Assistant's image keeps the last picture's height while
-// the next one loads, which would stretch a cropped picture.
-const FILL = sheetOf(`
-  :host(.fill) div, :host(.fill) img, :host(.fill) video { width: 100% !important; height: 100% !important; }
-  :host(.fill) img, :host(.fill) video { display: block; object-fit: fill; }
-`);
-
-type Image = HTMLElement & { hass?: HomeAssistant; entity?: string; cameraImage?: string; cameraView?: string; updateComplete?: Promise<unknown> };
+type Image = HTMLElement & {
+  hass?: HomeAssistant; entity?: string; cameraImage?: string; cameraView?: string; aspectRatio?: string; fitMode?: string;
+  updateComplete?: Promise<unknown>;
+};
 type Stamp = HTMLElement & { hass?: HomeAssistant; ts?: Date; format?: string };
 interface Place { left: number; top: number }
 
@@ -358,25 +353,24 @@ export class PrusaCameras extends PrusaFeature {
   /**
    * Show the crop: the box takes the crop's shape (the whole picture's
    * without one), and the picture is scaled and moved so only the crop
-   * shows. Sized by the picture's last known size, cropped or not, so the
-   * box does not shrink while Home Assistant's image loads the next picture.
+   * shows. Home Assistant's image is given the picture's last known shape
+   * (its aspect_ratio, as a picture card's), so it keeps that shape while it
+   * loads the next picture: the box neither collapses nor stretches.
    */
   private _applyCrop(): void {
     const view = this._view, image = this._image;
     if (!view || !image) return;
     const crop = this._shownCrop(), size = this._pictureSize();
     view.classList.toggle("cropped", !!size);
-    image.classList.toggle("fill", !!size);
     if (!size) {
       view.style.aspectRatio = "";
-      Object.assign(image.style, { width: "", height: "", left: "", top: "" });
+      Object.assign(image.style, { width: "", left: "", top: "" });
       return;
     }
-    if (image.shadowRoot) adopt(image.shadowRoot, FILL);
+    const shape = `${size.width}x${size.height}`;
+    if (image.aspectRatio !== shape) image.aspectRatio = shape;
     view.style.aspectRatio = `${size.width * crop.w} / ${size.height * crop.h}`;
-    Object.assign(image.style, {
-      width: `${100 / crop.w}%`, height: `${100 / crop.h}%`, left: `${(-crop.x / crop.w) * 100}%`, top: `${(-crop.y / crop.h) * 100}%`,
-    });
+    Object.assign(image.style, { width: `${100 / crop.w}%`, left: `${(-crop.x / crop.w) * 100}%`, top: `${(-crop.y / crop.h) * 100}%` });
   }
 
   /** Home Assistant's image of the camera shown, made once for each camera, as its picture cards have it. */
@@ -399,7 +393,7 @@ export class PrusaCameras extends PrusaFeature {
     }
     if (this._image?.cameraImage !== camera) {
       this._image = document.createElement("hui-image") as Image;
-      Object.assign(this._image, { entity: camera, cameraImage: camera });
+      Object.assign(this._image, { entity: camera, cameraImage: camera, fitMode: "fill" });
       this._watchedRoot = undefined;
     }
     if (this._image.hass !== this._hass) this._image.hass = this._hass;
@@ -437,12 +431,4 @@ export class PrusaCameras extends PrusaFeature {
     this._stamp.format = TIME_FORMATS.includes(chosen) ? chosen : undefined;
     return html`Updated ${this._stamp}`;
   }
-}
-
-/** The Prusa Connect card a feature is in, if any. */
-function cardOf(el: Element): (HTMLElement & { config?: Config }) | undefined {
-  for (let node = (el.getRootNode() as ShadowRoot).host; node; node = (node.getRootNode() as ShadowRoot).host) {
-    if (node.localName === CARD_TYPE) return node as HTMLElement & { config?: Config };
-  }
-  return undefined;
 }
