@@ -1,6 +1,5 @@
 {
   "name": "Prusa Connect Card",
-  "render_readme": true,
   "hide_default_branch": true,
   "filename": "prusa-connect-card.js"
 }
