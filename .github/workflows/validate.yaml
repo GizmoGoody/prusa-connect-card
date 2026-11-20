@@ -1,11 +1,12 @@
-# The Marketplace's own checks of the repository (hacs/action), so it is
-# ready for the catalog. Kept apart from CI, so an alpha still publishes
-# while something the catalog needs (such as screenshots) is missing.
+# The Marketplace's own checks of the repository (hacs/action), for the
+# catalog. They read the card from the latest stable release (pre-releases
+# do not count) or else from the branch, which has no built card, so they
+# run when a release is published, or by hand, not on every push.
 name: Marketplace validation
 
 on:
-  push:
-  pull_request:
+  release:
+    types: [released]
   workflow_dispatch:
 
 permissions:
