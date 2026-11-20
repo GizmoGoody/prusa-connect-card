@@ -21,6 +21,9 @@ describe("featurePlaces (L-1: half width, as the xTool card places features)", (
     ]);
     expect(rows).toEqual(["auto", "1fr"]);
   });
+  it("never leaves an empty half before a full width feature, whatever Last feature full width is (L-1)", () => {
+    expect(featurePlaces([small, { tall: true, full: true, height: 200 }], 12, false).places[0]).toEqual({ column: "1 / -1", row: "1", columns: 1 });
+  });
   it("gives a full width feature both columns", () => {
     expect(featurePlaces([{ tall: true, full: true, height: 200 }, small], 12, true).places[0]).toEqual({ column: "1 / -1", row: "1", columns: 1 });
   });

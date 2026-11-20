@@ -22,8 +22,10 @@ export interface Place {
  * - a camera or history without it takes one column, as many rows tall as
  *   it needs: the features after it fill the other column, one per row,
  *   until they pass its bottom; then the pattern resumes;
- * - a feature alone in its row takes both columns with Last feature full
- *   width (the default), one column without it.
+ * - a feature left alone in its row by a full-width feature after it takes
+ *   both columns, so no empty half is left;
+ * - the last feature, alone in its row, takes both columns with Last
+ *   feature full width (the default), one column without it.
  * gap: the grid's row gap (px).
  */
 export function featurePlaces(items: PlaceItem[], gap: number, lastWide: boolean): { places: Place[]; rows: string[] } {
@@ -31,7 +33,7 @@ export function featurePlaces(items: PlaceItem[], gap: number, lastWide: boolean
   const gridRows: string[] = [];
   let row = 1, col = 0;
   const alone = (index: number) => {
-    if (lastWide) places[index] = { column: "1 / -1", row: places[index].row, columns: 1 };
+    places[index] = { column: "1 / -1", row: places[index].row, columns: 1 };
   };
   for (let i = 0; i < items.length;) {
     const item = items[i];
@@ -73,7 +75,7 @@ export function featurePlaces(items: PlaceItem[], gap: number, lastWide: boolean
     }
     i += 1;
   }
-  if (col === 1) alone(items.length - 1);
+  if (col === 1 && lastWide) alone(items.length - 1);
   return { places, rows: Array.from({ length: row - 1 + col }, (_, i) => gridRows[i] ?? "auto") };
 }
 
