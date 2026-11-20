@@ -7,7 +7,7 @@
 // reloaded (the camera is not changed).
 import { css, html, nothing, unsafeCSS, type TemplateResult } from "lit";
 import { CARD_TYPE, ENABLED, TIME_FORMATS } from "../const";
-import { entityName, findDeep, moreInfo, select, type Config, type HomeAssistant } from "../ha";
+import { adopt, entityName, findDeep, moreInfo, select, sheetOf, type Config, type HomeAssistant } from "../ha";
 import { deviceOf, type Camera } from "../printer/device";
 import { displayField, displayOf, PrusaFeature, type FeatureForm } from "./base";
 import type { Item } from "./keys";
@@ -24,6 +24,13 @@ const MIN_CROP = 0.02;
 // A tap moves the pointer less than this between press and release (px)
 const TAP_SLOP = 10;
 const WHOLE: Crop = { x: 0, y: 0, w: 1, h: 1 };
+// Inside Home Assistant's image, once the box is sized: the picture fills the
+// image exactly. Home Assistant's image keeps the last picture's height while
+// the next one loads, which would stretch a cropped picture.
+const FILL = sheetOf(`
+  :host(.fill) div, :host(.fill) img, :host(.fill) video { width: 100% !important; height: 100% !important; }
+  :host(.fill) img, :host(.fill) video { display: block; object-fit: fill; }
+`);
 
 type Image = HTMLElement & { hass?: HomeAssistant; entity?: string; cameraImage?: string; cameraView?: string; updateComplete?: Promise<unknown> };
 type Stamp = HTMLElement & { hass?: HomeAssistant; ts?: Date; format?: string };
@@ -359,13 +366,17 @@ export class PrusaCameras extends PrusaFeature {
     if (!view || !image) return;
     const crop = this._shownCrop(), size = this._pictureSize();
     view.classList.toggle("cropped", !!size);
+    image.classList.toggle("fill", !!size);
     if (!size) {
       view.style.aspectRatio = "";
-      Object.assign(image.style, { width: "", left: "", top: "" });
+      Object.assign(image.style, { width: "", height: "", left: "", top: "" });
       return;
     }
+    if (image.shadowRoot) adopt(image.shadowRoot, FILL);
     view.style.aspectRatio = `${size.width * crop.w} / ${size.height * crop.h}`;
-    Object.assign(image.style, { width: `${100 / crop.w}%`, left: `${(-crop.x / crop.w) * 100}%`, top: `${(-crop.y / crop.h) * 100}%` });
+    Object.assign(image.style, {
+      width: `${100 / crop.w}%`, height: `${100 / crop.h}%`, left: `${(-crop.x / crop.w) * 100}%`, top: `${(-crop.y / crop.h) * 100}%`,
+    });
   }
 
   /** Home Assistant's image of the camera shown, made once for each camera, as its picture cards have it. */
