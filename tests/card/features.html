@@ -114,6 +114,15 @@
     await wait(200);
     check("cameras", !!cameras.shadowRoot.querySelector("hui-image") || window.cardHelperCalls.some((c) => c.type === "picture-entity"), "Home Assistant's picture of the camera");
 
+    // Cameras: another integration's camera in place of the printer's (the MK4S has none)
+    const other = addFeature({ type: "custom:prusa-cameras", cameras: ["camera.makerspace"] }, { entityId: "sensor.workshop_mk4s_state" });
+    await wait(200);
+    check("cameras, another camera", other._camera === "camera.makerspace", `shows the camera chosen (${other._camera})`);
+    check("cameras, another camera", customElements.get("prusa-cameras").supports(), "offered for every printer");
+    const camerasForm = customElements.get("prusa-cameras").editor(makeHass(), "sensor.office_core_one_state");
+    check("cameras, editor", camerasForm.schema[0].name === "cameras" && camerasForm.schema[0].selector.entity.domain === "camera"
+      && camerasForm.data({}).cameras.join() === "camera.office_core_one_camera_chamber", "any camera entities, the printer's own by default");
+
     // The feature editor tells which controls are not offered yet
     const editor = document.createElement("prusa-feature-editor");
     editor.hass = makeHass();

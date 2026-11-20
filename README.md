@@ -94,7 +94,7 @@ The card's own options:
 | Prusa movement | **`speed`**, **`flow`**, **`axis_z`**, **`axis_x`**, **`axis_y`**, `home`, `disable_steppers` | `show`, `only_z_while_printing`, `units` |
 | Prusa lights | `chamber_light`, `chamber_light_brightness` | `off_at_minimum` |
 | Prusa utilities | `beep`, `reset_printer` | `show`, `ask_before_resetting` |
-| Prusa cameras | **`camera_buttons`**, `camera_toggle`, **`crop`** | `camera`, `camera_view`, `show`, `show_last_updated`, `full_width` |
+| Prusa cameras | **`camera_buttons`**, `camera_toggle`, **`crop`** | `cameras` (any camera entities; the printer's own by default), `camera_view`, `show`, `show_last_updated`, `full_width` |
 
 `show` is `icons` (the default), `names`, or `both`.
 

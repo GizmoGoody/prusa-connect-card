@@ -1488,8 +1488,14 @@ class PrusaElement extends HTMLElement {
   set hass(hass) {
     const before = this._hass;
     this._hass = hass;
-    if (this._config && this._context && !changedFor(before, hass, this._entityId)) return;
+    if (this._config && this._context && !changedFor(before, hass, this._entityId)
+      && !this._watched().some((id) => before?.states[id] !== hass.states[id])) return;
     this._render();
+  }
+
+  /** Entities outside the printer's that the feature shows (see PrusaCameras). */
+  _watched() {
+    return [];
   }
 
   set context(context) {
@@ -2045,27 +2051,26 @@ class PrusaCameras extends PrusaFeature {
   static controls = ["camera_buttons", "camera_toggle", "crop"];
   static defaults = ["camera_buttons", "crop"];
 
-  static supports(device) {
-    return device.cameras.length > 0;
+  // Any printer can show a camera: its own, or any other camera entity (see camerasOf)
+  static supports() {
+    return true;
   }
 
-  static offered(device, hass) {
-    return [
-      ...(device.cameras.length > 1 ? [{ value: "camera_buttons", label: "Camera buttons" }, { value: "camera_toggle", label: "Camera toggle" }] : []),
-      ...(device.cameras.length ? [{ value: "crop", label: "Crop" }] : []),
-    ];
+  static offered() {
+    return [{ value: "camera_buttons", label: "Camera buttons" }, { value: "camera_toggle", label: "Camera toggle" }, { value: "crop", label: "Crop" }];
   }
 
   static editor(hass, entityId) {
     const device = deviceOf(hass, entityId);
     const offered = this.offered(device, hass);
-    const ids = device.cameras.map((camera) => camera.id);
+    const own = device.cameras.map((camera) => camera.entityId);
     return {
       pending: [],
       schema: [
         {
-          name: "camera", label: "Camera",
-          selector: { select: { mode: "dropdown", options: device.cameras.map((camera) => ({ value: camera.id, label: entityName(hass, camera.entityId) ?? camera.id })) } },
+          name: "cameras", label: "Cameras",
+          helper: "The printer's cameras from Prusa Connect, or any other camera entities, such as one that shows the printer better. The first shows when the card loads; the keys switch between them.",
+          selector: { entity: { domain: "camera", multiple: true, reorder: true } },
         },
         {
           name: "camera_view", label: "Camera view",
@@ -2090,7 +2095,7 @@ class PrusaCameras extends PrusaFeature {
         },
       ],
       data: (c) => ({
-        camera: ids.includes(c.camera) ? c.camera : ids[0], camera_view: c.camera_view === "live" ? "live" : "auto",
+        cameras: Array.isArray(c.cameras) && c.cameras.length ? c.cameras : own, camera_view: c.camera_view === "live" ? "live" : "auto",
         controls: Array.isArray(c.controls) ? c.controls : this.defaults.filter((id) => offered.some((o) => o.value === id)),
         show: displayOf(c), show_last_updated: c.show_last_updated !== false, full_width: c.full_width !== false,
       }),
@@ -2164,10 +2169,20 @@ class PrusaCameras extends PrusaFeature {
     return this._config?.camera_view === "live" ? "live" : "auto";
   }
 
+  /** The cameras shown, in order: those chosen (cameras), or else the printer's own. */
+  _cameras() {
+    const chosen = Array.isArray(this._config.cameras) ? this._config.cameras.filter((id) => typeof id === "string" && id.startsWith("camera.")) : [];
+    return chosen.length ? chosen.map((entityId) => ({ entityId, id: entityId })) : this._device.cameras;
+  }
+
+  _watched() {
+    return this._config && this._device ? this._cameras().map((camera) => camera.entityId) : [];
+  }
+
   /** Nothing to show only without a camera: the picture always shows. */
   _render() {
     if (!this._ready()) return;
-    const cameras = this._device.cameras;
+    const cameras = this._cameras();
     const current = this._currentCamera(cameras);
     if (current !== this._camera) {
       this._camera = current;
@@ -2182,7 +2197,7 @@ class PrusaCameras extends PrusaFeature {
 
   _lines() {
     const moment = this._moment();
-    const cameras = moment.device.cameras;
+    const cameras = this._cameras();
     const current = this._camera;
     const nameOf = (camera) => entityName(moment.hass, camera.entityId) ?? camera.id;
     const shortOf = (camera) => nameOf(camera).replace(/^Camera\s+/i, "");
@@ -2224,7 +2239,7 @@ class PrusaCameras extends PrusaFeature {
   _currentCamera(cameras) {
     const ids = cameras.map((camera) => camera.entityId);
     if (this._picked && ids.includes(this._picked)) return this._picked;
-    return cameras.find((camera) => camera.id === this._config.camera || camera.entityId === this._config.camera)?.entityId ?? ids[0];
+    return ids[0];
   }
 
   /**

@@ -185,6 +185,9 @@ window.makeHass = (changes = {}) => {
       hass.states[entity_id] = { entity_id, state, attributes: { friendly_name: entity_id, ...attributes }, last_changed: started };
     }
   }
+  // A camera of another integration, on no Prusa device
+  hass.entities["camera.makerspace"] = { entity_id: "camera.makerspace", device_id: "dev_other", platform: "generic" };
+  hass.states["camera.makerspace"] = { entity_id: "camera.makerspace", state: "idle", attributes: { friendly_name: "Makerspace", access_token: "d" }, last_changed: started };
   for (const [entityId, change] of Object.entries(changes)) {
     const next = typeof change === "string" ? { state: change } : change;
     hass.states[entityId] = { ...hass.states[entityId], ...next, attributes: { ...hass.states[entityId].attributes, ...(next.attributes ?? {}) } };
