@@ -34,7 +34,7 @@ jobs:
         id: build
         run: |
           version="0.1.0-alpha.${GITHUB_RUN_NUMBER}"
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           VERSION="${version}" npm run build
           grep -q "${version}" dist/prusa-connect-card.js
           echo "version=${version}" >> "$GITHUB_OUTPUT"

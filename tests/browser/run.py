@@ -8,7 +8,7 @@ failure.
 
 Usage: python tests/browser/run.py [card.js]
 The card is the built one (dist/prusa-connect-card.js) unless another file
-is given, such as the prototype (reference/prototype.js).
+is given.
 Set CHROME to the browser's path if it is not found.
 """
 from __future__ import annotations
