@@ -90,9 +90,9 @@ export const featureStyles = [rowStyles, css`
   .field.pair { container-type: inline-size; }
   /* As large as the field has room for (beside the icon), up to half as large again */
   .field.pair .two.settled .now, .field.pair .two.sliding .target { font-size: clamp(1em, calc((100cqi - 48px) / 3), 1.5em); line-height: 1; }
-  /* Sliding: the target alone, in the field's own weight */
+  /* Sliding: the target alone, in the field's own weight and the reading's color (not dimmed) */
   .field.pair .two.sliding .heat { display: none; }
-  .field.pair .two.sliding .target { font-weight: inherit; }
+  .field.pair .two.sliding .target { font-weight: inherit; color: var(--prusa-reading, inherit) !important; }
   .field.pair.heating .arrow { color: var(--red-color, #f44336); }
   .field.pair.cooling .arrow { color: var(--blue-color, #2196f3); }
   .field.pair .target { display: flex; justify-content: center; min-width: 0; font-size: 11px; font-weight: 400; }
