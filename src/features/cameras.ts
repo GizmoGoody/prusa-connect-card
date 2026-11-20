@@ -118,6 +118,8 @@ export class PrusaCameras extends PrusaFeature {
   private _stamp?: Stamp;
   private _pictureAt?: Date;
   private _first?: { x: number; y: number; at: Place };
+  // The picture's size, the last one known (for taps while the next picture loads)
+  private _natural?: { width: number; height: number };
   private _area?: Place & { width: number; height: number };
   private _down?: { x: number; y: number };
   private _tapped = false;
@@ -307,14 +309,24 @@ export class PrusaCameras extends PrusaFeature {
     this.requestUpdate();
   }
 
-  /** A tapped point in the picture (shares of its width and height), or undefined off it. The picture fills its box (cover): only the part shown counts. */
+  /**
+   * A tapped point in the picture (shares of its width and height), or
+   * undefined off it. Measured on Home Assistant's image itself, which is
+   * always laid out: its picture is hidden while the next one loads, and a
+   * tap then counts all the same. The picture fills the box (cover): only
+   * the part shown counts, by the picture's last known size.
+   */
   private _pointOf(ev: MouseEvent): { x: number; y: number } | undefined {
-    const img = this._image?.shadowRoot && findDeep(this._image.shadowRoot, "img, video", 3) as (HTMLImageElement & HTMLVideoElement) | null;
+    const image = this._image;
+    if (!image) return undefined;
+    const img = image.shadowRoot && findDeep(image.shadowRoot, "img, video", 3) as (HTMLImageElement & HTMLVideoElement) | null;
     const width = img ? img.naturalWidth || img.videoWidth : 0, height = img ? img.naturalHeight || img.videoHeight : 0;
-    if (!img || !width || !height) return undefined;
-    const box = img.getBoundingClientRect();
-    const scale = Math.max(box.width / width, box.height / height);
-    const shownW = width * scale, shownH = height * scale;
+    if (width && height) this._natural = { width, height };
+    const box = image.getBoundingClientRect();
+    if (!box.width || !box.height) return undefined;
+    const natural = this._natural ?? { width: box.width, height: box.height };
+    const scale = Math.max(box.width / natural.width, box.height / natural.height);
+    const shownW = natural.width * scale, shownH = natural.height * scale;
     const x = (ev.clientX - box.left - (box.width - shownW) / 2) / shownW;
     const y = (ev.clientY - box.top - (box.height - shownH) / 2) / shownH;
     return x < 0 || x > 1 || y < 0 || y > 1 ? undefined : { x, y };
