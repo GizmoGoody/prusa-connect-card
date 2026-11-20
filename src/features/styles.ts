@@ -78,13 +78,15 @@ export const featureStyles = [rowStyles, css`
   /* The higher number on top: the target while it is above the reading */
   .field.pair .two.above .target { order: -1; }
   /* In the heater's history colors: the reading's, and its target's (dimmed) */
-  .field.pair .heat, .field.pair ha-state-icon, .field.pair .arrow { color: var(--prusa-reading, inherit); }
+  .field.pair .heat, .field.pair ha-state-icon { color: var(--prusa-reading, inherit); }
   .field.pair .target { color: var(--prusa-target, var(--secondary-text-color)) !important; }
-  /* Heating or cooling: a thin arrow on the icon's lower right, outlined in the field's color */
+  /* Heating or cooling: an arrow over the icon, red or blue, outlined so it stands off the icon */
   .field.pair .arrow {
-    position: absolute; right: -9px; bottom: -6px; --mdc-icon-size: 20px;
-    filter: drop-shadow(0 0 1px var(--prusa-field-edge-color, var(--card-background-color, #000))) drop-shadow(0 0 1px var(--card-background-color, #000));
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); --mdc-icon-size: 20px; pointer-events: none;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, .9)) drop-shadow(0 0 1px rgba(0, 0, 0, .9)) drop-shadow(0 0 2px rgba(0, 0, 0, .6));
   }
+  .field.pair.heating .arrow { color: var(--red-color, #f44336); }
+  .field.pair.cooling .arrow { color: var(--blue-color, #2196f3); }
   .field.pair .target { display: flex; justify-content: center; min-width: 0; font-size: 11px; font-weight: 400; }
   .field.pair .target input { flex: 0 1 auto; text-align: center; }
   .field.pair .target input::placeholder { color: inherit; opacity: 1; text-transform: uppercase; letter-spacing: .03em; }

@@ -19,6 +19,12 @@ const SCRUB_POWER = 1.5;
 // A press held this long without sliding is a hold (ms), as Home Assistant's own hold
 const HOLD_TIME = 500;
 
+// The target goes on top once it is this far above the reading (°), and
+// back under it once it is within the second distance: a reading that
+// wavers near its target does not swap the two
+const ABOVE_ON = 3;
+const ABOVE_OFF = 1;
+
 // Each heater's last target before a hold turned it off
 const HEATER_TARGETS = new Map<string, number>();
 
@@ -119,6 +125,8 @@ export class PrusaField extends LitElement {
   colors?: { reading: string; target: string };
   private _pending?: number;
   private _shown = "";
+  // Whether the target is on top (see ABOVE_ON)
+  private _above = false;
 
   static override properties = {
     control: { attribute: false }, entity: { attribute: false }, reading: { attribute: false },
@@ -175,15 +183,17 @@ export class PrusaField extends LitElement {
     }
     const reading = hass.states[this.reading ?? ""];
     const state = this._heat();
-    const arrow = state === "heating" ? "mdi:arrow-up-thin" : state === "cooling" ? "mdi:arrow-down-thin" : undefined;
+    const arrow = state === "heating" ? "mdi:arrow-up-bold" : state === "cooling" ? "mdi:arrow-down-bold" : undefined;
     // The numbers alone: the units are implied, and the reading is never cut short
     const shown = known(reading) ? hass.formatEntityState(reading) : "";
     const readingUnit = reading?.attributes.unit_of_measurement ?? "";
     const number = (readingUnit && shown.endsWith(readingUnit) ? shown.slice(0, -readingUnit.length) : shown).trim();
-    // The higher number on top: the target while it is above the reading; Off is always under it
+    // The reading on top, unless the target is well above it (see ABOVE_ON); Off is always under it
     const target = this._pending ?? this._value();
-    const above = known(reading) && target > 0 && target > Number(reading.state);
-    // The arrow on the heater's icon, while it heats or cools
+    const lead = known(reading) && target > 0 ? target - Number(reading.state) : -Infinity;
+    this._above = this._above ? lead > ABOVE_OFF : lead > ABOVE_ON;
+    const above = this._above;
+    // The arrow over the heater's icon, while it heats or cools
     return html`<span class="icon"><ha-state-icon .hass=${hass} .stateObj=${reading}></ha-state-icon
       >${arrow ? html`<ha-icon class="arrow" .icon=${arrow}></ha-icon>` : nothing}</span
       ><span class="two ${above ? "above" : ""}"><span class="heat"><span class="now">${number}</span></span
