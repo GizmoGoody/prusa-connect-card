@@ -65,12 +65,16 @@
     // A heater and its target show the target's icon (the entity it sets)
     const nozzle = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
     const pairIcon = nozzle?.querySelector("ha-state-icon");
-    check("temperatures", pairIcon?.stateObj?.entity_id === "number.office_core_one_tool_1_nozzle_target_temperature", `the target's icon (${pairIcon?.stateObj?.entity_id})`);
+    check("temperatures", pairIcon?.stateObj?.entity_id === "sensor.office_core_one_tool_1_nozzle_temperature", `the temperature sensor's icon (${pairIcon?.stateObj?.entity_id})`);
     check("temperatures", nozzle?.querySelector(".now").textContent === "259.8 °C" && nozzle.querySelector("input").value === "260",
       `the reading over the target (${nozzle?.querySelector(".now").textContent} / ${nozzle?.querySelector("input").value})`);
     const row = temps.shadowRoot.querySelector(".row.wraps");
-    check("temperatures", getComputedStyle(row).display === "grid" && getComputedStyle(row).gridTemplateColumns.split(" ").length === 3,
+    check("temperatures", getComputedStyle(row).display === "grid" && getComputedStyle(row).gridTemplateColumns.split(" ").length === 5,
       `equal cells, as many as fit (${getComputedStyle(row).gridTemplateColumns})`);
+    row.style.width = "170px";
+    await wait(20);
+    check("temperatures", getComputedStyle(row).gridTemplateColumns.split(" ").length === 2, `two in a half-width column (${getComputedStyle(row).gridTemplateColumns})`);
+    row.style.width = "";
 
     // Hold: the heater off, and a second hold back to its target
     const holdOn = (el) => {
@@ -119,7 +123,8 @@
     const graphConfig = window.cardHelperCalls.find((c) => c.type === "history-graph");
     check("history", !!graphConfig && graphConfig.entities.some((e) => e.entity === "sensor.office_core_one_tool_1_nozzle_temperature"),
       `the history graph card, with the nozzle (${JSON.stringify(graphConfig)})`);
-    check("history", !!history.style.getPropertyValue("--graph-color-1"), "with the heaters' colors");
+    check("history", graphConfig.entities[0].color === "#fd5000" && graphConfig.entities[1].color === "#873109", `each heater's color, its target dimmed (${graphConfig.entities.map((e) => e.color)})`);
+    check("history", graphConfig.grid_options?.rows > 0 && graphConfig.expand_legend === true, "the chart fills the feature, with the whole legend");
     check("history", graphConfig.entities.map((e) => e.name).join() === "Nozzle,Nozzle target,Bed,Bed target", `short names in the legend (${graphConfig.entities.map((e) => e.name)})`);
     const xlHistory = addFeature({ type: "custom:prusa-history" }, { entityId: "sensor.garage_xl_state" });
     await wait(100);
@@ -164,7 +169,8 @@
     check("crop", hint() === "" && cropping.shadowRoot.querySelector(".view").classList.contains("cropped"), "and stays through updates");
     keyNamed(cropping, "crop").click();
     await wait(50);
-    check("crop", !cropping.shadowRoot.querySelector(".view").classList.contains("cropped"), "Crop off: the whole picture");
+    const image = cropping.shadowRoot.querySelector("hui-image");
+    check("crop", image.style.width === "100%" && image.style.left === "0%" && image.style.top === "0%", `Crop off: the whole picture (${image.style.width} ${image.style.left} ${image.style.top})`);
     keyNamed(cropping, "crop").click();
     await wait(50);
     check("crop", /Tap a corner/.test(hint()), "Crop on again: a new crop is chosen");

@@ -771,7 +771,7 @@ const ROW_CSS = `
   .rows { display: flex; flex-direction: column; gap: var(--ha-card-feature-gap, 12px); }
   .row { display: flex; flex-wrap: nowrap; align-items: center; column-gap: var(--feature-button-spacing, 12px); height: var(--feature-height, 42px); }
   .row.wraps {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(${ITEM_MIN.wide}px, 1fr)); height: auto;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(${ITEM_MIN.field}px, 1fr)); height: auto;
     gap: var(--ha-card-feature-gap, 12px) var(--feature-button-spacing, 12px);
   }
   .row.wraps > *, .row.wraps > .group > * { height: var(--feature-height, 42px); min-width: 0; }
@@ -997,7 +997,7 @@ function fieldKey(feature, control, entityId) {
 /**
  * A heater and its target as one control, one field (see FieldGroup): the
  * reading on top, tinted as Prusa Connect tints it, and the target under it
- * (Off at 0). The icon is the target's, the entity it sets.
+ * (Off at 0). The icon is the temperature sensor's.
  */
 function pairKey(feature, control, entityId, moment) {
   const [reading, target] = control.parts.map((id) => moment.device.roles[controlOf(id)?.role ?? id]);
@@ -1269,7 +1269,7 @@ class FieldGroup {
     this._unit.textContent = stateObj?.attributes.unit_of_measurement ?? "";
     if (this._icon) {
       this._icon.hass = hass;
-      this._icon.stateObj = stateObj;
+      this._icon.stateObj = this._pair ? hass.states[item.reading] : stateObj;
     }
     if (this._pair) {
       const reading = hass.states[item.reading];
@@ -1870,11 +1870,17 @@ class PrusaTemperatures extends PrusaFeature {
 }
 
 // The colors of Prusa history's lines: each heater keeps one color of
-// Prusa Connect's palette, in its order, and its target the same color at
-// half strength. Past five heaters (an XL with five tools), the tools keep
-// the five colors and the bed and chamber take the text's tones.
+// Prusa Connect's palette, in its order, and its target the same color
+// dimmed (half way to the theme's background). Past five heaters (an XL with
+// five tools), the tools keep the five colors and the bed and chamber take
+// the text's tones.
 function historyColors(ids, hass) {
   const dark = darkMode(hass);
+  const dim = (hex) => {
+    const background = dark ? [17, 17, 17] : [255, 255, 255];
+    const rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    return `#${rgb.map((c, i) => Math.round((c + background[i]) / 2).toString(16).padStart(2, "0")).join("")}`;
+  };
   const palette = PALETTE[dark ? "dark" : "light"];
   const heaters = [...new Set(ids.map((id) => id.replace("_target_temperature", "_temperature")))];
   const toneOf = (heater) => (heater === "bed_temperature" ? (dark ? "#e1e1e3" : "#1c1c1e") : dark ? "#9b9ea4" : "#5d6168");
@@ -1882,7 +1888,7 @@ function historyColors(ids, hass) {
     const heater = id.replace("_target_temperature", "_temperature");
     const at = heaters.length <= 5 ? heaters.indexOf(heater) : heaters.filter((h) => h.startsWith("tool_")).indexOf(heater);
     const color = at >= 0 ? palette[at % palette.length] : toneOf(heater);
-    return id === heater ? color : `${color}80`;
+    return id === heater ? color : dim(color);
   });
 }
 
@@ -1925,8 +1931,9 @@ class PrusaHistory extends PrusaElement {
   constructor() {
     super();
     this.shadowRoot.innerHTML = `<style>
-      :host { display: block; min-width: 0; max-width: 100%; }
+      :host { display: block; min-width: 0; max-width: 100%; height: 100%; }
       .graph {
+        height: 100%; min-height: 240px; box-sizing: border-box;
         --ha-card-background: transparent; --card-background-color: transparent; --ha-card-box-shadow: none;
         --ha-card-border-width: 0; --ha-card-border-color: transparent; --ha-card-backdrop-filter: none;
         border-radius: var(--feature-border-radius, 12px); overflow: hidden;
@@ -1942,11 +1949,14 @@ class PrusaHistory extends PrusaElement {
     const ids = this._chosen().filter((id) => this.constructor.controlIds(device).includes(id) && device.roles[id]);
     this._showNothing(ids.length === 0);
     if (!ids.length) return;
-    historyColors(ids, this._hass).forEach((color, i) => this.style.setProperty(`--graph-color-${i + 1}`, color));
+    const colors = historyColors(ids, this._hass);
     const c = this._config;
+    // A fixed height (grid_options rows) makes the card's chart fill the
+    // feature's height; the legend shows every line
     const config = {
-      type: "history-graph", entities: ids.map((id) => ({ entity: device.roles[id], name: historyName(id, device) })),
-      hours_to_show: Number(c.hours_to_show) || 1,
+      type: "history-graph",
+      entities: ids.map((id, i) => ({ entity: device.roles[id], name: historyName(id, device), color: colors[i] })),
+      hours_to_show: Number(c.hours_to_show) || 1, grid_options: { rows: 4 }, expand_legend: true,
       ...(Number.isFinite(c.min_y_axis) ? { min_y_axis: c.min_y_axis } : {}),
       ...(Number.isFinite(c.max_y_axis) ? { max_y_axis: c.max_y_axis } : {}),
       ...(c.fit_y_data === true ? { fit_y_data: true } : {}),
@@ -2444,14 +2454,16 @@ class PrusaCameras extends PrusaFeature {
   }
 
   /**
-   * Show the crop: the box takes the crop's shape, and the picture is
-   * scaled and moved so only the crop shows. The picture itself is the
-   * camera's whole picture.
+   * Show the crop: the box takes the crop's shape (the whole picture's
+   * without one), and the picture is scaled and moved so only the crop
+   * shows. The picture itself is the camera's whole picture.
    */
   _applyCrop() {
     if (!this._image) return;
     const crop = this._shownCrop(), size = this._pictureSize();
-    const cropped = !!size && (crop.w < 1 || crop.h < 1);
+    // Sized by the picture's last known size, cropped or not, so the box
+    // does not shrink while Home Assistant's image loads the next picture
+    const cropped = !!size;
     this._view.classList.toggle("cropped", cropped);
     if (!cropped) {
       this._view.style.aspectRatio = "";
