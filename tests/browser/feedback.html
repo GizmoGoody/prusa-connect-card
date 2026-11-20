@@ -1,0 +1,118 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prusa Connect card: decisions and feedback</title>
+<style>
+  body { margin: 0; padding: 16px; background: #111; color: #ddd; font: 13px Roboto, "Segoe UI", sans-serif; }
+  pre { white-space: pre-wrap; }
+</style>
+<script src="stand-ins.js"></script>
+<script src="load.js"></script>
+<script src="checks.js"></script>
+<div id="cards"></div>
+<pre id="report" data-result="running">running</pre>
+<script>
+  // Each check is named by its line in tests/SPEC.md
+  const keyNamed = (el, key) => el.shadowRoot.querySelector(`[data-key="${key}"]`);
+  const textOf = (el) => el?.textContent.replace(/\s+/g, " ").trim();
+  const FUTURE_PRINTER = "sensor.future_core_one_state";
+
+  runChecks(async () => {
+    // The console badge: GizmoGoody's card-badge, with the card's icon, name and version
+    check("B-1 badge", consoleLines.some((l) => l.includes("🖨️ Prusa Connect Card") && l.includes("by GizmoGoody")),
+      `the GizmoGoody badge (${consoleLines.find((l) => /prusa/i.test(l))})`);
+    check("B-1 badge", consoleLines.some((l) => l.includes("https://github.com/GizmoGoody/prusa-connect-card")), "with the repository's link");
+
+    // Feature names: "Prusa" and one word, in sentence case
+    const names = customCardFeatures.filter((f) => f.type.startsWith("prusa-")).map((f) => f.name);
+    check("N-1 names", names.length === 8 && names.every((n) => /^Prusa [a-z]+$/.test(n)), `sentence case, one word after Prusa (${names.join(", ")})`);
+
+    // Show: Icons by default in every feature that has it
+    const hass = makeHass();
+    const shows = customCardFeatures.filter((f) => f.type.startsWith("prusa-")).map((f) => [f.type, customElements.get(f.type).editor(hass, FUTURE_PRINTER)])
+      .filter(([, form]) => form.schema.some((s) => s.name === "show")).map(([type, form]) => [type, form.data({}).show]);
+    check("S-1 show", shows.length >= 5 && shows.every(([, show]) => show === "icons"), `Icons by default (${shows.map((s) => s.join(": ")).join(", ")})`);
+
+    // Full width: the camera's on by default, the history's off
+    check("L-2 full width", customElements.get("prusa-cameras").editor(hass, FUTURE_PRINTER).data({}).full_width === true
+      && customElements.get("prusa-history").editor(hass, FUTURE_PRINTER).data({}).full_width === false, "the camera across both columns, the history in one");
+
+    // Units: none on fan speeds and the nozzle diameter; positions without mm unless Units is on
+    const nozzles = addFeature({ type: "custom:prusa-nozzles", controls: ["nozzle_diameter", "print_fan_speed"] }, {});
+    await wait(50);
+    check("U-1 units", textOf(keyNamed(nozzles, "tool_1_nozzle_diameter")) === "0.4" && textOf(keyNamed(nozzles, "tool_1_print_fan_speed")) === "4200",
+      `no unit on the nozzle and the fan (${textOf(keyNamed(nozzles, "tool_1_nozzle_diameter"))}, ${textOf(keyNamed(nozzles, "tool_1_print_fan_speed"))})`);
+    const plain = addFeature({ type: "custom:prusa-movement", controls: ["axis_z"] }, {});
+    const units = addFeature({ type: "custom:prusa-movement", controls: ["axis_z"], units: true }, {});
+    await wait(50);
+    check("U-2 units", textOf(keyNamed(plain, "axis_z")) === "20.2" && textOf(keyNamed(units, "axis_z")) === "20.2 mm",
+      `positions in mm only with Units (${textOf(keyNamed(plain, "axis_z"))}, ${textOf(keyNamed(units, "axis_z"))})`);
+
+    // A heater and its target: centered in its cell
+    const temps = addFeature({ type: "custom:prusa-temperatures" }, { hass: makeHass(), entityId: FUTURE_PRINTER });
+    await wait(50);
+    const pair = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
+    check("H-4 centered", getComputedStyle(pair).justifyContent === "center", `the icon, reading and target centered (${getComputedStyle(pair).justifyContent})`);
+    const chamber = keyNamed(temps, "chamber_temperature_and_target");
+    check("H-1 pair", !!chamber && chamber.querySelector("ha-state-icon")?.stateObj?.entity_id === "sensor.future_core_one_chamber_temperature",
+      "the chamber's too, with its sensor's icon");
+
+    // Presets: every nozzle and the bed, never the chamber
+    const presetsHass = makeHass();
+    temps.hass = presetsHass;
+    await wait(50);
+    const menu = keyNamed(temps, "presets").querySelector("select");
+    menu.value = "PLA";
+    menu.dispatchEvent(new Event("change"));
+    const set = presetsHass.calls.map((c) => `${c.data.entity_id}=${c.data.value}`);
+    check("P-1 presets", set.join() === "number.future_core_one_tool_1_nozzle_target_temperature=215,number.future_core_one_bed_target_temperature=60",
+      `PLA sets the nozzle and the bed, not the chamber (${set.join(", ")})`);
+
+    // Cool down: every heater off, the chamber's too
+    presetsHass.calls.length = 0;
+    keyNamed(temps, "cool_down").click();
+    const off = presetsHass.calls.map((c) => `${c.data.entity_id.split(".")[1]}=${c.data.value}`);
+    check("P-2 cool down", off.length === 3 && off.every((c) => c.endsWith("=0")) && off.some((c) => c.startsWith("future_core_one_chamber")),
+      `every heater to 0 (${off.join(", ")})`);
+
+    // The chamber fan: Off, A and Manual, as Prusa Connect sets it
+    const fanKeys = ["off", "auto", "manual"].map((k) => keyNamed(temps, `chamber_fan_${k}`));
+    check("F-1 chamber fan", fanKeys.every(Boolean) && fanKeys[2].getAttribute("aria-pressed") === "true" && textOf(fanKeys[2]).includes("60%"),
+      `Off, A and Manual, Manual on at 60% (${fanKeys.map((k) => k?.getAttribute("aria-pressed")).join()})`);
+    presetsHass.calls.length = 0;
+    fanKeys[0].click();
+    check("F-1 chamber fan", presetsHass.calls[0]?.service === "turn_off", `Off turns the fan off (${JSON.stringify(presetsHass.calls[0])})`);
+    check("F-2 fan turns", fanKeys[2].querySelector(".spin") !== null, "the fan's icon turns while it runs");
+
+    // Crop: the box keeps its shape through new pictures and updates
+    const cropping = addFeature({ type: "custom:prusa-cameras", controls: ["crop"] }, {});
+    await wait(200);
+    keyNamed(cropping, "crop").click();
+    await wait(50);
+    const shot = cropping.shadowRoot.querySelector(".shot");
+    const view = () => cropping.shadowRoot.querySelector(".view");
+    const box = view().getBoundingClientRect();
+    const tapAt = (u, v) => shot.dispatchEvent(new MouseEvent("click", { clientX: box.left + u * box.width, clientY: box.top + v * box.height, bubbles: true }));
+    tapAt(0.1, 0.1);
+    tapAt(0.6, 0.9);
+    await wait(50);
+    const shape = view().style.aspectRatio;
+    const image = cropping.shadowRoot.querySelector("hui-image");
+    for (let i = 0; i < 3; i++) {
+      cropping.hass = makeHass();
+      await wait(30);
+    }
+    check("C-3 steady", view().style.aspectRatio === shape && cropping.shadowRoot.querySelector("hui-image") === image,
+      `the same picture and shape through updates (${shape} / ${view().style.aspectRatio})`);
+    keyNamed(cropping, "crop").click();
+    await wait(50);
+    check("C-4 crop off", view().style.aspectRatio !== shape && view().classList.contains("cropped"),
+      `Crop off: the whole picture, still sized by the last known picture (${view().style.aspectRatio})`);
+
+    // Badges: the xTool card's size
+    const card = addCard("XL, paused", { entity: "sensor.garage_xl_state" });
+    await wait(150);
+    const badge = card.shadowRoot.querySelector(".badge.status.on");
+    check("B-2 badge size", !!badge && getComputedStyle(badge).width === "18px" && getComputedStyle(badge.querySelector("ha-state-icon")).getPropertyValue("--mdc-icon-size").trim() === "12px",
+      `an 18 px circle, a 12 px icon (${badge && getComputedStyle(badge).width})`);
+  });
+</script>

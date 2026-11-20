@@ -6,7 +6,7 @@
   pre { white-space: pre-wrap; }
 </style>
 <script src="stand-ins.js"></script>
-<script src="../../prusa-connect-card.js"></script>
+<script src="load.js"></script>
 <script src="checks.js"></script>
 <div id="cards"></div>
 <pre id="report" data-result="running">running</pre>
@@ -17,6 +17,8 @@
     // Home Assistant's form cannot draw without a schema: hass first, as Home Assistant can give it
     const early = document.createElement("prusa-connect-card-editor");
     early.hass = makeHass();
+    document.getElementById("cards").append(early);
+    await wait(50);
     check("editor", ["printer", "style", "form"].every((id) => Array.isArray(early.shadowRoot.getElementById(id).schema)), "every form has a schema before the configuration comes");
 
     let fired;

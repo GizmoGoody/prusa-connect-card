@@ -6,7 +6,7 @@
   pre { white-space: pre-wrap; }
 </style>
 <script src="stand-ins.js"></script>
-<script src="../../prusa-connect-card.js"></script>
+<script src="load.js"></script>
 <script src="checks.js"></script>
 <div id="cards"></div>
 <pre id="report" data-result="running">running</pre>
@@ -62,7 +62,7 @@
     check("temperatures", !tempKeys.some((k) => k.startsWith("chamber")), `no chamber controls until the integration offers them (${tempKeys.join()})`);
     check("temperatures", tempKeys.some((k) => k.startsWith("tool_1_nozzle")) && tempKeys.some((k) => k.startsWith("bed")), "the nozzle and the bed");
 
-    // A heater and its target show the target's icon (the entity it sets)
+    // A heater and its target: the temperature sensor's icon, the reading over the target
     const nozzle = keyNamed(temps, "tool_1_nozzle_temperature_and_target");
     const pairIcon = nozzle?.querySelector("ha-state-icon");
     check("temperatures", pairIcon?.stateObj?.entity_id === "sensor.office_core_one_tool_1_nozzle_temperature", `the temperature sensor's icon (${pairIcon?.stateObj?.entity_id})`);
@@ -149,7 +149,8 @@
     // Cameras: another integration's camera in place of the printer's (the MK4S has none)
     const other = addFeature({ type: "custom:prusa-cameras", cameras: ["camera.makerspace"] }, { entityId: "sensor.workshop_mk4s_state" });
     await wait(200);
-    check("cameras, another camera", other._camera === "camera.makerspace", `shows the camera chosen (${other._camera})`);
+    const otherImage = other.shadowRoot.querySelector("hui-image");
+    check("cameras, another camera", otherImage?.cameraImage === "camera.makerspace", `shows the camera chosen (${otherImage?.cameraImage})`);
 
     // Crop: chosen once, kept until Crop is turned off
     const cropping = addFeature({ type: "custom:prusa-cameras", controls: ["crop"] }, {});

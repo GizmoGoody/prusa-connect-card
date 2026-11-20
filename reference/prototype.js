@@ -44,7 +44,7 @@
  * - Features, the card, and the editors.
  */
 
-const VERSION = "0.1.0-alpha.1";
+const VERSION = "prototype";
 const DOMAIN = "prusa_connect";
 const CARD_TYPE = "prusa-connect-card";
 const EDITOR_TYPE = "prusa-connect-card-editor";

@@ -3,11 +3,20 @@
  * testing the card in a plain browser page.
  *
  * They use Home Assistant's element names and structure. The hass object
- * holds two lasers as the integration registers them: an F2 Ultra UV (WS-V2,
- * no progress sensor), with each camera and its settings on its own device
- * and a SafetyPro IF2 2.0 on an accessory device, and a P2 with a progress
- * sensor.
+ * holds printers as the prusa_connect integration registers them (see
+ * DEVICES): a CORE One printing, an MK4S idle, an XL with five tools paused,
+ * and a CORE One with the entities a future version may offer.
  */
+
+// What the card prints to the console when it loads (its badge)
+window.consoleLines = [];
+for (const name of ["info", "log", "groupCollapsed", "group"]) {
+  const original = console[name].bind(console);
+  console[name] = (...args) => {
+    window.consoleLines.push(args.map(String).join(" "));
+    original(...args);
+  };
+}
 
 // The headless browser the tests run in draws no frames, so its
 // ResizeObserver never reports. This one reports each observed element's
