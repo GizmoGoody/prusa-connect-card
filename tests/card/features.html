@@ -1,0 +1,115 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prusa Connect card: tile features</title>
+<style>
+  body { margin: 0; padding: 16px; background: #111; color: #ddd; font: 13px Roboto, "Segoe UI", sans-serif; }
+  pre { white-space: pre-wrap; }
+</style>
+<script src="stand-ins.js"></script>
+<script src="../../prusa-connect-card.js"></script>
+<script src="checks.js"></script>
+<div id="cards"></div>
+<pre id="report" data-result="running">running</pre>
+<script>
+  const keysOf = (el) => [...el.shadowRoot.querySelectorAll("[data-key]")].map((k) => k.dataset.key);
+  const keyNamed = (el, key) => el.shadowRoot.querySelector(`[data-key="${key}"]`);
+  const lastCall = (hass) => hass.calls[hass.calls.length - 1];
+  const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+  runChecks(async () => {
+    // Every feature is registered for Home Assistant's feature picker
+    const types = window.customCardFeatures.map((f) => f.type);
+    check("registration", ["prusa-print", "prusa-temperatures", "prusa-history", "prusa-nozzles", "prusa-movement", "prusa-lights", "prusa-utilities", "prusa-cameras"]
+      .every((t) => types.includes(t)), `the features are in the picker (${types.join(", ")})`);
+
+    // Print: printing
+    let hass = makeHass();
+    let print = addFeature({ type: "custom:prusa-print" }, { hass });
+    await wait(50);
+    check("print, printing", equal(keysOf(print).slice(0, 2), ["pause", "stop"]), `Pause print and Stop print first (${keysOf(print).join()})`);
+    keyNamed(print, "pause").click();
+    await wait(20);
+    check("print, printing", equal(lastCall(hass), { domain: "button", service: "press", data: { entity_id: "button.office_core_one_pause_print" } }),
+      `Pause print presses the pause button (${JSON.stringify(lastCall(hass))})`);
+    keyNamed(print, "stop").click();
+    await wait(20);
+    check("print, printing", window.confirming?.title === "Stop the print?" && window.confirming.dismiss_text === "Keep it", "Stop print asks first");
+    window.confirming?.answer(true);
+    check("print, printing", lastCall(hass).data.entity_id === "button.office_core_one_stop_print", "and stops when confirmed");
+
+    // Print: paused (the XL)
+    hass = makeHass();
+    print = addFeature({ type: "custom:prusa-print" }, { hass, entityId: "sensor.garage_xl_state" });
+    await wait(50);
+    check("print, paused", keysOf(print)[0] === "resume", `Resume print while paused (${keysOf(print).join()})`);
+
+    // Print: idle (the MK4S), the keys cannot be used
+    print = addFeature({ type: "custom:prusa-print", controls: ["pause_resume", "stop"] }, { entityId: "sensor.workshop_mk4s_state" });
+    await wait(50);
+    check("print, idle", [...print.shadowRoot.querySelectorAll("[data-key]")].every((k) => k.disabled), "Pause print and Stop print cannot be used while idle");
+
+    // Temperatures: the CORE One as the integration offers it now
+    hass = makeHass();
+    let temps = addFeature({ type: "custom:prusa-temperatures" }, { hass });
+    await wait(50);
+    const tempKeys = keysOf(temps);
+    check("temperatures", !tempKeys.some((k) => k.startsWith("chamber")), `no chamber controls until the integration offers them (${tempKeys.join()})`);
+    check("temperatures", tempKeys.some((k) => k.startsWith("tool_1_nozzle")) && tempKeys.some((k) => k.startsWith("bed")), "the nozzle and the bed");
+
+    // Temperatures: a future CORE One with the chamber and its fan
+    hass = makeHass();
+    temps = addFeature({ type: "custom:prusa-temperatures" }, { hass, entityId: "sensor.future_core_one_state" });
+    await wait(50);
+    const futureKeys = keysOf(temps);
+    check("temperatures, future", futureKeys.some((k) => k.startsWith("chamber_temperature")), `the chamber once offered (${futureKeys.join()})`);
+    check("temperatures, future", futureKeys.some((k) => k.startsWith("chamber_fan")), "and the chamber fan");
+
+    // Nozzles: one row per tool on the XL
+    const nozzles = addFeature({ type: "custom:prusa-nozzles" }, { entityId: "sensor.garage_xl_state" });
+    await wait(50);
+    const rows = nozzles.shadowRoot.querySelectorAll(".row");
+    check("nozzles", rows.length === 5, `one row per tool (${rows.length})`);
+
+    // Movement: X, Y and Z while idle, only Z while printing (only_z_while_printing)
+    const movement = addFeature({ type: "custom:prusa-movement" }, { entityId: "sensor.workshop_mk4s_state" });
+    await wait(50);
+    check("movement, idle", ["axis_x", "axis_y", "axis_z"].every((k) => keysOf(movement).includes(k)), `X, Y and Z (${keysOf(movement).join()})`);
+    const printing = addFeature({ type: "custom:prusa-movement" }, {});
+    await wait(50);
+    check("movement, printing", equal(keysOf(printing).filter((k) => k.startsWith("axis")), ["axis_z"]), `only Z while printing (${keysOf(printing).join()})`);
+
+    // History: Home Assistant's history graph card of the heaters
+    const history = addFeature({ type: "custom:prusa-history" }, {});
+    await wait(100);
+    const graphConfig = window.cardHelperCalls.find((c) => c.type === "history-graph");
+    check("history", !!graphConfig && graphConfig.entities.some((e) => e.entity === "sensor.office_core_one_tool_1_nozzle_temperature"),
+      `the history graph card, with the nozzle (${JSON.stringify(graphConfig)})`);
+    check("history", !!history.style.getPropertyValue("--graph-color-1"), "with the heaters' colors");
+
+    // Utilities and lights: nothing until the integration offers them
+    const utilities = addFeature({ type: "custom:prusa-utilities" }, {});
+    await wait(50);
+    check("utilities", keysOf(utilities).length === 0, `nothing until offered (${keysOf(utilities).join()})`);
+    const futureUtilities = addFeature({ type: "custom:prusa-utilities" }, { entityId: "sensor.future_core_one_state" });
+    await wait(50);
+    check("utilities, future", keysOf(futureUtilities).length > 0, `shown once offered (${keysOf(futureUtilities).join()})`);
+
+    // Cameras: the printer's camera
+    const cameras = addFeature({ type: "custom:prusa-cameras" }, {});
+    await wait(200);
+    check("cameras", !!cameras.shadowRoot.querySelector("hui-image") || window.cardHelperCalls.some((c) => c.type === "picture-entity"), "Home Assistant's picture of the camera");
+
+    // The feature editor tells which controls are not offered yet
+    const editor = document.createElement("prusa-feature-editor");
+    editor.hass = makeHass();
+    editor.context = { entity_id: "sensor.office_core_one_state" };
+    editor.setConfig({ type: "custom:prusa-temperatures" });
+    document.getElementById("cards").append(editor);
+    await wait(50);
+    const alert = deep(editor, "ha-alert")[0];
+    check("feature editor", !!alert && alert.innerHTML.includes("prusa-connect-homeassistant/issues/14"), "links to the integration's issue for the controls not offered yet");
+    const form = deep(editor, "ha-form")[0];
+    const options = form?.schema?.[0]?.selector?.select?.options ?? [];
+    check("feature editor", options.some((o) => /not offered yet/.test(o.label)), `lists them as not offered yet (${options.map((o) => o.label).join(" | ")})`);
+  });
+</script>
