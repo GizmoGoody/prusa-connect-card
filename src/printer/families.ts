@@ -18,7 +18,8 @@ export const FAMILIES: Family[] = [
   { id: "core", label: "CORE Family", frame: ["#5b5b5b", "#434242", "#2b2a29"], door: "#141619", models: /core/i },
   { id: "mini", label: "MINI Family", frame: ["#e2e3e3", "#c5c6c6", "#b2b3b3"], models: /mini/i },
   { id: "mk", label: "MK Family", frame: ["#4a4a49", "#2b2a29", "#1f1e1d"], models: /^\s*(original\s+prusa\s+)?(i3\s+)?mk/i },
-  { id: "ht90", label: "Pro HT90", frame: ["#4f4f4f", "#2b2a29", "#1f1b20"], models: /ht\s*90/i },
+  // The Pro HT90's body in Prusa Connect's drawing of it (frontend/public/img/printers/ht90.svg): the same grays as the CORE One's
+  { id: "ht90", label: "Pro HT90", frame: ["#5b5b5b", "#434242", "#2b2a29"], models: /ht\s*90/i },
   { id: "xl", label: "XL Family", frame: ["#4a4a4a", "#303030", "#232323"], models: /\bxl/i },
 ];
 
