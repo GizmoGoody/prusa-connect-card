@@ -2,9 +2,11 @@
 // (the printer's own, or any other camera entities). The picture is Home
 // Assistant's own hui-image, the element its picture cards show a camera
 // with: snapshots it refreshes itself (Auto), or the camera's live stream
-// (Live). Crop: with Crop on, two taps on the picture choose the part shown,
-// kept in this browser's memory until Crop is turned off or the page is
-// reloaded (the camera is not changed).
+// (Live), filling its box as the xTool card's does (cover). Crop: with Crop
+// on, two taps on the picture choose the part shown, kept in this browser's
+// memory until Crop is turned off or the page is reloaded (the camera is not
+// changed). The crop only zooms the picture in its box: the box and the
+// picture keep their shape, so a crop can neither collapse nor stretch them.
 import { css, html, nothing, unsafeCSS, type TemplateResult } from "lit";
 import { ENABLED, TIME_FORMATS } from "../const";
 import { entityName, findDeep, moreInfo, select, type Config, type HomeAssistant } from "../ha";
@@ -17,15 +19,13 @@ const CAMERA_VIEWS: [string, string][] = [["auto", "Auto"], ["live", "Live"]];
 interface Crop { x: number; y: number; w: number; h: number }
 const CROPS = new Map<string, Crop>();
 const CROPPING = new Set<string>();
-// Each camera's picture size, the last one known (see _pictureSize)
-const SIZES = new Map<string, { width: number; height: number }>();
 // A crop narrower than this share of the picture is a slip, not a crop
 const MIN_CROP = 0.02;
 // A tap moves the pointer less than this between press and release (px)
 const TAP_SLOP = 10;
 const WHOLE: Crop = { x: 0, y: 0, w: 1, h: 1 };
 type Image = HTMLElement & {
-  hass?: HomeAssistant; entity?: string; cameraImage?: string; cameraView?: string; aspectRatio?: string; fitMode?: string;
+  hass?: HomeAssistant; entity?: string; cameraImage?: string; cameraView?: string; fitMode?: string;
   updateComplete?: Promise<unknown>;
 };
 type Stamp = HTMLElement & { hass?: HomeAssistant; ts?: Date; format?: string };
@@ -97,8 +97,7 @@ export class PrusaCameras extends PrusaFeature {
     .shot:has(~ .rows .row) { margin-bottom: var(--ha-card-feature-gap, 12px); }
     .shot.cropping { cursor: crosshair; }
     .view { position: relative; overflow: hidden; }
-    .view hui-image { display: block; }
-    .view.cropped hui-image { position: absolute; }
+    .view hui-image { display: block; transform-origin: 0 0; }
     .area {
       position: absolute; pointer-events: none; box-sizing: border-box;
       border: 2px solid ${unsafeCSS(ENABLED)}; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), 0 0 0 100vmax rgba(0, 0, 0, .35);
@@ -124,7 +123,6 @@ export class PrusaCameras extends PrusaFeature {
   private _tapped = false;
   private _loading = false;
   private _watchedRoot?: ShadowRoot;
-  private _sizer = new ResizeObserver(() => this._applyCrop());
 
   private get _cameraView(): string {
     return this._config?.camera_view === "live" ? "live" : "auto";
@@ -231,10 +229,6 @@ export class PrusaCameras extends PrusaFeature {
       ><span class="hint">${hint}</span><span class="time">${this._time()}</span></button>${rows}`;
   }
 
-  protected override firstUpdated(): void {
-    this._sizer.observe(this.renderRoot.querySelector(".shot")!);
-  }
-
   protected override updated(): void {
     super.updated();
     this._watchPictures();
@@ -300,10 +294,6 @@ export class PrusaCameras extends PrusaFeature {
     return this.renderRoot.querySelector(".shot");
   }
 
-  private get _view(): HTMLElement | null {
-    return this.renderRoot.querySelector(".view");
-  }
-
   /** A place in the picture box (px). */
   private _placeOf(ev: MouseEvent): Place {
     const shot = this._shot!;
@@ -317,17 +307,27 @@ export class PrusaCameras extends PrusaFeature {
     this.requestUpdate();
   }
 
+  /** A tapped point in the picture (shares of its width and height), or undefined off it. The picture fills its box (cover): only the part shown counts. */
+  private _pointOf(ev: MouseEvent): { x: number; y: number } | undefined {
+    const img = this._image?.shadowRoot && findDeep(this._image.shadowRoot, "img, video", 3) as (HTMLImageElement & HTMLVideoElement) | null;
+    const width = img ? img.naturalWidth || img.videoWidth : 0, height = img ? img.naturalHeight || img.videoHeight : 0;
+    if (!img || !width || !height) return undefined;
+    const box = img.getBoundingClientRect();
+    const scale = Math.max(box.width / width, box.height / height);
+    const shownW = width * scale, shownH = height * scale;
+    const x = (ev.clientX - box.left - (box.width - shownW) / 2) / shownW;
+    const y = (ev.clientY - box.top - (box.height - shownH) / 2) / shownH;
+    return x < 0 || x > 1 || y < 0 || y > 1 ? undefined : { x, y };
+  }
+
   // First tap: a corner; second tap: the opposite corner, which sets the crop
   private _cropTap(ev: MouseEvent): void {
-    const box = this._view?.getBoundingClientRect();
-    if (!box?.width || !box.height) return;
-    const shown = this._shownCrop();
-    const u = (ev.clientX - box.left) / box.width, v = (ev.clientY - box.top) / box.height;
-    if (u < 0 || u > 1 || v < 0 || v > 1) return;
-    const point = { x: shown.x + u * shown.w, y: shown.y + v * shown.h, at: this._placeOf(ev) };
+    const point = this._pointOf(ev);
+    if (!point) return;
+    const at = this._placeOf(ev);
     if (!this._first) {
-      this._first = point;
-      this._showArea(point.at, point.at);
+      this._first = { ...point, at };
+      this._showArea(at, at);
       return;
     }
     const first = this._first;
@@ -339,38 +339,22 @@ export class PrusaCameras extends PrusaFeature {
   }
 
   /**
-   * The picture's own size (an image's, or a live stream's). While a new
-   * picture loads it has none yet, so the last size the camera had is kept:
-   * the crop and its shape stay steady between pictures.
-   */
-  private _pictureSize(): { width: number; height: number } | undefined {
-    const el = this._image?.shadowRoot && findDeep(this._image.shadowRoot, "img, video", 3) as (HTMLImageElement & HTMLVideoElement) | null;
-    const width = el ? el.naturalWidth || el.videoWidth : 0, height = el ? el.naturalHeight || el.videoHeight : 0;
-    if (width && height) SIZES.set(this._camera!, { width, height });
-    return this._camera ? SIZES.get(this._camera) : undefined;
-  }
-
-  /**
-   * Show the crop: the box takes the crop's shape (the whole picture's
-   * without one), and the picture is scaled and moved so only the crop
-   * shows. Home Assistant's image is given the picture's last known shape
-   * (its aspect_ratio, as a picture card's), so it keeps that shape while it
-   * loads the next picture: the box neither collapses nor stretches.
+   * Show the crop: the picture is zoomed (the same in both directions) so
+   * the whole crop shows, centered in the box as far as the picture
+   * reaches. Only a transform: nothing about the box or the picture's own
+   * layout changes, whatever Home Assistant's image does between pictures.
    */
   private _applyCrop(): void {
-    const view = this._view, image = this._image;
-    if (!view || !image) return;
-    const crop = this._shownCrop(), size = this._pictureSize();
-    view.classList.toggle("cropped", !!size);
-    if (!size) {
-      view.style.aspectRatio = "";
-      Object.assign(image.style, { width: "", left: "", top: "" });
+    const image = this._image;
+    if (!image) return;
+    const crop = this._shownCrop();
+    if (crop === WHOLE) {
+      image.style.transform = "";
       return;
     }
-    const shape = `${size.width}x${size.height}`;
-    if (image.aspectRatio !== shape) image.aspectRatio = shape;
-    view.style.aspectRatio = `${size.width * crop.w} / ${size.height * crop.h}`;
-    Object.assign(image.style, { width: `${100 / crop.w}%`, left: `${(-crop.x / crop.w) * 100}%`, top: `${(-crop.y / crop.h) * 100}%` });
+    const scale = Math.min(1 / crop.w, 1 / crop.h);
+    const shift = (center: number) => Math.min(0, Math.max(1 - scale, 0.5 - scale * center));
+    image.style.transform = `translate(${shift(crop.x + crop.w / 2) * 100}%, ${shift(crop.y + crop.h / 2) * 100}%) scale(${scale})`;
   }
 
   /** Home Assistant's image of the camera shown, made once for each camera, as its picture cards have it. */
@@ -393,7 +377,7 @@ export class PrusaCameras extends PrusaFeature {
     }
     if (this._image?.cameraImage !== camera) {
       this._image = document.createElement("hui-image") as Image;
-      Object.assign(this._image, { entity: camera, cameraImage: camera, fitMode: "fill" });
+      Object.assign(this._image, { entity: camera, cameraImage: camera, fitMode: "cover" });
       this._watchedRoot = undefined;
     }
     if (this._image.hass !== this._hass) this._image.hass = this._hass;
@@ -413,10 +397,8 @@ export class PrusaCameras extends PrusaFeature {
     this._watchedRoot = root;
     root.addEventListener("load", () => {
       this._pictureAt = new Date();
-      this._applyCrop();
       this.requestUpdate();
     }, true);
-    root.addEventListener("loadedmetadata", () => this._applyCrop(), true);
   }
 
   /** The last updated time along the bottom of the picture (Auto view), in the tile card's time format. */
